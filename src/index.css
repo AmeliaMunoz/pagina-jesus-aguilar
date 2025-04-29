@@ -1,0 +1,12 @@
+@import "react-datepicker/dist/react-datepicker.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply font-playfair;
+}
+
+
+
+
