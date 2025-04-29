@@ -30,7 +30,7 @@ const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const sesionGuardada = localStorage.getItem("admin-autenticado");
+    const sesionGuardada = sessionStorage.getItem("admin-autenticado");
     if (sesionGuardada === "true") {
       setAutenticado(true);
     }
@@ -112,7 +112,7 @@ const Admin = () => {
 
   const handleLogout = () => {
     setAutenticado(false);
-    localStorage.removeItem("admin-autenticado");
+    sessionStorage.removeItem("admin-autenticado");
     navigate("/admin");
   };
 
@@ -140,7 +140,7 @@ const Admin = () => {
             onClick={() => {
               if (clave === PASSWORD) {
                 setAutenticado(true);
-                localStorage.setItem("admin-autenticado", "true");
+                sessionStorage.setItem("admin-autenticado", "true");
               } else {
                 alert("Contraseña incorrecta");
               }
@@ -253,6 +253,7 @@ const Admin = () => {
 };
 
 export default Admin;
+
 
 
 

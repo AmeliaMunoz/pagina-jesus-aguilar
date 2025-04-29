@@ -8,15 +8,14 @@ import AdolescentTherapyPage from "../pages/AdolescentTherapyPage";
 import Admin from "../pages/Admin";
 import PatientHistory from "../pages/PatientHistory";
 import Configuration from "../pages/Configuration";
-
-
-
+import ScrollToTop from "../components/ScrollToTop";
 
 
 
 const RouteMain = () => {
   return (
     <BrowserRouter>
+    <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<AboutMePage />} />

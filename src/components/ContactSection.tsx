@@ -175,7 +175,8 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contacto" className="bg-[#fdf8f4] py-16 px-4 sm:px-6">
+    <section id="contacto" className="bg-[#fdf8f4] py-16 px-4 sm:px-6 scroll-mt-24">
+
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
         {/* Columna izquierda */}
         <div className="self-center">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import IconoLogo from "./IconoLogo";
 
@@ -27,24 +27,27 @@ const AdminHeader = ({ onLogout, showConfiguracion = false }: AdminHeaderProps) 
   };
 
   return (
-    <header className="bg-[#fdf8f4] py-4 px-6 relative z-50">
+    <header className="bg-[#fdf8f4] py-4 px-6 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between relative">
-        
+
+        {/* Logo estático sin botón clicable */}
         <div className="flex-1 flex justify-start md:justify-center items-center">
-          <button
-            onClick={() => handleScrollTo("#mensajes")}
-            className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center"
-          >
+          <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
             <IconoLogo className="w-full h-full" />
-          </button>
+          </div>
         </div>
 
+        {/* Botón cerrar sesión fijo para escritorio */}
         <div className="hidden lg:block fixed top-4 right-6 bg-white px-4 py-2 rounded shadow-md z-50">
-          <button onClick={onLogout} className="text-sm text-[#5f4b32] hover:text-[#b89b71] underline">
+          <button
+            onClick={onLogout}
+            className="text-sm text-[#5f4b32] hover:text-[#b89b71] underline"
+          >
             🔓 Cerrar sesión
           </button>
         </div>
 
+        {/* Menú hamburguesa móvil */}
         <div className="absolute right-0 flex items-center lg:hidden">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -55,6 +58,7 @@ const AdminHeader = ({ onLogout, showConfiguracion = false }: AdminHeaderProps) 
           </button>
         </div>
 
+        {/* Menú escritorio */}
         <div className="hidden lg:flex justify-between items-center w-full absolute top-1/2 -translate-y-1/2 px-6">
           <ul className="flex gap-6 text-base font-medium text-gray-800 uppercase tracking-wide">
             <li>
@@ -83,6 +87,7 @@ const AdminHeader = ({ onLogout, showConfiguracion = false }: AdminHeaderProps) 
         </div>
       </div>
 
+      {/* Menú móvil */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-4 px-4 py-2 space-y-2 text-base font-medium text-gray-800 uppercase tracking-wide divide-y divide-gray-300">
           {[
@@ -113,6 +118,7 @@ const AdminHeader = ({ onLogout, showConfiguracion = false }: AdminHeaderProps) 
 };
 
 export default AdminHeader;
+
 
 
 

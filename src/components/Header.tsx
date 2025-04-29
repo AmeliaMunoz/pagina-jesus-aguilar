@@ -1,37 +1,26 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Logo from "./IconoLogo";
 
 const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   const closeDropdown = () => setDropdownOpen(false);
 
-  const handleLogoClick = () => {
-    if (location.pathname === "/") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      navigate("/");
-    }
-  };
-
   return (
-    <header className="bg-[#fdf8f4] py-4 px-6 relative z-50">
+    <header className="bg-[#fdf8f4] py-4 px-6 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between relative">
-        {/* Logo */}
+
+        {/* Logo estático sin enlace */}
         <div className="flex-1 flex justify-start md:justify-center items-center">
-          <button
-            onClick={handleLogoClick}
-            className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center"
-          >
-            <Logo className="w-full h-full" />
-          </button>
+          <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
+            <Logo className="w-full h-full object-contain" />
+          </div>
         </div>
 
-        {/* Botón hamburguesa en móvil y tablet */}
+        {/* Botón hamburguesa móvil */}
         <div className="absolute right-0 flex items-center lg:hidden">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -78,7 +67,11 @@ const Header = () => {
           {/* Menú derecho */}
           <ul className="flex gap-6 text-base font-medium text-gray-800 uppercase tracking-wide">
             <li>
-              <Link to="/" className="hover:text-[#b89b71] transition">
+              <Link
+                to="/"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="hover:text-[#b89b71] transition"
+              >
                 Inicio
               </Link>
             </li>
@@ -119,7 +112,13 @@ const Header = () => {
             <Link to="/about">Sobre mí</Link>
           </button>
           <button className="w-full text-left py-2">
-            <Link to="/">Inicio</Link>
+            <Link
+              to="/"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="hover:text-[#b89b71] transition"
+            >
+              Inicio
+            </Link>
           </button>
           <button className="w-full text-left py-2">
             <Link to="/#contacto">Contacto</Link>
@@ -131,6 +130,13 @@ const Header = () => {
 };
 
 export default Header;
+
+
+
+
+
+
+
 
 
 
