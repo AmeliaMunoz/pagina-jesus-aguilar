@@ -7,6 +7,15 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import {
+  Mail,
+  Phone,
+  FolderOpen,
+  CalendarDays,
+  Activity,
+  FileText,
+  Trash2,
+} from "lucide-react";
 
 interface CitaHistorial {
   fecha: string;
@@ -95,11 +104,21 @@ const PatientsAdmin = () => {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <h3 className="text-lg font-semibold text-[#5f4b32]">{paciente.nombre}</h3>
-                  <p className="text-sm text-gray-700">📧 {paciente.email}</p>
-                  <p className="text-sm text-gray-700">📞 {paciente.telefono}</p>
+                  <p className="text-sm text-gray-700 flex items-center gap-2">
+                    <Mail/>
+                    {paciente.email}
+                  </p>
+                  <p className="text-sm text-gray-700 flex items-center gap-2">
+                    <Phone/>
+                    {paciente.telefono}
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-2">📁 Total citas: {paciente.historial?.length || 0}</p>
+
+              <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
+                <FolderOpen/>
+                Total citas: {paciente.historial?.length || 0}
+              </p>
 
               {paciente.historial && paciente.historial.length > 0 ? (
                 <ul className="mt-4 space-y-2">
@@ -109,16 +128,28 @@ const PatientsAdmin = () => {
                       className="bg-[#fdf8f4] p-4 rounded border border-[#d6c4b0] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                     >
                       <div>
-                        <p className="text-sm"><strong>📅</strong> {cita.fecha} a las {cita.hora}</p>
-                        <p className="text-sm">🩺 Estado: <span className="font-medium">{cita.estado}</span></p>
-                        {cita.nota && <p className="text-sm italic">📝 {cita.nota}</p>}
+                        <p className="text-sm flex items-center gap-2">
+                          <CalendarDays/>
+                          {cita.fecha} a las {cita.hora}
+                        </p>
+                        <p className="text-sm flex items-center gap-2">
+                          <Activity/>
+                          Estado: <span className="font-medium">{cita.estado}</span>
+                        </p>
+                        {cita.nota && (
+                          <p className="text-sm italic flex items-center gap-2">
+                            <FileText/>
+                            {cita.nota}
+                          </p>
+                        )}
                       </div>
                       <div className="flex gap-3">
                         <button
                           onClick={() => eliminarCita(paciente.email, cita)}
-                          className="text-red-600 text-xs font-semibold hover:underline"
+                          className="text-red-600 text-xs font-semibold hover:underline flex items-center gap-1"
                         >
-                          🗑 Eliminar
+                          <Trash2/>
+                          Eliminar
                         </button>
                       </div>
                     </li>
@@ -136,6 +167,7 @@ const PatientsAdmin = () => {
 };
 
 export default PatientsAdmin;
+
 
 
 

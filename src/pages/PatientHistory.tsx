@@ -11,6 +11,16 @@ import { useNavigate } from "react-router-dom";
 import AdminHeader from "../components/AdminHeader";
 import ManualAppointmentModal from "../components/ManualAppointmentModal";
 
+import {
+  Mail,
+  Phone,
+  CalendarDays,
+  FileText,
+  Pencil,
+  Trash2,
+  Activity,
+} from "lucide-react";
+
 interface CitaHistorial {
   fecha: string;
   hora: string;
@@ -100,21 +110,27 @@ const PatientHistory = () => {
                 <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                   <div>
                     <p className="text-lg font-semibold text-gray-800">{paciente.nombre}</p>
-                    <p className="text-sm text-gray-700">📧 {paciente.email}</p>
-                    <p className="text-sm text-gray-700">📞 {paciente.telefono}</p>
+                    <p className="text-sm text-gray-700 flex items-center gap-2">
+                      <Mail size={16} className="text-[#5f4b32]" />
+                      {paciente.email}
+                    </p>
+                    <p className="text-sm text-gray-700 flex items-center gap-2">
+                      <Phone size={16} className="text-[#5f4b32]" />
+                      {paciente.telefono}
+                    </p>
                   </div>
                   <div className="flex gap-2 text-right">
                     <button
                       onClick={() => setModalEdicionPaciente(paciente)}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
                     >
-                      ✏️ Editar paciente
+                      <Pencil size={14} className="text-[#5f4b32]" /> Editar
                     </button>
                     <button
                       onClick={() => eliminarPaciente(paciente.email)}
-                      className="text-xs text-red-600 hover:text-red-800"
+                      className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
                     >
-                      🗑️ Eliminar paciente
+                      <Trash2 size={14} className="text-red-600" /> Eliminar
                     </button>
                   </div>
                 </div>
@@ -122,10 +138,21 @@ const PatientHistory = () => {
                 {paciente.historial && paciente.historial.length > 0 ? (
                   <ul className="space-y-4">
                     {paciente.historial.map((cita, i) => (
-                      <li key={i} className="bg-[#fdf8f4] p-4 border border-[#d6c4b0] rounded-xl">
-                        <p className="text-sm">📅 {cita.fecha} a las {cita.hora}</p>
-                        <p className="text-sm">🩺 Estado: {cita.estado}</p>
-                        {cita.nota && <p className="text-sm italic">📝 {cita.nota}</p>}
+                      <li key={i} className="bg-[#fdf8f4] p-4 border border-[#d6c4b0] rounded-xl space-y-1">
+                        <p className="text-sm flex items-center gap-2">
+                          <CalendarDays size={16} className="text-[#5f4b32]" />
+                          {cita.fecha} a las {cita.hora}
+                        </p>
+                        <p className="text-sm flex items-center gap-2">
+                          <Activity size={16} className="text-green-700" />
+                          Estado: {cita.estado}
+                        </p>
+                        {cita.nota && (
+                          <p className="text-sm italic flex items-center gap-2">
+                            <FileText size={16} className="text-[#b89b71]" />
+                            {cita.nota}
+                          </p>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -157,6 +184,8 @@ const PatientHistory = () => {
 };
 
 export default PatientHistory;
+
+
 
  
 

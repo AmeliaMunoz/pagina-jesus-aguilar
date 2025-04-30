@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { guardarCitaEnHistorial } from "../utils/patients";
+import { CalendarDays } from "lucide-react";
 
 interface CitaHistorial {
   fecha: string;
@@ -109,9 +110,11 @@ const ManualAppointmentModal = ({
         </h3>
 
         {!soloEditarPaciente && (
-          <p className="text-sm text-gray-600 mb-2">
-            📅 {fecha.toLocaleDateString("es-ES")} a las {hora}
-          </p>
+          <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+            <CalendarDays />
+            {fecha.toLocaleDateString("es-ES")} a las {hora}
+         </p>
+        
         )}
 
         <div className="space-y-3">

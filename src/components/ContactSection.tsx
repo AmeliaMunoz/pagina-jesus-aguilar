@@ -23,7 +23,7 @@ const ContactSection = () => {
   const [horaSeleccionada, setHoraSeleccionada] = useState("");
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
-  const [telefono, setTelefono] = useState(""); // 📞 Nuevo estado
+  const [telefono, setTelefono] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState(false);
@@ -123,7 +123,7 @@ const ContactSection = () => {
       await addDoc(collection(db, "mensajes"), {
         nombre,
         email,
-        telefono, // 📥 Añadido aquí
+        telefono,
         mensaje,
         fechaPropuesta: startDate ? Timestamp.fromDate(startDate) : null,
         horaPropuesta: horaSeleccionada || null,
@@ -162,7 +162,7 @@ const ContactSection = () => {
       setEnviado(true);
       setNombre("");
       setEmail("");
-      setTelefono(""); // 🧼 Limpiar campo
+      setTelefono("");
       setMensaje("");
       setStartDate(null);
       setHoraSeleccionada("");
@@ -177,9 +177,7 @@ const ContactSection = () => {
 
   return (
     <section id="contacto" className="bg-[#fdf8f4] py-16 px-4 sm:px-6 scroll-mt-24">
-
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-        {/* Columna izquierda */}
         <div className="self-center">
           <h2 className="text-2xl md:text-3xl text-gray-700 tracking-widest uppercase mb-16 font-semibold">
             Contacto
@@ -190,11 +188,11 @@ const ContactSection = () => {
           </p>
           <div className="space-y-4 text-gray-700 text-base">
             <div className="flex items-center gap-3">
-            <span className="text-xl">
-               <Mail />
-            </span>
+              <span className="text-xl">
+                <Mail />
+              </span>
               <a href="mailto:jesusaguilarpsicologia@gmail.com" className="hover:underline break-all">
-              jesusaguilarpsicologia@gmail.com
+                jesusaguilarpsicologia@gmail.com
               </a>
             </div>
             <div className="flex items-center gap-3">
@@ -208,7 +206,6 @@ const ContactSection = () => {
           </div>
         </div>
 
-        {/* Columna derecha: Formulario */}
         <div className="bg-white p-6 sm:p-8 rounded-xl shadow-md">
           <h3 className="text-xl md:text-2xl text-gray-700 tracking-widest uppercase mb-10 font-semibold">
             Envíame un mensaje
@@ -216,17 +213,16 @@ const ContactSection = () => {
 
           {enviado && (
             <div className="bg-[#f5ede6] text-[#5f4b32] border border-[#c8b29d] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm flex items-center gap-2">
-            <CheckCircle size={18} className="text-green-600" />
-            Tu mensaje ha sido enviado con éxito. Te responderé lo antes posible.
-          </div>
+              <CheckCircle size={18} className="text-green-600" />
+              Tu mensaje ha sido enviado con éxito. Te responderé lo antes posible.
+            </div>
           )}
 
           {error && (
             <div className="bg-[#fceeee] text-[#803e3e] border border-[#e2b8b8] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm flex items-center gap-2">
-            <XCircle size={18} className="text-red-500" />
-            Ha ocurrido un error. Por favor, intenta de nuevo más tarde.
-          </div>
-          
+              <XCircle size={18} className="text-red-500" />
+              Ha ocurrido un error. Por favor, intenta de nuevo más tarde.
+            </div>
           )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -309,7 +305,7 @@ const ContactSection = () => {
 
             <div className="flex flex-col gap-2">
               <label htmlFor="mensaje" className="text-gray-700 font-medium">
-                Mensaje
+                Dime en qué te puedo ayudar
               </label>
               <textarea
                 id="mensaje"
@@ -331,6 +327,7 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
+
 
 
 

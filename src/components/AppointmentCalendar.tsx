@@ -59,7 +59,11 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: ToolbarProps<any>) =
       </div>
 
       <div className="flex flex-wrap justify-center gap-3">
-        {[{ label: "Mes", value: "month" }, { label: "Semana", value: "week" }, { label: "Día", value: "day" }].map(({ label, value }) => (
+        {[
+          { label: "Mes", value: "month" },
+          { label: "Semana", value: "week" },
+          { label: "Día", value: "day" },
+        ].map(({ label, value }) => (
           <button
             key={value}
             onClick={() => onView(value as View)}
@@ -112,7 +116,7 @@ const AppointmentCalendar = () => {
 
         if (!fecha || !hora) return null;
 
-        const [h, m] = hora.split(":" ).map(Number);
+        const [h, m] = hora.split(":").map(Number);
         const start = new Date(fecha);
         start.setHours(h);
         start.setMinutes(m);
@@ -142,7 +146,7 @@ const AppointmentCalendar = () => {
       const end = new Date(year, month - 1, day, 23, 59, 59);
       return {
         id: fecha,
-        title: "🎉 Festivo",
+        title: "Festivo",
         start,
         end,
       };
@@ -183,7 +187,12 @@ const AppointmentCalendar = () => {
     return {};
   };
 
-  const guardarCitaEnHistorial = async (email: string, nombre: string, telefono: string, cita: any) => {
+  const guardarCitaEnHistorial = async (
+    email: string,
+    nombre: string,
+    telefono: string,
+    cita: any
+  ) => {
     const ref = doc(db, "pacientes", email);
     const snap = await getDoc(ref);
 
@@ -255,12 +264,14 @@ const AppointmentCalendar = () => {
           }}
           components={{ toolbar: CustomToolbar }}
           eventPropGetter={(event) => {
-            if (event.title.includes("🎉")) {
+            if (event.title === "Festivo") {
               return {
                 style: {
-                  backgroundColor: "#fdecea",
-                  color: "#9c2f2f",
+                  backgroundColor: "#fff4da",
+                  color: "#a1763c",
                   fontWeight: "bold",
+                  border: "1px solid #e1c9a0",
+                  borderRadius: "6px",
                 },
               };
             }
@@ -307,6 +318,7 @@ const AppointmentCalendar = () => {
 };
 
 export default AppointmentCalendar;
+
 
 
 

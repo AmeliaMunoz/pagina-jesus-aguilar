@@ -16,6 +16,7 @@ import desbloquearHora from "../components/UnblockHour";
 import AdminHeader from "../components/AdminHeader";
 import IconoLogo from "../components/IconoLogo";
 import { useNavigate } from "react-router-dom";
+import { CalendarDays, Phone } from "lucide-react";
 
 const PASSWORD = "admin123";
 
@@ -36,6 +37,26 @@ const Admin = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (autenticado) {
+      obtenerMensajes();
+    }
+  }, [autenticado]);
+
+  // ✅ Hace scroll si viene desde otra ruta
+  useEffect(() => {
+    const destino = sessionStorage.getItem("scrollTo");
+    if (destino) {
+      setTimeout(() => {
+        const el = document.querySelector(destino);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+        sessionStorage.removeItem("scrollTo");
+      }, 300);
+    }
+  }, []);
+
   const obtenerMensajes = async () => {
     setCargando(true);
     const querySnapshot = await getDocs(collection(db, "mensajes"));
@@ -46,12 +67,6 @@ const Admin = () => {
     setMensajes(datos);
     setCargando(false);
   };
-
-  useEffect(() => {
-    if (autenticado) {
-      obtenerMensajes();
-    }
-  }, [autenticado]);
 
   const guardarCitaEnHistorial = async (email: string, nombre: string, telefono: string, cita: any) => {
     const ref = doc(db, "pacientes", email);
@@ -92,12 +107,18 @@ const Admin = () => {
       mensaje.fechaPropuesta &&
       mensaje.horaPropuesta
     ) {
+      const fechaLocal = mensaje.fechaPropuesta.toDate();
+      const fechaFormateada =
+        fechaLocal.getFullYear() + "-" +
+        String(fechaLocal.getMonth() + 1).padStart(2, "0") + "-" +
+        String(fechaLocal.getDate()).padStart(2, "0");
+
       await guardarCitaEnHistorial(
         mensaje.email,
         mensaje.nombre,
         mensaje.telefono || "Desconocido",
         {
-          fecha: mensaje.fechaPropuesta.toDate().toISOString().split("T")[0],
+          fecha: fechaFormateada,
           hora: mensaje.horaPropuesta,
           estado: "aprobada",
           nota: mensaje.mensaje || "",
@@ -165,7 +186,7 @@ const Admin = () => {
       )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <section className="mb-16" id="mensajes">
+        <section className="mb-16 scroll-mt-32" id="mensajes">
           <div className="flex flex-wrap gap-3 justify-center mb-8">
             {['pendiente', 'rechazada', 'aprobada', 'todos'].map((estado) => (
               <button
@@ -193,22 +214,33 @@ const Admin = () => {
                   <p className="text-sm text-gray-500 mb-1">{m.creado?.toDate().toLocaleString()}</p>
                   <h3 className="text-lg font-semibold text-gray-800">{m.nombre}</h3>
                   <p className="text-sm text-gray-700">{m.email}</p>
-                  {m.telefono && <p className="text-sm text-gray-700">📞 {m.telefono}</p>}
-                  <p className="mt-2 text-gray-800">{m.mensaje}</p>
-
-                  {m.fechaPropuesta && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      📅 Fecha propuesta: {m.fechaPropuesta?.toDate().toLocaleDateString("es-ES")} {m.horaPropuesta ? `a las ${m.horaPropuesta}` : ""}
+                  {m.telefono && (
+                    <p className="text-sm text-gray-700 flex items-center gap-2">
+                      <Phone />
+                      {m.telefono}
                     </p>
                   )}
-
+                  <p className="mt-2 text-gray-800">{m.mensaje}</p>
+                  {m.fechaPropuesta && (
+                    <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
+                      <CalendarDays />
+                      Fecha propuesta:{" "}
+                      {m.fechaPropuesta?.toDate().toLocaleDateString("es-ES")}{" "}
+                      {m.horaPropuesta ? `a las ${m.horaPropuesta}` : ""}
+                    </p>
+                  )}
                   <p className="mt-2 font-medium text-sm">
-                    Estado: <span className={
-                      m.estado === "pendiente" ? "text-yellow-600" :
-                      m.estado === "aprobada" ? "text-green-700" : "text-red-600"
-                    }>{m.estado}</span>
+                    Estado:{" "}
+                    <span className={
+                      m.estado === "pendiente"
+                        ? "text-yellow-600"
+                        : m.estado === "aprobada"
+                        ? "text-green-700"
+                        : "text-red-600"
+                    }>
+                      {m.estado}
+                    </span>
                   </p>
-
                   {filtroEstado !== "todos" && (
                     <div className="mt-4 flex gap-4 flex-wrap">
                       <button
@@ -244,7 +276,7 @@ const Admin = () => {
           )}
         </section>
 
-        <section className="mb-16" id="calendario">
+        <section className="mb-16 scroll-mt-32" id="calendario">
           <AppointmentCalendar />
         </section>
       </div>
@@ -253,6 +285,9 @@ const Admin = () => {
 };
 
 export default Admin;
+
+
+
 
 
 

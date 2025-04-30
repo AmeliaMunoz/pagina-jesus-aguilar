@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="bg-[#e8d4c3d5] text-gray-800 py-12 mt-0">
 
       <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-        {/* Logo y descripción */}
+      
         <div className="flex flex-col gap-4 items-start">
           <Logo className="w-20 h-20 mb-2" />
           <p className="text-sm text-gray-600">
@@ -14,7 +14,6 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Enlaces rápidos */}
         <div>
           <h4 className="text-base font-semibold mb-4 uppercase tracking-wide">Navegación</h4>
           <ul className="space-y-2 text-sm">
@@ -25,7 +24,6 @@ const Footer = () => {
           </ul>
         </div>
 
-        {/* Redes sociales + contacto */}
         <div className="flex flex-col gap-4">
           <h4 className="text-base font-semibold uppercase tracking-wide">Contacto</h4>
           <p className="text-sm">jesusaguilarpsicologia@gmail.com</p>
@@ -49,7 +47,6 @@ const Footer = () => {
               >
                 <FaInstagram />
               </a>
-
           </div>
         </div>
       </div>

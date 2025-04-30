@@ -9,16 +9,9 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { X } from "lucide-react";
 
-const diasSemana = [
-  "lunes",
-  "martes",
-  "miercoles",
-  "jueves",
-  "viernes",
-  "sabado",
-  "domingo",
-];
+const diasSemana = ["lunes", "martes", "miercoles", "jueves", "viernes"];
 
 const WeeklySchedulePanel = () => {
   const [horarios, setHorarios] = useState<any[]>([]);
@@ -33,9 +26,15 @@ const WeeklySchedulePanel = () => {
     const snapshot = await getDocs(collection(db, "horarios_semanales"));
     const datos = snapshot.docs.map((doc) => ({
       dia: doc.id,
-      horas: doc.data().horas || [],
+      horas: (doc.data().horas || []).sort(), // ordena las horas dentro de cada día
     }));
-    setHorarios(datos);
+
+    // Ordenar días según diasSemana
+    const datosOrdenados = diasSemana
+      .map((dia) => datos.find((d) => d.dia === dia))
+      .filter(Boolean); // elimina los días que no existen aún
+
+    setHorarios(datosOrdenados as any[]);
   };
 
   const agregarHora = async () => {
@@ -48,7 +47,7 @@ const WeeklySchedulePanel = () => {
       const data = snap.data();
       if (!data.horas.includes(nuevaHora)) {
         await updateDoc(ref, {
-          horas: [...data.horas, nuevaHora],
+          horas: [...data.horas, nuevaHora].sort(),
         });
       }
     } else {
@@ -82,7 +81,7 @@ const WeeklySchedulePanel = () => {
         Configuración de disponibilidad por semanas
       </h2>
 
-      {/* Añadir nueva hora */}
+     
       <div className="bg-white border border-[#e8d4c3] p-6 rounded-xl shadow-sm mb-8">
         <h3 className="text-md font-medium mb-4 text-gray-800">
           Añadir hora disponible
@@ -124,7 +123,7 @@ const WeeklySchedulePanel = () => {
         </div>
       </div>
 
-      {/* Lista de horarios actuales */}
+     
       <div className="space-y-6">
         {horarios.map((item) => (
           <div
@@ -143,9 +142,10 @@ const WeeklySchedulePanel = () => {
                   {hora}
                   <button
                     onClick={() => eliminarHora(item.dia, hora)}
-                    className="text-red-500 hover:text-red-700 text-xs font-bold"
+                    className="text-red-500 hover:text-red-700"
+                    aria-label="Eliminar hora"
                   >
-                    ✕
+                    <X/>
                   </button>
                 </div>
               ))}
@@ -158,3 +158,4 @@ const WeeklySchedulePanel = () => {
 };
 
 export default WeeklySchedulePanel;
+

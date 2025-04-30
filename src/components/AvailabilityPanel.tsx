@@ -77,7 +77,7 @@ const AvailabilityPanel = () => {
       Configuración de disponibilidad por días
       </h2>
 
-      {/* Add availability */}
+      
       <div className="bg-white border border-[#e8d4c3] p-6 rounded-xl shadow-sm mb-8">
         <h3 className="text-md font-medium mb-4 text-gray-800">
           Añadir dia y hora disponible
@@ -112,7 +112,7 @@ const AvailabilityPanel = () => {
         </div>
       </div>
 
-      {/* Availability list */}
+     
       <div className="space-y-6">
         {availability.map((day) => (
           <div
