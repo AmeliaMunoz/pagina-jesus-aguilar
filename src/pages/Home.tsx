@@ -20,7 +20,7 @@ const Home = () => {
   }, [location]);
 
   return (
-    <main className="space-y-48 bg-[#fdf8f4] px-6 pt-20">
+    <main className="space-y-32 bg-[#fdf8f4] px-6 pt-8">
 
       <Header />
       <Hero />

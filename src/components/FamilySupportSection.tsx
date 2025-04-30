@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "../components/Button";
+import { Check } from "lucide-react";
 
 const FamilySupportSection = () => {
   return (
@@ -9,7 +10,7 @@ const FamilySupportSection = () => {
           Acompañamiento Familiar desde el Respeto y la Empatía
         </h2>
 
-        <div className="space-y-6 mb-10 font-sans text-brown-800 text-base sm:text-lg leading-relaxed">
+        <div className="space-y-6 mb-10 font-sans text-base sm:text-lg leading-relaxed">
           <p>
             Acompaño a madres, padres y cuidadores que desean educar desde el respeto, el vínculo y la presencia.
             Mi enfoque parte de la idea de que los adultos también estamos aprendiendo, y que toda transformación familiar comienza con una mirada más consciente hacia las relaciones.
@@ -24,25 +25,33 @@ const FamilySupportSection = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
           <div className="flex items-start gap-3">
-            <span className="text-brown-600 text-xl">✔</span>
+            <span className="text-xl">
+              <Check/>
+            </span>
             <span>Redirigir conductas difíciles sin recurrir al castigo</span>
           </div>
           <div className="flex items-start gap-3">
-            <span className="text-brown-600 text-xl">✔</span>
+           <span className="text-xl">
+              <Check/>
+            </span>
             <span>Fomentar la autonomía, la autoestima y la responsabilidad</span>
           </div>
           <div className="flex items-start gap-3">
-            <span className="text-brown-600 text-xl">✔</span>
+            <span className="text-xl">
+              <Check/>
+            </span>
             <span>Establecer normas claras desde el amor y el respeto</span>
           </div>
           <div className="flex items-start gap-3">
-            <span className="text-brown-600 text-xl">✔</span>
+            <span className="text-xl">
+              <Check/>
+            </span>
             <span>Mejorar la comunicación y fortalecer el vínculo familiar</span>
           </div>
         </div>
 
-        <div className="bg-[#fcf7f2] p-6 rounded-xl mb-12 border-l-4 border-brown-300 font-sans">
-          <h3 className="text-lg font-semibold text-brown-900 mb-2">Un hogar donde todos pueden crecer</h3>
+        <div className="bg-[#fcf7f2] p-6 rounded-xl mb-12 border-l-4 border-amber-800 font-sans">
+          <h3 className="text-lg font-semibold mb-2">Un hogar donde todos pueden crecer</h3>
           <p className="mb-2">
             La disciplina positiva no es una técnica, es una forma de mirar a nuestros hijos e hijas con más comprensión,
             firmeza y ternura a la vez. Es posible educar sin gritos ni castigos, sostener sin sobreproteger, y acompañar sin controlar.
@@ -53,7 +62,7 @@ const FamilySupportSection = () => {
           </p>
         </div>
 
-        <p className=" text-center text-brown-900 text-lg mb-10">
+        <p className=" text-center text-lg mb-10">
           “No se trata de tener hijos perfectos, sino de construir relaciones sanas.”
         </p>
 

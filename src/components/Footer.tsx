@@ -1,4 +1,4 @@
-import { FaFacebookF, FaInstagram, FaGlobe, FaArrowUp } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaGlobe, FaArrowUp, FaWhatsapp } from 'react-icons/fa';
 import Logo from "./IconoLogo";
 
 const Footer = () => {
@@ -28,18 +28,28 @@ const Footer = () => {
         {/* Redes sociales + contacto */}
         <div className="flex flex-col gap-4">
           <h4 className="text-base font-semibold uppercase tracking-wide">Contacto</h4>
-          <p className="text-sm">info@jesusaguilar.com</p>
+          <p className="text-sm">jesusaguilarpsicologia@gmail.com</p>
           <p className="text-sm">+34 123 456 789</p>
           <div className="flex gap-4 mt-2 text-xl">
-            <a href="#" className="hover:text-[#b89b71] transition" aria-label="Web">
-              <FaGlobe />
+          <a
+              href="https://wa.me/34123456789"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#b89b71] transition"
+              aria-label="WhatsApp"
+            >
+              <FaWhatsapp />
             </a>
-            <a href="#" className="hover:text-[#b89b71] transition" aria-label="Facebook">
-              <FaFacebookF />
-            </a>
-            <a href="#" className="hover:text-[#b89b71] transition" aria-label="Instagram">
-              <FaInstagram />
-            </a>
+            <a
+                href="https://www.instagram.com/psicologia_aguilar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#b89b71] transition"
+                aria-label="Instagram"
+              >
+                <FaInstagram />
+              </a>
+
           </div>
         </div>
       </div>

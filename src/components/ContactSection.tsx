@@ -15,6 +15,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { addDays } from "date-fns";
 import Button from "./Button";
 import { holidays2025 } from "../data/holidays";
+import { CheckCircle, Mail, Phone, XCircle } from "lucide-react";
 
 const ContactSection = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -189,13 +190,17 @@ const ContactSection = () => {
           </p>
           <div className="space-y-4 text-gray-700 text-base">
             <div className="flex items-center gap-3">
-              <span className="text-xl">✉️</span>
-              <a href="mailto:info@jesusaguilar.com" className="hover:underline break-all">
-                info@jesusaguilar.com
+            <span className="text-xl">
+               <Mail />
+            </span>
+              <a href="mailto:jesusaguilarpsicologia@gmail.com" className="hover:underline break-all">
+              jesusaguilarpsicologia@gmail.com
               </a>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xl">📞</span>
+              <span className="text-xl">
+                <Phone />
+              </span>
               <a href="tel:+34123456789" className="hover:underline">
                 +34 123 456 789
               </a>
@@ -210,15 +215,18 @@ const ContactSection = () => {
           </h3>
 
           {enviado && (
-            <div className="bg-[#f5ede6] text-[#5f4b32] border border-[#c8b29d] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm">
-              ✅ Tu mensaje ha sido enviado con éxito. Te responderé lo antes posible.
-            </div>
+            <div className="bg-[#f5ede6] text-[#5f4b32] border border-[#c8b29d] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm flex items-center gap-2">
+            <CheckCircle size={18} className="text-green-600" />
+            Tu mensaje ha sido enviado con éxito. Te responderé lo antes posible.
+          </div>
           )}
 
           {error && (
-            <div className="bg-[#fceeee] text-[#803e3e] border border-[#e2b8b8] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm">
-              ❌ Ha ocurrido un error. Por favor, intenta de nuevo más tarde.
-            </div>
+            <div className="bg-[#fceeee] text-[#803e3e] border border-[#e2b8b8] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm flex items-center gap-2">
+            <XCircle size={18} className="text-red-500" />
+            Ha ocurrido un error. Por favor, intenta de nuevo más tarde.
+          </div>
+          
           )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>

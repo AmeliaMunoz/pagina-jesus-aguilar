@@ -5,7 +5,7 @@ import IconAdolescent from "./IconAdolescent";
 
 const TherapyTypes = () => {
   return (
-    <section id="terapias" className="bg-white py-16 gap-6 px-6 text-center">
+    <section id="terapias" className="bg-white py-16 gap-6 px-6 text-center scroll-mt-24">
       <h2 className="text-lg md:text-xl font-semibold text-gray-700 tracking-widest uppercase mb-12">
         Tipos de terapia especializada
       </h2>

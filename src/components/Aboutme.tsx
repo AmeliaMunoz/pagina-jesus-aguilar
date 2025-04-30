@@ -2,7 +2,7 @@ import Button from "./Button";
 
 const AboutMe = () => {
   return (
-    <section id="sobre-mi" className="bg-[#fdf8f4]py-16 px-4 sm:px-6 ">
+    <section id="sobre-mi" className="bg-[#fdf8f4]py-16 px-4 sm:px-6 scroll-mt-32">
       <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 items-start">
         {/* Imagen */}
         <div className="flex justify-center md:justify-start">
@@ -15,7 +15,7 @@ const AboutMe = () => {
 
         {/* Texto */}
         <div>
-          <h2 className="text-lg md:text-xl text-gray-700 tracking-widest uppercase mb-8">Sobre mí</h2>
+          <h2 className="text-lg md:text-xl text-gray-700 font-semibold tracking-widest uppercase mb-8">Sobre mí</h2>
           <p className="text-gray-700 mb-4 text-base sm:text-lg">
             Hola, soy Jesús Aguilar, psicólogo especializado en adolescentes y familias.
             Desde hace un tiempo acompaño a jóvenes y a sus familias en el camino hacia la disciplina positiva,
