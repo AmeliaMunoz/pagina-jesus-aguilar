@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Logo from "./IconoLogo";
+import { Menu } from "lucide-react";
 
 const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -22,13 +23,13 @@ const Header = () => {
 
         
         <div className="absolute right-0 flex items-center lg:hidden">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-gray-800 text-2xl"
-            aria-label="Abrir menú"
-          >
-            ☰
-          </button>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="text-gray-800 text-2xl"
+          aria-label="Abrir menú"
+        >
+          <Menu size={28} />
+        </button>
         </div>
 
        

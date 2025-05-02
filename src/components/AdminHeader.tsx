@@ -28,14 +28,13 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
   return (
     <header className="bg-[#fdf8f4] py-4 px-6 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between relative">
-        {/* Logo centrado */}
+     
         <div className="flex-1 flex justify-center items-center">
           <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
             <IconoLogo className="w-full h-full" />
           </div>
         </div>
 
-        {/* Botón cerrar sesión (escritorio) */}
         <div className="hidden lg:block fixed top-4 right-6 bg-white px-4 py-2 rounded shadow-md z-50">
           <button
             onClick={onLogout}
@@ -46,14 +45,12 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
           </button>
         </div>
 
-        {/* Botón menú móvil */}
         <div className="absolute right-0 flex items-center lg:hidden">
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-gray-800">
             <Menu size={28} />
           </button>
         </div>
 
-        {/* Menú escritorio */}
         <div className="hidden lg:flex justify-between items-center w-full absolute top-1/2 -translate-y-1/2 px-6">
           <ul className="flex gap-6 text-base font-medium text-gray-800 uppercase tracking-wide">
             <li><button onClick={() => handleScrollTo("#mensajes")} className="hover:text-[#b89b71]">MENSAJES</button></li>
@@ -66,7 +63,6 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
         </div>
       </div>
 
-      {/* Menú móvil */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-4 px-4 py-2 space-y-2 text-base text-gray-800 uppercase tracking-wide divide-y divide-gray-300">
           {[

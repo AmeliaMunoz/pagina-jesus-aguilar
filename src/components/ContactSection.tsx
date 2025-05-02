@@ -242,7 +242,7 @@ const ContactSection = () => {
               </div>
               <div className="flex flex-col gap-2">
                 <label htmlFor="email" className="text-gray-700 font-medium">
-                  Correo electrónico
+                  Email
                 </label>
                 <input
                   id="email"
