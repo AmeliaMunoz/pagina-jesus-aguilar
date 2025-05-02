@@ -18,17 +18,20 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
   }, []);
 
   const handleScrollTo = (id: string) => {
-    const el = document.querySelector(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-      setMobileMenuOpen(false);
+    if (window.location.pathname !== "/admin") {
+      navigate("/admin", { state: { scrollTo: id } });
+    } else {
+      const el = document.querySelector(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        setMobileMenuOpen(false);
+      }
     }
   };
 
   return (
     <header className="bg-[#fdf8f4] py-4 px-6 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex items-center justify-between relative">
-     
         <div className="flex-1 flex justify-center items-center">
           <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center">
             <IconoLogo className="w-full h-full" />
@@ -89,6 +92,7 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
 };
 
 export default AdminHeader;
+
 
 
 
