@@ -18,10 +18,6 @@ import {
   updateDoc,
   doc,
   getDoc,
-  arrayUnion,
-  setDoc,
-  serverTimestamp,
-  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { holidays2025 } from "../data/holidays";
@@ -187,29 +183,6 @@ const AppointmentCalendar = () => {
     return {};
   };
 
-  const guardarCitaEnHistorial = async (
-    email: string,
-    nombre: string,
-    telefono: string,
-    cita: any
-  ) => {
-    const ref = doc(db, "pacientes", email);
-    const snap = await getDoc(ref);
-
-    if (snap.exists()) {
-      await updateDoc(ref, {
-        historial: arrayUnion(cita),
-      });
-    } else {
-      await setDoc(ref, {
-        nombre,
-        email,
-        telefono,
-        creado: serverTimestamp(),
-        historial: [cita],
-      });
-    }
-  };
 
   const eliminarCitaDeHistorial = async (email: string, fecha: string, hora: string) => {
     const ref = doc(db, "pacientes", email);

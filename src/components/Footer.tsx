@@ -1,7 +1,6 @@
 import { FaInstagram, FaWhatsapp, FaArrowUp } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Logo from './IconoLogo';
-import { useEffect } from 'react';
 
 const Footer = () => {
   const navigate = useNavigate();

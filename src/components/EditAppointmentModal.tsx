@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { db } from "../firebase";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import DatePicker from "react-datepicker";
@@ -21,9 +21,6 @@ const EditAppointmentModal = ({
   id,
   fecha,
   hora,
-  nombre,
-  email,
-  telefono,
   nota,
   onClose,
   onUpdate,
