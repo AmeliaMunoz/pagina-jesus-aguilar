@@ -24,13 +24,13 @@ import { holidays2025 } from "../data/holidays";
 import ManualAppointmentModal from "./ManualAppointmentModal";
 import EditAppointmentModal from "./EditAppointmentModal";
 
-const locales = { es };
 const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
+  format: (date: Date, formatStr: string) => format(date, formatStr, { locale: es }),
+  parse: (value: string, formatStr: string) =>
+    parse(value, formatStr, new Date(), { locale: es }),
+  startOfWeek: () => startOfWeek(new Date(), { locale: es }),
   getDay,
-  locales,
+  locales: { es },
 });
 
 const CustomToolbar = ({ label, onNavigate, onView, view }: ToolbarProps<any>) => {
@@ -88,6 +88,7 @@ interface CalendarEvent extends Event {
     email: string;
     telefono?: string;
     nota?: string;
+    estado?: string;
   };
 }
 
@@ -101,7 +102,10 @@ const AppointmentCalendar = () => {
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
 
   const cargarEventos = async () => {
-    const q = query(collection(db, "mensajes"), where("estado", "==", "aprobada"));
+    const q = query(
+      collection(db, "mensajes"),
+      where("estado", "in", ["aprobada", "ausente"])
+    );
     const snapshot = await getDocs(q);
 
     const citas = snapshot.docs
@@ -112,7 +116,7 @@ const AppointmentCalendar = () => {
 
         if (!fecha || !hora) return null;
 
-        const [h, m] = hora.split(":").map(Number);
+        const [h, m] = hora.split(":" ).map(Number);
         const start = new Date(fecha);
         start.setHours(h);
         start.setMinutes(m);
@@ -131,6 +135,7 @@ const AppointmentCalendar = () => {
             email: data.email,
             telefono: data.telefono || "",
             nota: data.mensaje || "",
+            estado: data.estado,
           },
         } as CalendarEvent;
       })
@@ -183,7 +188,6 @@ const AppointmentCalendar = () => {
     return {};
   };
 
-
   const eliminarCitaDeHistorial = async (email: string, fecha: string, hora: string) => {
     const ref = doc(db, "pacientes", email);
     const snap = await getDoc(ref);
@@ -229,21 +233,38 @@ const AppointmentCalendar = () => {
           views={["month", "week", "day"]}
           defaultView="month"
           messages={{
-            previous: "←",
-            next: "→",
+            previous: "Anterior",
+            next: "Siguiente",
+            today: "Hoy",
             month: "Mes",
             week: "Semana",
             day: "Día",
+            agenda: "Agenda",
+            date: "Fecha",
+            time: "Hora",
+            event: "Cita",
+            noEventsInRange: "No hay citas en este rango",
+            showMore: (total) => `+ Ver ${total} más`,
           }}
           components={{ toolbar: CustomToolbar }}
           eventPropGetter={(event) => {
             if (event.title === "Festivo") {
               return {
                 style: {
-                  backgroundColor: "#fff4da",
-                  color: "#a1763c",
+                  backgroundColor: "#f3e8ff",
+                  color: "#7e22ce",
                   fontWeight: "bold",
-                  border: "1px solid #e1c9a0",
+                  border: "1px solid #d8b4fe",
+                  borderRadius: "6px",
+                },
+              };
+            }
+            if (event.resource?.estado === "ausente") {
+              return {
+                style: {
+                  backgroundColor: "#fff3cd",
+                  color: "#856404",
+                  fontWeight: "bold",
                   borderRadius: "6px",
                 },
               };
@@ -290,7 +311,7 @@ const AppointmentCalendar = () => {
   );
 };
 
-export default AppointmentCalendar;
+export default AppointmentCalendar; 
 
 
 

@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState } from "react";
 import { db } from "../firebase";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import DatePicker from "react-datepicker";
@@ -31,6 +31,7 @@ const EditAppointmentModal = ({
   const [nuevaNota, setNuevaNota] = useState(nota || "");
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [marcandoAusente, setMarcandoAusente] = useState(false);
 
   const handleGuardar = async () => {
     setGuardando(true);
@@ -60,6 +61,22 @@ const EditAppointmentModal = ({
       setEliminando(false);
     }
   };
+
+  const handleMarcarAusente = async () => {
+    setMarcandoAusente(true);
+    try {
+      await updateDoc(doc(db, "mensajes", id), {
+        estado: "ausente",
+      });
+      onUpdate();
+    } catch (err) {
+      console.error("Error al marcar como ausente:", err);
+    } finally {
+      setMarcandoAusente(false);
+    }
+  };
+
+  const yaHaPasado = nuevaFecha < new Date();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 px-4">
@@ -113,6 +130,17 @@ const EditAppointmentModal = ({
             >
               {eliminando ? "Eliminando..." : "Eliminar"}
             </button>
+            <button
+              onClick={handleMarcarAusente}
+              disabled={marcandoAusente || !yaHaPasado}
+              className={`w-full px-4 py-2 rounded text-white text-sm ${
+                !yaHaPasado
+                  ? "bg-yellow-400 cursor-not-allowed"
+                  : "bg-yellow-400 hover:bg-yellow-500"
+              }`}
+            >
+              {marcandoAusente ? "Marcando..." : "Ausente"}
+            </button>
           </div>
         </div>
       </div>
@@ -121,6 +149,8 @@ const EditAppointmentModal = ({
 };
 
 export default EditAppointmentModal;
+
+
 
 
 

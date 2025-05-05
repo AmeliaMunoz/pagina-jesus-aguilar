@@ -9,25 +9,13 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
 
   useEffect(() => {
     const handleBeforeUnload = () => {
-      sessionStorage.removeItem("admin-autenticado"); 
+      sessionStorage.removeItem("admin-autenticado");
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
-
-  const handleScrollTo = (id: string) => {
-    if (window.location.pathname !== "/admin") {
-      navigate("/admin", { state: { scrollTo: id } });
-    } else {
-      const el = document.querySelector(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-        setMobileMenuOpen(false);
-      }
-    }
-  };
 
   return (
     <header className="bg-[#fdf8f4] py-4 px-6 sticky top-0 z-50">
@@ -56,12 +44,38 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
 
         <div className="hidden lg:flex justify-between items-center w-full absolute top-1/2 -translate-y-1/2 px-6">
           <ul className="flex gap-6 text-base font-medium text-gray-800 uppercase tracking-wide">
-            <li><button onClick={() => handleScrollTo("#mensajes")} className="hover:text-[#b89b71]">MENSAJES</button></li>
-            <li><button onClick={() => handleScrollTo("#calendario")} className="hover:text-[#b89b71]">CALENDARIO</button></li>
+            <li>
+              <button onClick={() => navigate("/admin")} className="hover:text-[#b89b71]">
+                INICIO
+              </button>
+            </li>
+            <li>
+              <button onClick={() => navigate("/admin/mensajes")} className="hover:text-[#b89b71]">
+                MENSAJES
+              </button>
+            </li>
+            <li>
+              <button onClick={() => navigate("/admin/citas")} className="hover:text-[#b89b71]">
+                CITAS
+              </button>
+            </li>
           </ul>
           <ul className="flex gap-6 text-base font-medium text-gray-800 uppercase tracking-wide ml-auto">
-            <li><button onClick={() => navigate("/pacientes")} className="hover:text-[#b89b71]">HISTORIAL</button></li>
-            <li><button onClick={() => navigate("/configuracion")} className="hover:text-[#b89b71]">CONFIGURACIÓN</button></li>
+            <li>
+              <button onClick={() => navigate("/admin/pacientes")} className="hover:text-[#b89b71]">
+                HISTORIAL
+              </button>
+            </li>
+            <li>
+              <button onClick={() => navigate("/admin/configuracion")} className="hover:text-[#b89b71]">
+                CONFIGURACIÓN
+              </button>
+            </li>
+            <li>
+              <button onClick={() => navigate("/admin/estadisticas")} className="hover:text-[#b89b71]">
+                ESTADÍSTICAS
+              </button>
+            </li>
           </ul>
         </div>
       </div>
@@ -69,10 +83,12 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
       {mobileMenuOpen && (
         <div className="lg:hidden mt-4 px-4 py-2 space-y-2 text-base text-gray-800 uppercase tracking-wide divide-y divide-gray-300">
           {[
-            { label: "Mensajes", action: () => handleScrollTo("#mensajes") },
-            { label: "Calendario", action: () => handleScrollTo("#calendario") },
-            { label: "Historial", action: () => navigate("/pacientes") },
-            { label: "Configuración", action: () => navigate("/configuracion") },
+            { label: "Inicio", action: () => navigate("/admin") },
+            { label: "Mensajes", action: () => navigate("/admin/mensajes") },
+            { label: "Citas", action: () => navigate("/admin/citas") },
+            { label: "Historial", action: () => navigate("/admin/pacientes") },
+            { label: "Configuración", action: () => navigate("/admin/configuracion") },
+            { label: "Estadísticas", action: () => navigate("/admin/estadisticas") },
           ].map(({ label, action }) => (
             <button key={label} onClick={action} className="w-full text-left py-2">
               {label}
@@ -92,6 +108,9 @@ const AdminHeader = ({ onLogout }: { onLogout: () => void }) => {
 };
 
 export default AdminHeader;
+
+
+
 
 
 

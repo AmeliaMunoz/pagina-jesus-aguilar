@@ -1,290 +1,161 @@
-import { useState, useEffect } from "react";
-import {
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-  Timestamp,
-  getDoc,
-  setDoc,
-  arrayUnion,
-  serverTimestamp
-} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
-import AppointmentCalendar from "../components/AppointmentCalendar";
-import desbloquearHora from "../components/UnblockHour";
 import AdminHeader from "../components/AdminHeader";
-import IconoLogo from "../components/IconoLogo";
-import { useNavigate } from "react-router-dom";
-import { CalendarDays, Phone } from "lucide-react";
+import { CalendarDays, Clock, AlertCircle } from "lucide-react";
 
-const PASSWORD = "admin123";
+interface Cita {
+  id: string;
+  nombre: string;
+  email: string;
+  fechaPropuesta: Date;
+  horaPropuesta: string;
+  estado: string;
+}
 
 const Admin = () => {
-  const [autenticado, setAutenticado] = useState(false);
-  const [clave, setClave] = useState("");
-  const [mensajes, setMensajes] = useState<any[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [filtroEstado, setFiltroEstado] = useState("pendiente");
-  const [mensajeToast, setMensajeToast] = useState("");
+  const [citasHoy, setCitasHoy] = useState<Cita[]>([]);
+  const [proximasCitas, setProximasCitas] = useState<Cita[]>([]);
+  const [mensajesPendientes, setMensajesPendientes] = useState<Cita[]>([]);
 
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const sesionGuardada = sessionStorage.getItem("admin-autenticado");
-    if (sesionGuardada === "true") {
-      setAutenticado(true);
-    }
-  }, []);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const mañana = new Date(hoy);
+  mañana.setDate(hoy.getDate() + 1);
 
   useEffect(() => {
-    if (autenticado) {
-      obtenerMensajes();
-    }
-  }, [autenticado]);
-
-  // ✅ Hace scroll si viene desde otra ruta
-  useEffect(() => {
-    const destino = sessionStorage.getItem("scrollTo");
-    if (destino) {
-      setTimeout(() => {
-        const el = document.querySelector(destino);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-        }
-        sessionStorage.removeItem("scrollTo");
-      }, 300);
-    }
-  }, []);
-
-  const obtenerMensajes = async () => {
-    setCargando(true);
-    const querySnapshot = await getDocs(collection(db, "mensajes"));
-    const datos = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setMensajes(datos);
-    setCargando(false);
-  };
-
-  const guardarCitaEnHistorial = async (email: string, nombre: string, telefono: string, cita: any) => {
-    const ref = doc(db, "pacientes", email);
-    const snap = await getDoc(ref);
-
-    if (snap.exists()) {
-      await updateDoc(ref, {
-        historial: arrayUnion(cita),
+    const fetchData = async () => {
+      const q = query(collection(db, "mensajes"));
+      const snapshot = await getDocs(q);
+      const citas = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          nombre: data.nombre,
+          email: data.email,
+          fechaPropuesta: data.fechaPropuesta?.toDate(),
+          horaPropuesta: data.horaPropuesta,
+          estado: data.estado,
+        } as Cita;
       });
-    } else {
-      await setDoc(ref, {
-        nombre,
-        email,
-        telefono,
-        creado: serverTimestamp(),
-        historial: [cita],
-      });
-    }
-  };
 
-  const cambiarEstado = async (id: string, nuevoEstado: string) => {
-    const mensajeRef = doc(db, "mensajes", id);
-    const mensajeSnap = await getDoc(mensajeRef);
-
-    if (!mensajeSnap.exists()) return;
-
-    const mensaje = mensajeSnap.data();
-
-    await updateDoc(mensajeRef, {
-      estado: nuevoEstado,
-      actualizado: Timestamp.now(),
-    });
-
-    if (
-      nuevoEstado === "aprobada" &&
-      mensaje.email &&
-      mensaje.nombre &&
-      mensaje.fechaPropuesta &&
-      mensaje.horaPropuesta
-    ) {
-      const fechaLocal = mensaje.fechaPropuesta.toDate();
-      const fechaFormateada =
-        fechaLocal.getFullYear() + "-" +
-        String(fechaLocal.getMonth() + 1).padStart(2, "0") + "-" +
-        String(fechaLocal.getDate()).padStart(2, "0");
-
-      await guardarCitaEnHistorial(
-        mensaje.email,
-        mensaje.nombre,
-        mensaje.telefono || "Desconocido",
-        {
-          fecha: fechaFormateada,
-          hora: mensaje.horaPropuesta,
-          estado: "aprobada",
-          nota: mensaje.mensaje || "",
-        }
+      const hoyCitas = citas.filter(
+        (c) =>
+          c.fechaPropuesta &&
+          c.fechaPropuesta >= hoy &&
+          c.fechaPropuesta < mañana &&
+          ["aprobada", "ausente"].includes(c.estado)
       );
-    }
 
-    obtenerMensajes();
-    setMensajeToast(`Mensaje marcado como "${nuevoEstado}"`);
-    setTimeout(() => setMensajeToast(""), 4000);
-  };
+      const futurasCitas = citas.filter(
+        (c) =>
+          c.fechaPropuesta &&
+          c.fechaPropuesta > mañana &&
+          ["aprobada", "ausente"].includes(c.estado)
+      );
 
-  const handleLogout = () => {
-    setAutenticado(false);
-    sessionStorage.removeItem("admin-autenticado");
-    navigate("/admin");
-  };
+      const pendientes = citas.filter((c) => c.estado === "pendiente");
 
-  const mensajesFiltrados =
-    filtroEstado === "todos"
-      ? mensajes
-      : mensajes.filter((m) => m.estado === filtroEstado);
+      setCitasHoy(hoyCitas);
+      setProximasCitas(futurasCitas.slice(0, 5));
+      setMensajesPendientes(pendientes.slice(0, 5));
+    };
 
-  if (!autenticado) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#fdf8f4] px-4">
-        <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md text-center">
-          <div className="flex justify-center mb-4">
-            <IconoLogo className="w-20 h-20" />
-          </div>
-          <h2 className="text-2xl font-semibold mb-6 text-gray-700">Acceso Admin</h2>
-          <input
-            type="password"
-            placeholder="Introduce la contraseña"
-            className="border border-gray-300 rounded px-4 py-2 w-full text-sm mb-4"
-            value={clave}
-            onChange={(e) => setClave(e.target.value)}
-          />
-          <button
-            onClick={() => {
-              if (clave === PASSWORD) {
-                setAutenticado(true);
-                sessionStorage.setItem("admin-autenticado", "true");
-              } else {
-                alert("Contraseña incorrecta");
-              }
-            }}
-            className="bg-[#b89b71] hover:bg-[#9e855c] text-white font-medium px-6 py-2 rounded transition"
-          >
-            Entrar
-          </button>
-        </div>
-      </div>
-    );
-  }
+    fetchData();
+  }, []);
 
   return (
-    <div className="bg-[#fdf8f4] min-h-screen scroll-smooth">
-      <AdminHeader onLogout={handleLogout} />
+    <div className="bg-[#fdf8f4] min-h-screen">
+      <AdminHeader onLogout={() => {
+        sessionStorage.removeItem("admin-autenticado");
+        window.location.reload();
+      }} />
 
-      {mensajeToast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-[#f5ede6] text-[#5f4b32] border border-[#c8b29d] px-6 py-3 rounded-xl shadow-md text-sm font-medium z-50 transition-opacity duration-300 animate-fade-in">
-          {mensajeToast}
-        </div>
-      )}
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <section className="mb-16 scroll-mt-32" id="mensajes">
-          <div className="flex flex-wrap gap-3 justify-center mb-8">
-            {['pendiente', 'rechazada', 'aprobada', 'todos'].map((estado) => (
-              <button
-                key={estado}
-                onClick={() => setFiltroEstado(estado)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  filtroEstado === estado
-                    ? 'bg-[#b89b71] text-white'
-                    : 'bg-white border border-[#c8b29d] text-[#5f4b32]'
-                }`}
-              >
-                {estado === 'todos' ? 'Todos' : estado.charAt(0).toUpperCase() + estado.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {cargando ? (
-            <p className="text-center text-brown-700">Cargando mensajes...</p>
-          ) : mensajesFiltrados.length === 0 ? (
-            <p className="text-center text-brown-700">No hay mensajes en esta categoría.</p>
+      <main className="max-w-6xl mx-auto px-4 py-12 space-y-16">
+        {/* Citas de hoy */}
+        <section>
+          <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
+            <CalendarDays size={24} /> Citas de hoy
+          </h2>
+          {citasHoy.length === 0 ? (
+            <p className="text-gray-600">No hay citas para hoy.</p>
           ) : (
-            <div className="grid gap-6">
-              {mensajesFiltrados.map((m) => (
-                <div key={m.id} className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6">
-                  <p className="text-sm text-gray-500 mb-1">{m.creado?.toDate().toLocaleString()}</p>
-                  <h3 className="text-lg font-semibold text-gray-800">{m.nombre}</h3>
-                  <p className="text-sm text-gray-700">{m.email}</p>
-                  {m.telefono && (
-                    <p className="text-sm text-gray-700 flex items-center gap-2">
-                      <Phone />
-                      {m.telefono}
-                    </p>
+            <ul className="space-y-3">
+              {citasHoy.map((cita) => (
+                <li
+                  key={cita.id}
+                  className={`p-4 rounded-lg shadow-sm border flex justify-between items-center ${
+                    cita.estado === "ausente"
+                      ? "bg-yellow-100 border-yellow-300"
+                      : "bg-white border-gray-300"
+                  }`}
+                >
+                  <span>
+                    🕒 {cita.horaPropuesta} — {cita.nombre} ({cita.email})
+                  </span>
+                  {cita.estado === "ausente" ? (
+                    <span className="text-sm text-yellow-800 font-medium">Ausente</span>
+                  ) : (
+                    <span className="text-sm text-green-700 font-medium">Confirmada</span>
                   )}
-                  <p className="mt-2 text-gray-800">{m.mensaje}</p>
-                  {m.fechaPropuesta && (
-                    <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
-                      <CalendarDays />
-                      Fecha propuesta:{" "}
-                      {m.fechaPropuesta?.toDate().toLocaleDateString("es-ES")}{" "}
-                      {m.horaPropuesta ? `a las ${m.horaPropuesta}` : ""}
-                    </p>
-                  )}
-                  <p className="mt-2 font-medium text-sm">
-                    Estado:{" "}
-                    <span className={
-                      m.estado === "pendiente"
-                        ? "text-yellow-600"
-                        : m.estado === "aprobada"
-                        ? "text-green-700"
-                        : "text-red-600"
-                    }>
-                      {m.estado}
-                    </span>
-                  </p>
-                  {filtroEstado !== "todos" && (
-                    <div className="mt-4 flex gap-4 flex-wrap">
-                      <button
-                        onClick={() => cambiarEstado(m.id, "aprobada")}
-                        className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
-                      >
-                        Aprobar
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const fecha = m.fechaPropuesta?.toDate().toISOString().split("T")[0];
-                          const hora = m.horaPropuesta;
-
-                          await updateDoc(doc(db, "mensajes", m.id), {
-                            estado: "rechazada",
-                            actualizado: Timestamp.now(),
-                          });
-
-                          if (fecha && hora) {
-                            await desbloquearHora(fecha, hora);
-                          }
-                          obtenerMensajes();
-                        }}
-                        className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
-                      >
-                        Rechazar
-                      </button>
-                    </div>
-                  )}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
+          )}
+        </section>
+        {/* Mensajes pendientes */}
+        <section>
+          <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
+            <AlertCircle size={24} /> Mensajes pendientes
+          </h2>
+          {mensajesPendientes.length === 0 ? (
+            <p className="text-gray-600">No hay mensajes pendientes.</p>
+          ) : (
+            <ul className="space-y-3">
+              {mensajesPendientes.map((msg) => (
+                <li
+                  key={msg.id}
+                  className="p-4 rounded-lg shadow-sm border bg-white border-[#f3d4a3]"
+                >
+                  ✉️ {msg.nombre} — {msg.email} —{" "}
+                  {msg.fechaPropuesta?.toLocaleDateString("es-ES")}{" "}
+                  {msg.horaPropuesta && `a las ${msg.horaPropuesta}`}
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 
-        <section className="mb-16 scroll-mt-32" id="calendario">
-          <AppointmentCalendar />
+        {/* Próximas citas */}
+        <section>
+          <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
+            <Clock size={24} /> Próximas citas
+          </h2>
+          {proximasCitas.length === 0 ? (
+            <p className="text-gray-600">No hay citas futuras.</p>
+          ) : (
+            <ul className="space-y-3">
+              {proximasCitas.map((cita) => (
+                <li
+                  key={cita.id}
+                  className="p-4 rounded-lg shadow-sm border bg-white border-gray-300"
+                >
+                  📅 {cita.fechaPropuesta?.toLocaleDateString("es-ES")} — {cita.horaPropuesta} — {cita.nombre}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
-      </div>
+      </main>
     </div>
   );
 };
 
 export default Admin;
+
+
+
+
 
 
 
