@@ -72,16 +72,17 @@ const MessagesPage = () => {
               <div key={m.id} className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6">
                 <p className="text-sm text-gray-500 mb-1">{m.creado?.toDate().toLocaleString()}</p>
                 <h3 className="text-lg font-semibold text-gray-800">{m.nombre}</h3>
-                <p className="text-sm text-gray-700 flex items-center gap-2">
+
+                <p className="text-sm text-gray-700 flex items-center gap-2 mt-2">
                   <Mail size={16} /> {m.email}
                 </p>
+
                 {m.telefono && (
-                  <p className="text-sm text-gray-700 flex items-center gap-2">
-                    <Phone size={16} />
-                    {m.telefono}
+                  <p className="text-sm text-gray-700 flex items-center gap-2 mt-2">
+                    <Phone size={16} /> {m.telefono}
                   </p>
                 )}
-                <p className="mt-2 text-gray-800">{m.mensaje}</p>
+
                 {m.fechaPropuesta && (
                   <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
                     <CalendarDays size={16} />
@@ -89,6 +90,11 @@ const MessagesPage = () => {
                     {m.horaPropuesta ? `a las ${m.horaPropuesta}` : ""}
                   </p>
                 )}
+
+                {m.mensaje && (
+                  <p className="mt-2 text-gray-800">{m.mensaje}</p>
+                )}
+
                 <p className="mt-2 font-medium text-sm">
                   Estado:{" "}
                   <span
@@ -103,6 +109,7 @@ const MessagesPage = () => {
                     {m.estado}
                   </span>
                 </p>
+
                 {filtroEstado !== "todos" && (
                   <div className="mt-4 flex gap-4 flex-wrap">
                     <button
@@ -128,6 +135,7 @@ const MessagesPage = () => {
                 )}
               </div>
             ))}
+
           </div>
         )}
       </main>

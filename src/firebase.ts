@@ -1,7 +1,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 //  Primero declaramos la configuración
 const firebaseConfig = {
@@ -17,6 +17,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+
+
 // Finalmente exportamos Firestore
 export const db = getFirestore(app);
-export { auth };
+export { auth,createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut };

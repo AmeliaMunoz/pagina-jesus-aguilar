@@ -12,6 +12,10 @@ import ScrollToTop from "../components/ScrollToTop";
 import AppointmentStatsPage from "../pages/AppointmentStatePage";
 import AdminAppointmentsPage from "../pages/AdminAppointmentsPage";
 import MessagePage from "../pages/MessagePage";
+import UserCreatePage from "../pages/UserCreatePage";
+import CrearCitaManual from "../pages/CrearCitasManual";
+import User from "../pages/User";
+import LoginPage from "../pages/LoginPage";
 
 
 
@@ -31,6 +35,12 @@ const RouteMain = () => {
       <Route path="/admin/estadisticas" element={<AppointmentStatsPage />} />
       <Route path="/admin/citas" element={<AdminAppointmentsPage />} />
       <Route path="/admin/mensajes"element={<MessagePage />} />
+      <Route path="/admin/crear-usuario" element={<UserCreatePage/>} />
+      <Route path="/admin/crear-cita" element={<CrearCitaManual />} />  
+      <Route path="/usuario" element={<User/>} />
+      <Route path="/login" element={<LoginPage />} /> 
+      <Route path="/profile" element={User ? <User /> : <LoginPage />} />
+
     </Routes>
     </BrowserRouter>
   );

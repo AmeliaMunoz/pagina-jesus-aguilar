@@ -66,8 +66,11 @@ const AdminMessages = ({ onToast }: Props) => {
         <div className="grid gap-6">
           {mensajesFiltrados.map((m) => (
             <div key={m.id} className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6">
-              <p className="text-sm text-gray-500 mb-1">{m.creado?.toDate().toLocaleString()}</p>
+              <p className="text-sm text-gray-500 mb-1">
+                {m.creado?.toDate().toLocaleString()}
+              </p>
               <h3 className="text-lg font-semibold text-gray-800">{m.nombre}</h3>
+
               <p className="text-sm text-gray-700 flex items-center gap-2">
                 <Mail size={16} />
                 {m.email}
@@ -78,14 +81,18 @@ const AdminMessages = ({ onToast }: Props) => {
                   {m.telefono}
                 </p>
               )}
-              <p className="mt-2 text-gray-800">{m.mensaje}</p>
+
               {m.fechaPropuesta && (
                 <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
                   <CalendarDays />
-                  Fecha propuesta: {m.fechaPropuesta.toDate().toLocaleDateString("es-ES")}{" "}
+                  <span className="font-medium">Fecha propuesta:</span>{" "}
+                  {m.fechaPropuesta.toDate().toLocaleDateString("es-ES")}{" "}
                   {m.horaPropuesta ? `a las ${m.horaPropuesta}` : ""}
                 </p>
               )}
+
+              <p className="mt-2 text-gray-800">{m.mensaje}</p>
+
               <p className="mt-2 font-medium text-sm">
                 Estado:{" "}
                 <span
@@ -100,6 +107,7 @@ const AdminMessages = ({ onToast }: Props) => {
                   {m.estado}
                 </span>
               </p>
+
               {filtroEstado !== "todos" && (
                 <div className="mt-4 flex gap-4 flex-wrap">
                   <button
@@ -132,4 +140,7 @@ const AdminMessages = ({ onToast }: Props) => {
 };
 
 export default AdminMessages;
+
+
+
 

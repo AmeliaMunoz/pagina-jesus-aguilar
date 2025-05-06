@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "../firebase";
 import AdminHeader from "../components/AdminHeader";
-import { CalendarDays, Clock, AlertCircle } from "lucide-react";
+import { CalendarDays, Clock, AlertCircle, Mail, CalendarClock } from "lucide-react";
+import AdminCreateUser from "../components/AdminCreateUser";
+
 
 interface Cita {
   id: string;
@@ -66,12 +68,17 @@ const Admin = () => {
 
   return (
     <div className="bg-[#fdf8f4] min-h-screen">
-      <AdminHeader onLogout={() => {
-        sessionStorage.removeItem("admin-autenticado");
-        window.location.reload();
-      }} />
+      <AdminHeader
+        onLogout={() => {
+          sessionStorage.removeItem("admin-autenticado");
+          window.location.reload();
+        }}
+      />
 
       <main className="max-w-6xl mx-auto px-4 py-12 space-y-16">
+      <AdminCreateUser />
+      
+
         {/* Citas de hoy */}
         <section>
           <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
@@ -90,19 +97,27 @@ const Admin = () => {
                       : "bg-white border-gray-300"
                   }`}
                 >
-                  <span>
-                    🕒 {cita.horaPropuesta} — {cita.nombre} ({cita.email})
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock size={16} className="text-[#5f4b32]" />
+                    <span>
+                      {cita.horaPropuesta} — {cita.nombre} ({cita.email})
+                    </span>
+                  </div>
+                  <span
+                    className={`text-sm font-medium ${
+                      cita.estado === "ausente"
+                        ? "text-yellow-800"
+                        : "text-green-700"
+                    }`}
+                  >
+                    {cita.estado === "ausente" ? "Ausente" : "Confirmada"}
                   </span>
-                  {cita.estado === "ausente" ? (
-                    <span className="text-sm text-yellow-800 font-medium">Ausente</span>
-                  ) : (
-                    <span className="text-sm text-green-700 font-medium">Confirmada</span>
-                  )}
                 </li>
               ))}
             </ul>
           )}
         </section>
+
         {/* Mensajes pendientes */}
         <section>
           <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
@@ -115,11 +130,14 @@ const Admin = () => {
               {mensajesPendientes.map((msg) => (
                 <li
                   key={msg.id}
-                  className="p-4 rounded-lg shadow-sm border bg-white border-[#f3d4a3]"
+                  className="p-4 rounded-lg shadow-sm border bg-white border-[#f3d4a3] flex items-center gap-2 text-sm"
                 >
-                  ✉️ {msg.nombre} — {msg.email} —{" "}
-                  {msg.fechaPropuesta?.toLocaleDateString("es-ES")}{" "}
-                  {msg.horaPropuesta && `a las ${msg.horaPropuesta}`}
+                  <Mail size={16} className="text-[#5f4b32]" />
+                  <span>
+                    {msg.nombre} — {msg.email} —{" "}
+                    {msg.fechaPropuesta?.toLocaleDateString("es-ES")}{" "}
+                    {msg.horaPropuesta && `a las ${msg.horaPropuesta}`}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -129,7 +147,7 @@ const Admin = () => {
         {/* Próximas citas */}
         <section>
           <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
-            <Clock size={24} /> Próximas citas
+            <CalendarClock size={24} /> Próximas citas
           </h2>
           {proximasCitas.length === 0 ? (
             <p className="text-gray-600">No hay citas futuras.</p>
@@ -138,9 +156,12 @@ const Admin = () => {
               {proximasCitas.map((cita) => (
                 <li
                   key={cita.id}
-                  className="p-4 rounded-lg shadow-sm border bg-white border-gray-300"
+                  className="p-4 rounded-lg shadow-sm border bg-white border-gray-300 flex items-center gap-2 text-sm"
                 >
-                  📅 {cita.fechaPropuesta?.toLocaleDateString("es-ES")} — {cita.horaPropuesta} — {cita.nombre}
+                  <CalendarDays size={16} className="text-[#5f4b32]" />
+                  <span>
+                    {cita.fechaPropuesta?.toLocaleDateString("es-ES")} — {cita.horaPropuesta} — {cita.nombre}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -152,6 +173,7 @@ const Admin = () => {
 };
 
 export default Admin;
+
 
 
 
