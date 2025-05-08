@@ -1,30 +1,24 @@
+// src/components/ManualAppointmentModal.tsx
 import { useState, useEffect } from "react";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  addDoc,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../firebase";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
-import { guardarCitaEnHistorial } from "../utils/patients";
 import { CalendarDays } from "lucide-react";
 
-interface CitaHistorial {
-  fecha: string;
-  hora: string;
-  estado: string;
-  nota?: string;
-}
-
-type DatosPaciente = {
-  nombre: string;
-  email: string;
-  telefono: string;
-  nota?: string;
-};
-
-type ModalSaveData = CitaHistorial | DatosPaciente;
-
-interface ModalProps {
+interface Props {
   fecha: Date;
   hora: string;
   onClose: () => void;
-  onSave: (data: ModalSaveData) => void;
+  onSave: (data: { nombre: string; email: string; telefono: string }) => void;
   nombre?: string;
   email?: string;
   telefono?: string;
@@ -44,12 +38,14 @@ const ManualAppointmentModal = ({
   nota: notaInicial = "",
   modoEdicion = false,
   soloEditarPaciente = false,
-}: ModalProps) => {
+}: Props) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [nombre, setNombre] = useState(nombreInicial);
   const [email, setEmail] = useState(emailInicial);
   const [telefono, setTelefono] = useState(telefonoInicial);
   const [nota, setNota] = useState(notaInicial);
-  const [enviando, setEnviando] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setNombre(nombreInicial);
@@ -58,63 +54,117 @@ const ManualAppointmentModal = ({
     setNota(notaInicial);
   }, [nombreInicial, emailInicial, telefonoInicial, notaInicial]);
 
-  const handleGuardar = async () => {
-    setEnviando(true);
-    try {
-      if (modoEdicion) {
-        if (soloEditarPaciente) {
-          onSave({ nombre, email, telefono, nota });
-        } else {
-          const cita: CitaHistorial = {
-            fecha: fecha.toISOString().split("T")[0],
-            hora,
-            estado: "aprobada",
-            nota,
-          };
-          onSave(cita);
-        }
-      } else {
-        await addDoc(collection(db, "mensajes"), {
-          nombre,
-          email,
-          telefono,
-          mensaje: nota,
-          fechaPropuesta: Timestamp.fromDate(fecha),
-          horaPropuesta: hora,
-          estado: "aprobada",
-          duracionMinutos: 60,
-          creado: Timestamp.now(),
-        });
-
-        await guardarCitaEnHistorial(email, nombre, telefono || "Desconocido", {
-          fecha: fecha.toISOString().split("T")[0],
-          hora,
-          estado: "aprobada",
-          nota: nota || "Cita manual desde admin",
-        });
-
-        onClose();
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      if (searchTerm.trim().length < 2) {
+        setSearchResults([]);
+        return;
       }
-    } catch (err) {
-      console.error("Error al guardar:", err);
-    } finally {
-      setEnviando(false);
+
+      const q = query(
+        collection(db, "usuarios"),
+        where("nombre", ">=", searchTerm),
+        where("nombre", "<=", searchTerm + "\uf8ff")
+      );
+      const snapshot = await getDocs(q);
+      const results = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setSearchResults(results);
+    };
+
+    fetchPacientes();
+  }, [searchTerm]);
+
+  const handleSelectPaciente = (paciente: any) => {
+    setNombre(paciente.nombre || "");
+    setEmail(paciente.email || "");
+    setTelefono(paciente.telefono || "");
+    setSearchTerm("");
+    setSearchResults([]);
+  };
+
+  const handleGuardar = async () => {
+    setLoading(true);
+    const dateStr = fecha.toISOString().split("T")[0];
+
+    if (modoEdicion && soloEditarPaciente) {
+      onSave({ nombre, email, telefono });
+      setLoading(false);
+      return;
     }
+
+    await addDoc(collection(db, "citas"), {
+      nombre,
+      email,
+      telefono,
+      nota,
+      fecha: dateStr,
+      hora,
+      estado: "aprobada",
+      uid: null,
+      creadoEl: new Date().toISOString(),
+      anuladaPorUsuario: false,
+      descontadaDelBono: false,
+    });
+
+    const ref = doc(db, "pacientes", email);
+    const snap = await getDoc(ref);
+    const nuevaEntrada = { fecha: dateStr, hora, estado: "aprobada", nota };
+
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        nombre,
+        email,
+        telefono,
+        historial: [nuevaEntrada],
+      });
+    } else {
+      const data = snap.data();
+      const historial = data.historial || [];
+      historial.push(nuevaEntrada);
+      await updateDoc(ref, { historial });
+    }
+
+    setLoading(false);
+    onSave({ nombre, email, telefono });
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 px-4">
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          {soloEditarPaciente ? "Editar paciente" : modoEdicion ? "Editar cita" : "Nueva cita manual"}
+          {soloEditarPaciente ? "Editar paciente" : "Nueva cita manual"}
         </h3>
 
         {!soloEditarPaciente && (
           <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
             <CalendarDays />
             {fecha.toLocaleDateString("es-ES")} a las {hora}
-         </p>
-        
+          </p>
+        )}
+
+        {!soloEditarPaciente && (
+          <div className="mb-4">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar paciente por nombre..."
+              className="w-full border px-4 py-2 rounded text-sm"
+            />
+            {searchResults.length > 0 && (
+              <ul className="bg-white border rounded mt-1 max-h-40 overflow-y-auto text-sm">
+                {searchResults.map((paciente) => (
+                  <li
+                    key={paciente.id}
+                    onClick={() => handleSelectPaciente(paciente)}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {paciente.nombre} — {paciente.email}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         <div className="space-y-3">
@@ -157,10 +207,10 @@ const ManualAppointmentModal = ({
           </button>
           <button
             onClick={handleGuardar}
-            disabled={enviando}
+            disabled={loading}
             className="px-4 py-2 rounded bg-[#b89b71] text-white hover:bg-[#9e855c] text-sm w-full sm:w-auto"
           >
-            {enviando ? "Guardando..." : "Guardar"}
+            {loading ? "Guardando..." : "Guardar"}
           </button>
         </div>
       </div>
@@ -169,6 +219,14 @@ const ManualAppointmentModal = ({
 };
 
 export default ManualAppointmentModal;
+
+
+
+
+
+
+
+
 
 
 

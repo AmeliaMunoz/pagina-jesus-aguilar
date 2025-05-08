@@ -1,20 +1,19 @@
 import AppointmentStats from "../components/AppointmentStats";
-import AdminHeader from "../components/AdminHeader";
+import AdminSidebar from "../components/AdminSidebar";
 
 const AppointmentStatsPage = () => {
-  const handleLogout = () => {
-    sessionStorage.removeItem("admin-autenticado");
-    window.location.href = "/";
-  };
-
   return (
-    <div className="min-h-screen bg-[#fdf8f4]">
-      <AdminHeader onLogout={handleLogout} />
-      <AppointmentStats />
+    <div className="flex bg-[#fdf8f4] min-h-screen">
+      <AdminSidebar />
+
+      <main className="flex-1 ml-64 p-6">
+        <AppointmentStats />
+      </main>
     </div>
   );
 };
 
 export default AppointmentStatsPage;
+
 
 

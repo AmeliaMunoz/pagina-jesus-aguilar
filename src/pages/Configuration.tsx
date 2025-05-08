@@ -1,21 +1,13 @@
-import AdminHeader from "../components/AdminHeader";
+import AdminSidebar from "../components/AdminSidebar";
 import AvailabilityPanel from "../components/AvailabilityPanel";
 import WeeklySchedulePanel from "../components/WeeklySchedulePanel";
-import { useNavigate } from "react-router-dom";
 
 const Configuracion = () => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("admin-autenticado");
-    navigate("/admin");
-  };
-
   return (
-    <div className="bg-[#fdf8f4] min-h-screen scroll-smooth">
-      <AdminHeader onLogout={handleLogout} />
+    <div className="flex bg-[#fdf8f4] min-h-screen scroll-smooth">
+      <AdminSidebar />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-16">
+      <main className="flex-1 ml-64 px-4 sm:px-6 py-8 sm:py-12 space-y-16">
         <section id="disponibilidad">
           <AvailabilityPanel />
         </section>
@@ -23,11 +15,12 @@ const Configuracion = () => {
         <section id="horarios">
           <WeeklySchedulePanel />
         </section>
-      </div>
+      </main>
     </div>
   );
 };
 
 export default Configuracion;
+
 
 

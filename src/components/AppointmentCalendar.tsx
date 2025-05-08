@@ -103,7 +103,7 @@ const AppointmentCalendar = () => {
 
   const cargarEventos = async () => {
     const q = query(
-      collection(db, "mensajes"),
+      collection(db, "citas"),
       where("estado", "in", ["aprobada", "ausente"])
     );
     const snapshot = await getDocs(q);

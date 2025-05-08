@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
+import { JSX, useEffect, useState } from "react";
+import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { es } from "date-fns/locale";
+registerLocale("es", es);
+
 import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   updateDoc,
@@ -12,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { holidays2025 } from "../data/holidays";
+import { CalendarClock } from "lucide-react";
 
 interface Props {
   uid: string;
@@ -33,7 +38,7 @@ const BookAppointmentFromUser = ({
   userName,
   bonoPendiente,
   onBooked,
-}: Props) => {
+}: Props): JSX.Element => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [availableHours, setAvailableHours] = useState<string[]>([]);
@@ -41,45 +46,39 @@ const BookAppointmentFromUser = ({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const formatDate = (date: Date) => date.toISOString().split("T")[0];
+
+  const isDateAvailable = (date: Date) =>
+    availableDates.some((d) => formatDate(d) === formatDate(date));
+
   useEffect(() => {
     const fetchAvailableDates = async () => {
-      const today = new Date();
       const result: Date[] = [];
 
-      // Comprobar los próximos 30 días
       for (let i = 1; i <= 30; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
+        const dateStr = formatDate(date);
 
-        const dayString = date.toISOString().split("T")[0];
+        const dayOfWeek = date.toLocaleDateString("es-ES", { weekday: "long" })
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
 
-        // Comprobar si es un festivo
-        if (holidays2025.includes(dayString)) continue;
+        if (holidays2025.includes(dateStr)) continue;
 
-        // Consultamos en la colección "disponibilidad"
         const disponibilidadSnap = await getDocs(
-          query(collection(db, "disponibilidad"), where("fecha", "==", dayString))
+          query(collection(db, "disponibilidad"), where("fecha", "==", dateStr))
         );
-
-        // Si hay disponibilidad en ese día, lo agregamos
         if (!disponibilidadSnap.empty) {
           result.push(new Date(date));
-        } else {
-          // Consultamos en "horarios_semanales" si hay horarios disponibles para ese día
-          const dayOfWeek = date.toLocaleDateString("es-ES", { weekday: "long" }).toLowerCase();
-
-          const horariosSnap = await getDocs(
-            query(collection(db, "horarios_semanales"), where("dia", "==", dayOfWeek))
-          );
-
-          // Si hay horarios para ese día, lo agregamos
-          if (!horariosSnap.empty) {
-            result.push(new Date(date));
-          }
+          continue;
         }
+
+        const dayDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
+        if (dayDoc.exists()) result.push(new Date(date));
       }
 
-      // Establecer las fechas disponibles
       setAvailableDates(result);
     };
 
@@ -90,40 +89,52 @@ const BookAppointmentFromUser = ({
     const fetchAvailableHours = async () => {
       if (!selectedDate) return;
 
-      const dateString = selectedDate.toISOString().split("T")[0];
+      const dateStr = formatDate(selectedDate);
+      const dayOfWeek = selectedDate
+        .toLocaleDateString("es-ES", { weekday: "long" })
+        .toLowerCase();
 
-      // Consultamos si ya hay citas en ese día
-      const usedHoursSnap = await getDocs(
-        query(collection(db, "citas"), where("fecha", "==", dateString))
+      let horasDisponibles: string[] = [];
+
+      const disponibilidadSnap = await getDocs(
+        query(collection(db, "disponibilidad"), where("fecha", "==", dateStr))
       );
+      if (!disponibilidadSnap.empty) {
+        horasDisponibles = HOURS;
+      } else {
+        const docSnap = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          horasDisponibles = data.horas || [];
+        }
+      }
 
-      const usedHours = usedHoursSnap.docs.map((doc) => doc.data().hora);
+      const citasSnap = await getDocs(
+        query(collection(db, "citas"), where("fecha", "==", dateStr))
+      );
+      const usadas = citasSnap.docs.map(doc => doc.data().hora);
+      const disponibles = horasDisponibles.filter(hora => !usadas.includes(hora));
 
-      // Filtramos las horas disponibles
-      setAvailableHours(HOURS.filter((hora) => !usedHours.includes(hora)));
+      setAvailableHours(disponibles);
     };
 
     fetchAvailableHours();
   }, [selectedDate]);
 
-  const isDateAvailable = (date: Date) => {
-    return availableDates.some(
-      (available) => available.toDateString() === date.toDateString()
-    );
-  };
-
   const handleBooking = async () => {
     if (!selectedDate || !selectedHour) return;
     setLoading(true);
 
-    const dateString = selectedDate.toISOString().split("T")[0];
+    const [day, month, year] = selectedDate
+      .toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
+      .split("/");
+    const dateStr = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 
-    // Guardamos la cita en Firestore
     await addDoc(collection(db, "citas"), {
       uid,
       email: userEmail,
       nombre: userName,
-      fecha: dateString,
+      fecha: dateStr,
       hora: selectedHour,
       estado: "pendiente",
       anuladaPorUsuario: false,
@@ -131,9 +142,7 @@ const BookAppointmentFromUser = ({
       creadoEl: new Date().toISOString(),
     });
 
-    // Actualizamos el bono del usuario
-    const userRef = doc(db, "usuarios", uid);
-    await updateDoc(userRef, {
+    await updateDoc(doc(db, "usuarios", uid), {
       "bono.pendientes": bonoPendiente - 1,
       "bono.usadas": bonoPendiente === 1 ? 1 : undefined,
     });
@@ -144,62 +153,127 @@ const BookAppointmentFromUser = ({
   };
 
   return (
-    <div className="bg-[#fdf8f4] border p-4 rounded mt-6">
-      <h2 className="text-lg font-semibold text-[#5f4b32] mb-4">Reservar nueva cita</h2>
+    <div className="bg-white p-8 rounded-xl shadow-lg border border-[#e0d6ca] max-w-5xl mx-auto w-full">
+      <h2 className="text-2xl font-bold text-[#5f4b32] mb-6 text-center">Reservar nueva cita</h2>
 
       {success ? (
-        <p className="text-green-700">Cita reservada correctamente </p>
+        <p className="text-green-600 font-medium text-center">Cita reservada correctamente.</p>
       ) : (
-        <>
-          <div className="mb-4">
-            <label className="block text-sm mb-1">Selecciona una fecha:</label>
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => {
-                setSelectedDate(date);
-                setSelectedHour(""); // Limpiar la hora cuando se cambia la fecha
-              }}
-              filterDate={isDateAvailable} // Solo mostrar fechas disponibles
-              minDate={new Date()} // No permitir fechas pasadas
-              placeholderText="Haz clic para elegir un día disponible"
-              className="w-full border p-2 rounded"
-              dateFormat="dd/MM/yyyy"
-              locale="es"
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
+          {/* Calendario */}
+          <div className="w-full">
+            <h3 className="text-lg font-semibold mb-2 text-[#5f4b32]">1. Elige una fecha disponible</h3>
+
+            {/* Input para móvil y tablet */}
+            <div className="block lg:hidden">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => {
+                  setSelectedDate(date);
+                  setSelectedHour("");
+                }}
+                filterDate={isDateAvailable}
+                minDate={new Date()}
+                dateFormat="dd/MM/yyyy"
+                locale="es"
+                placeholderText="Selecciona una fecha"
+                className="w-full border p-3 rounded text-sm"
+              />
+            </div>
+
+            {/* Calendario inline para portátil y escritorio */}
+            <div className="hidden lg:block w-full max-w-[340px]">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => {
+                  setSelectedDate(date);
+                  setSelectedHour("");
+                }}
+                filterDate={isDateAvailable}
+                minDate={new Date()}
+                inline
+                dateFormat="dd/MM/yyyy"
+                locale="es"
+              />
+            </div>
           </div>
 
-          {selectedDate && (
-            <div className="mb-4">
-              <label className="block text-sm mb-1">Hora:</label>
-              <select
-                value={selectedHour}
-                onChange={(e) => setSelectedHour(e.target.value)}
-                className="w-full border p-2 rounded"
-              >
-                <option value="">Selecciona una hora</option>
-                {availableHours.map((hora) => (
-                  <option key={hora} value={hora}>
-                    {hora}
-                  </option>
-                ))}
-              </select>
+          {/* Selector de hora y resumen */}
+          <div className="w-full flex flex-col justify-between min-h-[400px]">
+            <div>
+              <h3 className="text-lg font-semibold mb-2 text-[#5f4b32]">2. Selecciona una hora</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {availableHours.length > 0 ? (
+                  availableHours.map((hora) => (
+                    <button
+                      key={hora}
+                      onClick={() => setSelectedHour(hora)}
+                      className={`px-3 py-2 rounded border text-sm transition ${
+                        selectedHour === hora
+                          ? "bg-[#5f4b32] text-white"
+                          : "bg-white text-[#5f4b32] border-[#e0d6ca] hover:bg-[#f9f6f1]"
+                      }`}
+                    >
+                      {hora}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">Selecciona una fecha para ver las horas.</p>
+                )}
+              </div>
             </div>
-          )}
 
-          <button
-            onClick={handleBooking}
-            disabled={loading || !selectedDate || !selectedHour}
-            className="bg-[#5f4b32] text-white px-4 py-2 rounded hover:bg-[#b89b71] disabled:opacity-50"
-          >
-            {loading ? "Reservando..." : "Confirmar cita"}
-          </button>
-        </>
+            {selectedDate && selectedHour && (
+              <div className="bg-[#f9f6f1] border border-[#e0d6ca] rounded-lg p-4 text-sm text-[#5f4b32] shadow-sm mb-4 flex items-start gap-3 mt-6">
+                <CalendarClock className="w-5 h-5 sm:w-6 sm:h-6 lg:w-10 lg:h-10 text-[#5f4b32]" />
+                <div>
+                  <h4 className="font-semibold mb-2">Resumen de la cita:</h4>
+                  <p>
+                    <span className="font-medium">Fecha:</span>{" "}
+                    {selectedDate.toLocaleDateString("es-ES", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                  <p>
+                    <span className="font-medium">Hora:</span> {selectedHour}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleBooking}
+              disabled={loading || !selectedDate || !selectedHour}
+              className="bg-[#5f4b32] mt-2 w-full text-white py-3 rounded font-medium hover:bg-[#b89b71] disabled:opacity-50 transition"
+            >
+              {loading ? "Reservando..." : "Confirmar cita"}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
 };
 
 export default BookAppointmentFromUser;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

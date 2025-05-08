@@ -6,16 +6,21 @@ import FamilySupportPage from "../pages/FamilySupportPage";
 import BehaviorSupportPage   from "../pages/BehaviorSupportPage";
 import AdolescentTherapyPage from "../pages/AdolescentTherapyPage";
 import Admin from "../pages/Admin";
-import PatientHistory from "../pages/PatientHistory";
+import PatientHistory from "../pages/PatientHistoryAdmin";
 import Configuration from "../pages/Configuration";
 import ScrollToTop from "../components/ScrollToTop";
 import AppointmentStatsPage from "../pages/AppointmentStatePage";
 import AdminAppointmentsPage from "../pages/AdminAppointmentsPage";
 import MessagePage from "../pages/MessagePage";
 import UserCreatePage from "../pages/UserCreatePage";
-import CrearCitaManual from "../pages/CrearCitasManual";
 import User from "../pages/User";
 import LoginPage from "../pages/LoginPage";
+import BookAppointmentPage from "../pages/BookAppointmentPage";
+import PatientBonoPage from "../pages/PatientBonoPage";
+import NextAppointmentPage from "../pages/NextAppointmentPage";
+import PatientHistoryPage from "../pages/PatientHistoryPage";
+import PatientMessagesPage from "../pages/PatientMessagePage";
+import AdminMessagesPage from "../pages/AdminMessagePage";
 
 
 
@@ -36,10 +41,22 @@ const RouteMain = () => {
       <Route path="/admin/citas" element={<AdminAppointmentsPage />} />
       <Route path="/admin/mensajes"element={<MessagePage />} />
       <Route path="/admin/crear-usuario" element={<UserCreatePage/>} />
-      <Route path="/admin/crear-cita" element={<CrearCitaManual />} />  
       <Route path="/usuario" element={<User/>} />
       <Route path="/login" element={<LoginPage />} /> 
       <Route path="/profile" element={User ? <User /> : <LoginPage />} />
+      <Route path="/panel/paciente/reservar" element={<BookAppointmentPage />} />
+      <Route path="/panel/paciente/bono" element={<PatientBonoPage />} />
+      <Route path="/panel/paciente/proxima-cita" element={<NextAppointmentPage />} />
+      <Route path="/panel/paciente/historial" element={<PatientHistoryPage />} />
+      <Route path="/panel/paciente/mensajes" element={<PatientMessagesPage />} />
+      <Route path="/admin/mensajes-pacientes" element={<AdminMessagesPage />} />
+      <Route path="/panel/paciente/user" element={<User />} />
+
+
+
+
+
+
 
     </Routes>
     </BrowserRouter>

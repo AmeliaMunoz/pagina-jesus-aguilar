@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, updateDoc, doc, Timestamp } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, Timestamp, addDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import AdminHeader from "../components/AdminHeader";
 import desbloquearHora from "../components/UnblockHour";
 import { CalendarDays, Phone, Mail } from "lucide-react";
+import AdminSidebar from "../components/AdminSidebar";
 
 const MessagesPage = () => {
   const [mensajes, setMensajes] = useState<any[]>([]);
@@ -22,14 +22,34 @@ const MessagesPage = () => {
     obtenerMensajes();
   }, []);
 
-  const cambiarEstado = async (id: string, nuevoEstado: string, fecha?: string, hora?: string) => {
+  const cambiarEstado = async (id: string, nuevoEstado: string, fecha?: string, hora?: string, msgData?: any) => {
     await updateDoc(doc(db, "mensajes", id), {
       estado: nuevoEstado,
       actualizado: Timestamp.now(),
     });
+
     if (nuevoEstado === "rechazada" && fecha && hora) {
       await desbloquearHora(fecha, hora);
     }
+
+    // ✅ GUARDAR EN "citas" si es aprobada
+    if (nuevoEstado === "aprobada" && msgData) {
+      const cita = {
+        uid: msgData.uid || "",
+        email: msgData.email,
+        nombre: msgData.nombre,
+        telefono: msgData.telefono || "",
+        mensaje: msgData.mensaje || "",
+        fecha: msgData.fechaPropuesta.toDate().toISOString().split("T")[0],
+        hora: msgData.horaPropuesta,
+        estado: "aprobada",
+        anuladaPorUsuario: false,
+        descontadaDelBono: false,
+        creadoEl: new Date().toISOString(),
+      };
+      await addDoc(collection(db, "citas"), cita);
+    }
+
     await obtenerMensajes();
   };
 
@@ -38,10 +58,7 @@ const MessagesPage = () => {
 
   return (
     <div className="bg-[#fdf8f4] min-h-screen">
-      <AdminHeader onLogout={() => {
-        sessionStorage.removeItem("admin-autenticado");
-        window.location.reload();
-      }} />
+      <AdminSidebar />
 
       <main className="max-w-6xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6">Gestión de mensajes</h2>
@@ -113,7 +130,15 @@ const MessagesPage = () => {
                 {filtroEstado !== "todos" && (
                   <div className="mt-4 flex gap-4 flex-wrap">
                     <button
-                      onClick={() => cambiarEstado(m.id, "aprobada")}
+                      onClick={() =>
+                        cambiarEstado(
+                          m.id,
+                          "aprobada",
+                          m.fechaPropuesta?.toDate()?.toISOString().split("T")[0],
+                          m.horaPropuesta,
+                          m // <-- pasamos el mensaje completo
+                        )
+                      }
                       className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
                     >
                       Aprobar
@@ -135,7 +160,6 @@ const MessagesPage = () => {
                 )}
               </div>
             ))}
-
           </div>
         )}
       </main>
@@ -144,3 +168,5 @@ const MessagesPage = () => {
 };
 
 export default MessagesPage;
+
+

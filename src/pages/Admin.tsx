@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "../firebase";
-import AdminHeader from "../components/AdminHeader";
 import { CalendarDays, Clock, AlertCircle, Mail, CalendarClock } from "lucide-react";
-import AdminCreateUser from "../components/AdminCreateUser";
-
+import AdminSidebar from "../components/AdminSidebar";
 
 interface Cita {
   id: string;
@@ -67,20 +65,12 @@ const Admin = () => {
   }, []);
 
   return (
-    <div className="bg-[#fdf8f4] min-h-screen">
-      <AdminHeader
-        onLogout={() => {
-          sessionStorage.removeItem("admin-autenticado");
-          window.location.reload();
-        }}
-      />
+    <div className="flex bg-[#fdf8f4] min-h-screen">
+      <AdminSidebar />
 
-      <main className="max-w-6xl mx-auto px-4 py-12 space-y-16">
-      <AdminCreateUser />
-      
-
+      <main className="ml-64 flex-1 px-6 py-12 overflow-y-auto">
         {/* Citas de hoy */}
-        <section>
+        <section className="max-w-5xl mx-auto mb-16">
           <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
             <CalendarDays size={24} /> Citas de hoy
           </h2>
@@ -119,7 +109,7 @@ const Admin = () => {
         </section>
 
         {/* Mensajes pendientes */}
-        <section>
+        <section className="max-w-5xl mx-auto mb-16">
           <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
             <AlertCircle size={24} /> Mensajes pendientes
           </h2>
@@ -145,7 +135,7 @@ const Admin = () => {
         </section>
 
         {/* Próximas citas */}
-        <section>
+        <section className="max-w-5xl mx-auto mb-16">
           <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 flex items-center gap-2">
             <CalendarClock size={24} /> Próximas citas
           </h2>
@@ -173,6 +163,7 @@ const Admin = () => {
 };
 
 export default Admin;
+
 
 
 

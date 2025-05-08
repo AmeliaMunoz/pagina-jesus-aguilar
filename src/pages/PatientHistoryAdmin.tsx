@@ -8,8 +8,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useNavigate } from "react-router-dom";
-import AdminHeader from "../components/AdminHeader";
 import ManualAppointmentModal from "../components/ManualAppointmentModal";
+import AdminSidebar from "../components/AdminSidebar";
 
 import {
   Mail,
@@ -85,18 +85,18 @@ const PatientHistory = () => {
   );
 
   return (
-    <div className="bg-[#fdf8f4] min-h-screen scroll-smooth">
-      <AdminHeader onLogout={() => {
-        localStorage.removeItem("admin-autenticado");
-        navigate("/admin");
-      }} />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <div className="flex bg-[#fdf8f4] min-h-screen">
+      <AdminSidebar />
+
+      <main className="ml-64 flex-1 px-6 py-12">
+        <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6">Historial de pacientes</h2>
+
         <input
           type="text"
           placeholder="Buscar por nombre o email"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          className="w-full max-w-md mb-8 px-4 py-2 border border-gray-300 rounded text-sm mx-auto block"
+          className="w-full max-w-md mb-8 px-4 py-2 border border-gray-300 rounded text-sm"
         />
 
         {cargando ? (
@@ -135,7 +135,7 @@ const PatientHistory = () => {
                   </div>
                 </div>
 
-                {paciente.historial && paciente.historial.length > 0 ? (
+                {paciente.historial?.length > 0 ? (
                   <ul className="space-y-4">
                     {paciente.historial.map((cita, i) => (
                       <li key={i} className="bg-[#fdf8f4] p-4 border border-[#d6c4b0] rounded-xl space-y-1">
@@ -163,14 +163,16 @@ const PatientHistory = () => {
             ))}
           </div>
         )}
-      </div>
+      </main>
 
       {modalEdicionPaciente && (
         <ManualAppointmentModal
           fecha={new Date()}
           hora={"10:00"}
           onClose={() => setModalEdicionPaciente(null)}
-          onSave={(datos) => guardarDatosPaciente(modalEdicionPaciente, datos as DatosPaciente)}
+          onSave={(datos: DatosPaciente) =>
+            guardarDatosPaciente(modalEdicionPaciente!, datos)
+          }
           nombre={modalEdicionPaciente.nombre}
           email={modalEdicionPaciente.email}
           telefono={modalEdicionPaciente.telefono}
@@ -184,6 +186,8 @@ const PatientHistory = () => {
 };
 
 export default PatientHistory;
+
+
 
 
 
