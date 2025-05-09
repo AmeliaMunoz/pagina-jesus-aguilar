@@ -111,10 +111,11 @@ const AppointmentCalendar = () => {
     const citas = snapshot.docs
       .map((doc) => {
         const data = doc.data();
-        const fecha = data.fechaPropuesta?.toDate();
-        const hora = data.horaPropuesta || "00:00";
+        const fecha = data.fechaPropuesta?.toDate() || new Date(data.fecha);
+        const hora = data.horaPropuesta || data.hora || "00:00";
 
         if (!fecha || !hora) return null;
+
 
         const [h, m] = hora.split(":" ).map(Number);
         const start = new Date(fecha);
@@ -278,10 +279,7 @@ const AppointmentCalendar = () => {
       {modalOpen && selectedSlot && (
         <ManualAppointmentModal
           fecha={selectedSlot.start}
-          hora={selectedSlot.start.toLocaleTimeString("es-ES", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          hora={selectedSlot.start.toTimeString().slice(0, 5)}
           onClose={closeModal}
           onSave={refreshAfterSave}
         />

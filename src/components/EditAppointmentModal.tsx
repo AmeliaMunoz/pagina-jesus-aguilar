@@ -36,14 +36,15 @@ const EditAppointmentModal = ({
   const handleGuardar = async () => {
     setGuardando(true);
     try {
-      await updateDoc(doc(db, "mensajes", id), {
-        fechaPropuesta: nuevaFecha,
-        horaPropuesta: nuevaHora,
-        mensaje: nuevaNota,
+      await updateDoc(doc(db, "citas", id), {
+        fecha: nuevaFecha.toISOString().split("T")[0],
+        hora: nuevaHora,
+        nota: nuevaNota,
       });
       onUpdate();
     } catch (err) {
       console.error("Error al guardar cambios:", err);
+      alert("No se pudo guardar la cita.");
     } finally {
       setGuardando(false);
     }
@@ -52,11 +53,12 @@ const EditAppointmentModal = ({
   const handleEliminar = async () => {
     setEliminando(true);
     try {
-      await deleteDoc(doc(db, "mensajes", id));
+      await deleteDoc(doc(db, "citas", id));
       await onDeleteFromHistory();
       onUpdate();
     } catch (err) {
       console.error("Error al eliminar cita:", err);
+      alert("No se pudo eliminar la cita.");
     } finally {
       setEliminando(false);
     }
@@ -65,12 +67,13 @@ const EditAppointmentModal = ({
   const handleMarcarAusente = async () => {
     setMarcandoAusente(true);
     try {
-      await updateDoc(doc(db, "mensajes", id), {
+      await updateDoc(doc(db, "citas", id), {
         estado: "ausente",
       });
       onUpdate();
     } catch (err) {
-      console.error("Error al marcar como ausente:", err);
+      console.error(" Error al marcar como ausente:", err);
+      alert("No se pudo marcar como ausente.");
     } finally {
       setMarcandoAusente(false);
     }
@@ -149,6 +152,7 @@ const EditAppointmentModal = ({
 };
 
 export default EditAppointmentModal;
+
 
 
 

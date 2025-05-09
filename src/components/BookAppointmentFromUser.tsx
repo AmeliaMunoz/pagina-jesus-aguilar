@@ -11,6 +11,7 @@ import {
   getDoc,
   getDocs,
   query,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -55,31 +56,35 @@ const BookAppointmentFromUser = ({
     const fetchAvailableDates = async () => {
       const result: Date[] = [];
 
-      for (let i = 1; i <= 30; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() + i);
-        const dateStr = formatDate(date);
+      try {
+        for (let i = 1; i <= 30; i++) {
+          const date = new Date();
+          date.setDate(date.getDate() + i);
+          const dateStr = formatDate(date);
 
-        const dayOfWeek = date.toLocaleDateString("es-ES", { weekday: "long" })
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
+          const dayOfWeek = date.toLocaleDateString("es-ES", { weekday: "long" })
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
 
-        if (holidays2025.includes(dateStr)) continue;
+          if (holidays2025.includes(dateStr)) continue;
 
-        const disponibilidadSnap = await getDocs(
-          query(collection(db, "disponibilidad"), where("fecha", "==", dateStr))
-        );
-        if (!disponibilidadSnap.empty) {
-          result.push(new Date(date));
-          continue;
+          const disponibilidadSnap = await getDocs(
+            query(collection(db, "disponibilidad"), where("fecha", "==", dateStr))
+          );
+          if (!disponibilidadSnap.empty) {
+            result.push(new Date(date));
+            continue;
+          }
+
+          const dayDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
+          if (dayDoc.exists()) result.push(new Date(date));
         }
 
-        const dayDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
-        if (dayDoc.exists()) result.push(new Date(date));
+        setAvailableDates(result);
+      } catch (err) {
+        console.error(" Error cargando fechas:", err);
       }
-
-      setAvailableDates(result);
     };
 
     fetchAvailableDates();
@@ -112,9 +117,12 @@ const BookAppointmentFromUser = ({
       const citasSnap = await getDocs(
         query(collection(db, "citas"), where("fecha", "==", dateStr))
       );
-      const usadas = citasSnap.docs.map(doc => doc.data().hora);
-      const disponibles = horasDisponibles.filter(hora => !usadas.includes(hora));
+      const usadas = citasSnap.docs.map(doc => {
+        const data = doc.data();
+        return data.hora || data.horaPropuesta;
+      });
 
+      const disponibles = horasDisponibles.filter(hora => !usadas.includes(hora));
       setAvailableHours(disponibles);
     };
 
@@ -124,33 +132,71 @@ const BookAppointmentFromUser = ({
   const handleBooking = async () => {
     if (!selectedDate || !selectedHour) return;
     setLoading(true);
-
+  
     const [day, month, year] = selectedDate
       .toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
       .split("/");
     const dateStr = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-
-    await addDoc(collection(db, "citas"), {
-      uid,
-      email: userEmail,
-      nombre: userName,
-      fecha: dateStr,
-      hora: selectedHour,
-      estado: "pendiente",
-      anuladaPorUsuario: false,
-      descontadaDelBono: false,
-      creadoEl: new Date().toISOString(),
-    });
-
-    await updateDoc(doc(db, "usuarios", uid), {
-      "bono.pendientes": bonoPendiente - 1,
-      "bono.usadas": bonoPendiente === 1 ? 1 : undefined,
-    });
-
+  
+    try {
+      const cita = {
+        uid,
+        email: userEmail,
+        nombre: userName,
+        fecha: dateStr,
+        hora: selectedHour,
+        estado: "aprobada", 
+        anuladaPorUsuario: false,
+        descontadaDelBono: false,
+        creadoEl: new Date().toISOString(),
+      };
+  
+      // 1. Guardar en colección citas
+      await addDoc(collection(db, "citas"), cita);
+  
+      // 2. Actualizar bono
+      await updateDoc(doc(db, "usuarios", uid), {
+        "bono.pendientes": bonoPendiente - 1,
+        ...(bonoPendiente === 1 && { "bono.usadas": 1 }),
+      });
+  
+      // 3. Actualizar historial del paciente
+      const pacienteRef = doc(db, "pacientes", userEmail);
+      const pacienteSnap = await getDoc(pacienteRef);
+      const nuevaEntrada = {
+        fecha: dateStr,
+        hora: selectedHour,
+        estado: "aprobada",
+        nota: "",
+      };
+  
+      if (!pacienteSnap.exists()) {
+        await setDoc(pacienteRef, {
+          nombre: userName,
+          email: userEmail,
+          historial: [nuevaEntrada],
+        });
+      } else {
+        const data = pacienteSnap.data();
+        const historial = data.historial || [];
+        historial.push(nuevaEntrada);
+        await updateDoc(pacienteRef, { historial });
+      }
+  
+      // 4. Resetear estado
+      setSelectedDate(null);
+      setSelectedHour("");
+      setAvailableHours([]);
+      setSuccess(true);
+      onBooked();
+    } catch (error) {
+      console.error("Error al reservar cita:", error);
+      alert("Ocurrió un error al reservar la cita.");
+    }
+  
     setLoading(false);
-    setSuccess(true);
-    onBooked();
   };
+  
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-lg border border-[#e0d6ca] max-w-5xl mx-auto w-full">
@@ -164,7 +210,6 @@ const BookAppointmentFromUser = ({
           <div className="w-full">
             <h3 className="text-lg font-semibold mb-2 text-[#5f4b32]">1. Elige una fecha disponible</h3>
 
-            {/* Input para móvil y tablet */}
             <div className="block lg:hidden">
               <DatePicker
                 selected={selectedDate}
@@ -181,7 +226,6 @@ const BookAppointmentFromUser = ({
               />
             </div>
 
-            {/* Calendario inline para portátil y escritorio */}
             <div className="hidden lg:block w-full max-w-[340px]">
               <DatePicker
                 selected={selectedDate}
@@ -196,6 +240,12 @@ const BookAppointmentFromUser = ({
                 locale="es"
               />
             </div>
+
+            {availableDates.length === 0 && (
+              <p className="text-sm text-red-500 mt-4">
+                No hay fechas disponibles actualmente. Intenta más tarde.
+              </p>
+            )}
           </div>
 
           {/* Selector de hora y resumen */}
@@ -259,6 +309,9 @@ const BookAppointmentFromUser = ({
 };
 
 export default BookAppointmentFromUser;
+
+
+
 
 
 

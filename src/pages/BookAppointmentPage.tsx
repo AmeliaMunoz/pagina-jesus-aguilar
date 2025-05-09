@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import BookAppointmentFromUser from "../components/BookAppointmentFromUser";
 import Sidebar from "../components/Sidebar";
-import { Calendar, Ticket, Clock, Plus, Mail } from "lucide-react";
+import { Calendar, Ticket, Clock, Plus, Mail, CheckCircle } from "lucide-react";
 
 const pacienteNav = [
   { label: "Próxima cita", path: "/panel/paciente/proxima-cita", icon: <Calendar /> },
@@ -17,12 +18,14 @@ const BookAppointmentPage = () => {
   const [bonoPendiente, setBonoPendiente] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
+  const [userUid, setUserUid] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const currentUser = auth.currentUser;
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) return;
 
+      setUserUid(currentUser.uid);
       setUserEmail(currentUser.email || "");
 
       const docRef = doc(db, "usuarios", currentUser.uid);
@@ -32,10 +35,12 @@ const BookAppointmentPage = () => {
         const data = docSnap.data();
         setUserName(data.nombre || "");
         setBonoPendiente(data.bono?.pendientes ?? 0);
+      } else {
+        setBonoPendiente(0);
       }
-    };
+    });
 
-    fetchUser();
+    return () => unsubscribe();
   }, []);
 
   if (bonoPendiente === null) {
@@ -46,21 +51,28 @@ const BookAppointmentPage = () => {
     <div className="flex min-h-screen">
       <Sidebar title="" items={pacienteNav} />
 
-      <main className="flex-1 bg-[#fdf8f4] px-6 sm:px-10 md:px-16 py-12 overflow-y-auto pl-64">
-        {/* Saludo */}
-        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-3xl mx-auto text-center md:text-left">
-          Hola, {userName}
-        </h1>
+      <main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex items-center justify-center min-h-screen">
+        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
+          <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">
+            {userName}
+          </h1>
 
-        {/* Tarjeta centrada */}
-        <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl border border-[#e0d6ca] p-10">
-          <BookAppointmentFromUser
-            uid={auth.currentUser?.uid || ""}
-            userEmail={userEmail}
-            userName={userName}
-            bonoPendiente={bonoPendiente}
-            onBooked={() => window.location.reload()}
-          />
+          {successMessage && (
+            <div className="bg-[#f5ede6] text-[#5f4b32] border border-[#c8b29d] px-4 py-3 rounded-xl text-sm font-medium shadow-sm flex items-center gap-2 mb-6">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              Tu cita ha sido reservada correctamente.
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#e0d6ca] p-10">
+            <BookAppointmentFromUser
+              uid={userUid}
+              userEmail={userEmail}
+              userName={userName}
+              bonoPendiente={bonoPendiente}
+              onBooked={() => setSuccessMessage(true)}
+            />
+          </div>
         </div>
       </main>
     </div>
@@ -68,6 +80,11 @@ const BookAppointmentPage = () => {
 };
 
 export default BookAppointmentPage;
+
+
+
+
+
 
 
 

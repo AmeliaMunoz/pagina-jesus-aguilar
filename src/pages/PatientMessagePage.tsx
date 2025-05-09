@@ -78,61 +78,58 @@ const PatientMessagesPage = () => {
   };
 
   return (
-    <div className="flex bg-[#f5ede3] min-h-screen">
-      <Sidebar title="Paciente" items={pacienteNav} onLogout={() => auth.signOut()} />
+    <div className="flex min-h-screen">
+      <Sidebar title="" items={pacienteNav} onLogout={() => auth.signOut()} />
 
-      <main className="flex-1 bg-[#fdf8f4] px-6 sm:px-8 md:px-12 py-12 flex flex-col items-center justify-center relative">
-        {/* Saludo */}
-        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-3xl text-center md:text-left">
-          {nombre}
-        </h1>
+      <main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex items-center justify-center min-h-screen">
+        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
+          <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">{nombre}</h1>
 
-        {/* Tarjeta exterior */}
-        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-10">
-          {/* Tarjeta interior */}
-          <div className="bg-white border border-[#e0d6ca] rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-[#5f4b32]">Mensajes con tu psicólogo</h2>
-              <Mail className="hidden lg:block w-10 h-10 text-[#5f4b32]" />
-            </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-10">
+            <div className="bg-white border border-[#e0d6ca] rounded-xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-[#5f4b32]">Mensajes con tu psicólogo</h2>
+                <Mail className="hidden lg:block w-10 h-10 text-[#5f4b32]" />
+              </div>
 
-            <div className="space-y-4 max-h-[300px] overflow-y-auto mb-6">
-              {mensajes.length === 0 ? (
-                <p className="text-gray-600 text-sm">No has enviado ningún mensaje aún.</p>
-              ) : (
-                mensajes.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`p-3 rounded-md text-sm shadow-sm max-w-[80%] ${
-                      msg.enviadoPorPaciente
-                        ? "bg-[#f5ede3] text-right ml-auto"
-                        : "bg-[#e9e2d7] text-left mr-auto"
-                    }`}
-                  >
-                    <p>{msg.texto}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {msg.fecha?.toDate().toLocaleString("es-ES")}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto mb-6">
+                {mensajes.length === 0 ? (
+                  <p className="text-gray-600 text-sm">No has enviado ningún mensaje aún.</p>
+                ) : (
+                  mensajes.map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`p-3 rounded-md text-sm shadow-sm max-w-[80%] ${
+                        msg.enviadoPorPaciente
+                          ? "bg-[#f5ede3] text-right ml-auto"
+                          : "bg-[#e9e2d7] text-left mr-auto"
+                      }`}
+                    >
+                      <p>{msg.texto}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {msg.fecha?.toDate().toLocaleString("es-ES")}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
 
-            <div className="flex gap-2">
-              <textarea
-                className="flex-1 border rounded p-2 text-sm"
-                rows={2}
-                value={nuevoMensaje}
-                onChange={(e) => setNuevoMensaje(e.target.value)}
-                placeholder="Escribe tu mensaje para el terapeuta..."
-              />
-              <button
-                onClick={handleEnviar}
-                disabled={enviando || !nuevoMensaje.trim()}
-                className="bg-[#5f4b32] text-white p-2 rounded hover:bg-[#b89b71] disabled:opacity-50"
-              >
-                <SendHorizontal size={20} />
-              </button>
+              <div className="flex gap-2">
+                <textarea
+                  className="flex-1 border rounded p-2 text-sm"
+                  rows={2}
+                  value={nuevoMensaje}
+                  onChange={(e) => setNuevoMensaje(e.target.value)}
+                  placeholder="Escribe tu mensaje para el terapeuta..."
+                />
+                <button
+                  onClick={handleEnviar}
+                  disabled={enviando || !nuevoMensaje.trim()}
+                  className="bg-[#5f4b32] text-white p-2 rounded hover:bg-[#b89b71] disabled:opacity-50"
+                >
+                  <SendHorizontal size={20} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -142,4 +139,7 @@ const PatientMessagesPage = () => {
 };
 
 export default PatientMessagesPage;
+
+
+
 

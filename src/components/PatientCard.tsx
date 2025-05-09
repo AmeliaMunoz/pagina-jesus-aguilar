@@ -17,7 +17,7 @@ const PatientCard = ({ title, children, onClick }: Props) => {
           onClick ? "hover:bg-[#f8f1e7]" : ""
         }`}
       >
-        <h2 className="text-lg font-semibold text-[#5f4b32] mb-2">{title}</h2>
+        <h2 className="text-lg font-semibold text-[#5f4b32] mb-4">{title}</h2>
         <div className="text-[#5f4b32] text-sm">{children}</div>
       </div>
     );

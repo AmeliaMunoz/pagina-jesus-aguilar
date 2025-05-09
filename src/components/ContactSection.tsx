@@ -120,18 +120,28 @@ const ContactSection = () => {
     setError(false);
 
     try {
-      await addDoc(collection(db, "mensajes"), {
+      const cita = {
         nombre,
         email,
         telefono,
         mensaje,
         fechaPropuesta: startDate ? Timestamp.fromDate(startDate) : null,
         horaPropuesta: horaSeleccionada || null,
-        estado: "pendiente",
+        estado: "aprobada",
         duracionMinutos: 60,
         creado: Timestamp.now(),
+      };
+
+      // Guardar mensaje pendiente
+      await addDoc(collection(db, "mensajes"), {
+        ...cita,
+        estado: "pendiente",
       });
 
+      // Guardar cita aprobada para el calendario
+      await addDoc(collection(db, "citas"), cita);
+
+      // Eliminar hora seleccionada
       if (startDate && horaSeleccionada) {
         const fecha = startDate.toISOString().split("T")[0];
         const ref = doc(db, "disponibilidad", fecha);
@@ -327,6 +337,7 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
+
 
 
 

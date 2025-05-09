@@ -103,40 +103,44 @@ const User = () => {
         }}
       />
 
-      <main className="flex-1 bg-[#fdf8f4] px-6 sm:px-10 md:px-16 py-12 overflow-y-auto">
-        <div className="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border border-[#e0d6ca] p-10">
-          <div className="flex items-center justify-between mb-10">
-            <h1 className="text-3xl font-bold text-[#5f4b32]">Hola, {nombre}</h1>
-          </div>
+      <main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex flex-col items-center justify-center min-h-screen">
+        {/* Saludo FUERA de la tarjeta */}
+        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-5xl ml-auto mr-auto lg:mr-24 text-center md:text-left">
+          ¡Hola, {nombre}!
+        </h1>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-            {proximaCita && (
-              <PatientCard title="Próxima cita">
-                {new Date(proximaCita.fecha).toLocaleDateString("es-ES")},{" "}
-                {proximaCita.hora}
+        {/* Tarjeta de contenido */}
+        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
+          <div className="bg-white rounded-2xl shadow-3xl border border-[#e0d6ca] p-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+              {proximaCita && (
+                <PatientCard title="Próxima cita">
+                  {new Date(proximaCita.fecha).toLocaleDateString("es-ES")},{" "}
+                  {proximaCita.hora}
+                </PatientCard>
+              )}
+
+              {bono && (
+                <PatientCard title="Mi bono">
+                  Disponible: {bono.pendientes}{" "}
+                  {bono.pendientes === 1 ? "sesión" : "sesiones"}
+                </PatientCard>
+              )}
+
+              <PatientCard
+                title="Historial de citas"
+                onClick={() => navigate("/panel/paciente/historial")}
+              >
+                Ver historial completo
               </PatientCard>
-            )}
 
-            {bono && (
-              <PatientCard title="Mi bono">
-                Disponible: {bono.pendientes}{" "}
-                {bono.pendientes === 1 ? "sesión" : "sesiones"}
+              <PatientCard
+                title="Mensajes privados"
+                onClick={() => navigate("/panel/paciente/mensajes")}
+              >
+                Ver mensajes
               </PatientCard>
-            )}
-
-            <PatientCard
-              title="Historial de citas"
-              onClick={() => navigate("/panel/paciente/historial")}
-            >
-              Ver historial completo
-            </PatientCard>
-
-            <PatientCard
-              title="Mensajes privados"
-              onClick={() => navigate("/panel/paciente/mensajes")}
-            >
-              Ver mensajes
-            </PatientCard>
+            </div>
           </div>
         </div>
       </main>
@@ -145,17 +149,3 @@ const User = () => {
 };
 
 export default User;
-
-
-
-
-
-
-
-
-
-
-
-
-
-

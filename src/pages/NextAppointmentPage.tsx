@@ -64,7 +64,7 @@ const NextAppointmentPage = () => {
       const q = query(
         collection(db, "citas"),
         where("uid", "==", currentUser.uid),
-        where("estado", "==", "pendiente"),
+        where("estado", "==", "aprobada"),
         orderBy("fecha")
       );
 
@@ -121,7 +121,7 @@ const NextAppointmentPage = () => {
   };
 
   return (
-    <div className="flex bg-[#f5ede3] min-h-screen">
+    <div className="flex min-h-screen">
       <Sidebar
         title=""
         items={pacienteNav}
@@ -131,15 +131,14 @@ const NextAppointmentPage = () => {
         }}
       />
 
-<main className="flex-1 bg-[#fdf8f4] px-6 sm:px-10 md:px-16 py-12 flex flex-col items-center justify-center relative">
-          {/* Saludo */}
-          <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-3xl text-center md:text-left">
-            {nombre}
+      
+<main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex items-center justify-center min-h-screen">
+        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
+          <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">
+           {nombre}
           </h1>
 
-          {/* Tarjeta exterior */}
-          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-10">
-            {/* Tarjeta interior */}
+          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-10">
             <div className="bg-white border border-[#e0d6ca] rounded-xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-[#5f4b32]">Tu próxima cita</h2>
@@ -211,12 +210,14 @@ const NextAppointmentPage = () => {
               )}
             </div>
           </div>
-        </main>
+        </div>
+      </main>
     </div>
   );
 };
 
 export default NextAppointmentPage;
+
 
 
 

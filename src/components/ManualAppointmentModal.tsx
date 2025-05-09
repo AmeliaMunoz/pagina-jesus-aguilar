@@ -1,4 +1,3 @@
-// src/components/ManualAppointmentModal.tsx
 import { useState, useEffect } from "react";
 import {
   collection,
@@ -27,6 +26,13 @@ interface Props {
   soloEditarPaciente?: boolean;
 }
 
+interface Paciente {
+  id: string;
+  nombre: string;
+  email: string;
+  telefono?: string;
+}
+
 const ManualAppointmentModal = ({
   fecha,
   hora,
@@ -40,7 +46,7 @@ const ManualAppointmentModal = ({
   soloEditarPaciente = false,
 }: Props) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Paciente[]>([]);
   const [nombre, setNombre] = useState(nombreInicial);
   const [email, setEmail] = useState(emailInicial);
   const [telefono, setTelefono] = useState(telefonoInicial);
@@ -61,20 +67,40 @@ const ManualAppointmentModal = ({
         return;
       }
 
-      const q = query(
+      const nombreQuery = query(
         collection(db, "usuarios"),
         where("nombre", ">=", searchTerm),
         where("nombre", "<=", searchTerm + "\uf8ff")
       );
-      const snapshot = await getDocs(q);
-      const results = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setSearchResults(results);
+
+      const emailQuery = query(
+        collection(db, "usuarios"),
+        where("email", ">=", searchTerm),
+        where("email", "<=", searchTerm + "\uf8ff")
+      );
+
+      const [nombreSnap, emailSnap] = await Promise.all([
+        getDocs(nombreQuery),
+        getDocs(emailQuery),
+      ]);
+
+      const results: Paciente[] = [...nombreSnap.docs, ...emailSnap.docs].map((doc) => {
+        const data = doc.data() as Omit<Paciente, "id">;
+        return { id: doc.id, ...data };
+      });
+
+      const únicos = results.filter(
+        (pac, index, self) =>
+          index === self.findIndex((p) => p.email === pac.email)
+      );
+
+      setSearchResults(únicos);
     };
 
     fetchPacientes();
   }, [searchTerm]);
 
-  const handleSelectPaciente = (paciente: any) => {
+  const handleSelectPaciente = (paciente: Paciente) => {
     setNombre(paciente.nombre || "");
     setEmail(paciente.email || "");
     setTelefono(paciente.telefono || "");
@@ -84,49 +110,90 @@ const ManualAppointmentModal = ({
 
   const handleGuardar = async () => {
     setLoading(true);
-    const dateStr = fecha.toISOString().split("T")[0];
-
-    if (modoEdicion && soloEditarPaciente) {
-      onSave({ nombre, email, telefono });
+  
+    console.log("➡️ handleGuardar ejecutado", { nombre, email, hora, fecha });
+  
+    if (!nombre || !email || !fecha || !hora) {
+      alert("Faltan datos para guardar la cita.");
+      console.log("❌ Campos incompletos:", { nombre, email, fecha, hora });
       setLoading(false);
       return;
     }
-
-    await addDoc(collection(db, "citas"), {
-      nombre,
-      email,
-      telefono,
-      nota,
-      fecha: dateStr,
-      hora,
-      estado: "aprobada",
-      uid: null,
-      creadoEl: new Date().toISOString(),
-      anuladaPorUsuario: false,
-      descontadaDelBono: false,
-    });
-
-    const ref = doc(db, "pacientes", email);
-    const snap = await getDoc(ref);
-    const nuevaEntrada = { fecha: dateStr, hora, estado: "aprobada", nota };
-
-    if (!snap.exists()) {
-      await setDoc(ref, {
+  
+    const dateStr = fecha.toISOString().split("T")[0];
+  
+    try {
+      // Buscar UID del paciente
+      let uid: string | null = null;
+      try {
+        const usuariosSnap = await getDocs(
+          query(collection(db, "usuarios"), where("email", "==", email))
+        );
+        if (!usuariosSnap.empty) {
+          uid = usuariosSnap.docs[0].id;
+        }
+      } catch (e) {
+        console.error("❌ Error buscando usuario:", e);
+      }
+  
+      // Preparar objeto de cita
+      const cita = {
         nombre,
         email,
         telefono,
-        historial: [nuevaEntrada],
-      });
-    } else {
-      const data = snap.data();
-      const historial = data.historial || [];
-      historial.push(nuevaEntrada);
-      await updateDoc(ref, { historial });
+        nota,
+        fecha: dateStr,
+        hora,
+        estado: "aprobada",
+        uid,
+        creadoEl: new Date().toISOString(),
+        anuladaPorUsuario: false,
+        descontadaDelBono: false,
+      };
+  
+      // Guardar cita en la colección "citas"
+      try {
+        await addDoc(collection(db, "citas"), cita);
+        console.log("✅ Cita guardada correctamente en la colección 'citas'");
+      } catch (e) {
+        console.error("❌ Error guardando cita en Firebase:", e);
+      }
+  
+      // Guardar en historial de paciente
+      try {
+        const pacienteRef = doc(db, "pacientes", email);
+        const snap = await getDoc(pacienteRef);
+        const nuevaEntrada = { fecha: dateStr, hora, estado: "aprobada", nota };
+  
+        if (!snap.exists()) {
+          await setDoc(pacienteRef, {
+            nombre,
+            email,
+            telefono,
+            historial: [nuevaEntrada],
+          });
+          console.log("✅ Paciente nuevo creado con historial");
+        } else {
+          const data = snap.data();
+          const historial = data.historial || [];
+          historial.push(nuevaEntrada);
+          await updateDoc(pacienteRef, { historial });
+          console.log("✅ Historial actualizado para paciente existente");
+        }
+      } catch (e) {
+        console.error("❌ Error guardando historial:", e);
+      }
+  
+      // Finalizar
+      onSave({ nombre, email, telefono });
+    } catch (error) {
+      console.error("❌ Error inesperado:", error);
+      alert("Ha ocurrido un error al guardar la cita.");
     }
-
+  
     setLoading(false);
-    onSave({ nombre, email, telefono });
   };
+  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 px-4">
@@ -148,7 +215,7 @@ const ManualAppointmentModal = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar paciente por nombre..."
+              placeholder="Buscar paciente por nombre o email..."
               className="w-full border px-4 py-2 rounded text-sm"
             />
             {searchResults.length > 0 && (
@@ -219,16 +286,4 @@ const ManualAppointmentModal = ({
 };
 
 export default ManualAppointmentModal;
-
-
-
-
-
-
-
-
-
-
-
-
 
