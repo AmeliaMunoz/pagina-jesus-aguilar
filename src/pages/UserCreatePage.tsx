@@ -1,7 +1,10 @@
-import { useState } from "react";
-import { auth, createUserWithEmailAndPassword } from "../firebase";  // Asegúrate de importar auth y createUserWithEmailAndPassword
-import { db } from "../firebase"; // Firebase Firestore
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { auth, createUserWithEmailAndPassword } from "../firebase";
+import { db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
+import AdminSidebar from "../components/AdminSidebar";
+import HamburgerButton from "../components/HamburgerButton";
 import { User } from "lucide-react";
 
 const UserCreatePage = () => {
@@ -9,7 +12,13 @@ const UserCreatePage = () => {
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [totalSesiones, setTotalSesiones] = useState(5);
-  const [password, setPassword] = useState("");  // Añadimos campo de contraseña
+  const [password, setPassword] = useState("");
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarVisible(false);
+  }, [location.pathname]);
 
   const crearUsuario = async () => {
     if (!nombre || !email || !telefono || !password) {
@@ -18,11 +27,9 @@ const UserCreatePage = () => {
     }
 
     try {
-      // Crear usuario en Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = userCredential.user.uid;  // Obtenemos el uid del usuario recién creado
+      const uid = userCredential.user.uid;
 
-      // Crear documento de usuario en Firestore
       await setDoc(doc(db, "usuarios", uid), {
         uid,
         nombre,
@@ -36,12 +43,10 @@ const UserCreatePage = () => {
       });
 
       alert("Usuario creado correctamente.");
-      
-      // Limpiar los campos
       setNombre("");
       setEmail("");
       setTelefono("");
-      setPassword("");  // Limpiar el campo de la contraseña
+      setPassword("");
       setTotalSesiones(5);
 
     } catch (error) {
@@ -51,61 +56,81 @@ const UserCreatePage = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-8 bg-white shadow rounded mt-10">
-      <h2 className="text-2xl font-semibold mb-6 text-[#5f4b32]">Crear nuevo usuario</h2>
+    <div className="flex min-h-screen bg-[#fdf8f4] overflow-x-hidden relative">
+      <HamburgerButton
+        isOpen={sidebarVisible}
+        onToggle={() => setSidebarVisible(!sidebarVisible)}
+      />
 
-      <div className="space-y-4">
-        <input
-          type="text"
-          placeholder="Nombre completo"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
+      <AdminSidebar
+        isOpen={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+      />
 
-        <input
-          type="email"
-          placeholder="Correo electrónico"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
+      <main className="w-full px-4 py-6 flex items-center justify-center min-h-screen">
+        <div className="w-full max-w-xl p-6 bg-white shadow rounded-xl">
+          <h2 className="text-2xl font-semibold mb-6 text-[#5f4b32] flex items-center gap-2">
+            <User /> Crear nuevo usuario
+          </h2>
 
-        <input
-          type="tel"
-          placeholder="Teléfono"
-          value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Nombre completo"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
 
-        <input
-          type="password"  // Cambié el tipo de este campo a "password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
+            <input
+              type="email"
+              placeholder="Correo electrónico"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
 
-        <input
-          type="number"
-          placeholder="Número de sesiones (bono)"
-          value={totalSesiones}
-          onChange={(e) => setTotalSesiones(parseInt(e.target.value))}
-          min={1}
-          className="w-full p-2 border rounded"
-        />
+            <input
+              type="tel"
+              placeholder="Teléfono"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
 
-        <button
-          onClick={crearUsuario}
-          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-        >
-          Crear usuario
-        </button>
-      </div>
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+
+            <input
+              type="number"
+              placeholder="Número de sesiones (bono)"
+              value={totalSesiones}
+              onChange={(e) => setTotalSesiones(parseInt(e.target.value))}
+              min={1}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+
+            <button
+              onClick={crearUsuario}
+              className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+            >
+              Crear usuario
+            </button>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
 
 export default UserCreatePage;
+
+
+
+
 

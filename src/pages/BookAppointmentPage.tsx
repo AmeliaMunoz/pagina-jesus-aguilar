@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import BookAppointmentFromUser from "../components/BookAppointmentFromUser";
-import Sidebar from "../components/Sidebar";
-import { Calendar, Ticket, Clock, Plus, Mail, CheckCircle } from "lucide-react";
+import Sidebar from "../components/UserSidebar";
+import HamburgerButton from "../components/HamburgerButton";
+import { Calendar, Ticket, Clock, Plus, Mail } from "lucide-react";
 
 const pacienteNav = [
   { label: "Próxima cita", path: "/panel/paciente/proxima-cita", icon: <Calendar /> },
@@ -19,7 +21,13 @@ const BookAppointmentPage = () => {
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
   const [userUid, setUserUid] = useState<string>("");
-  const [successMessage, setSuccessMessage] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarVisible(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -48,29 +56,33 @@ const BookAppointmentPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar title="" items={pacienteNav} />
+    <div className="flex min-h-screen bg-[#fdf8f4]">
+      <HamburgerButton
+        isOpen={sidebarVisible}
+        onToggle={() => setSidebarVisible(!sidebarVisible)}
+      />
 
-      <main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex items-center justify-center min-h-screen">
-        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
-          <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">
+      <Sidebar
+        title=""
+        items={pacienteNav}
+        isOpen={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        onLogout={() => auth.signOut()}
+      />
+
+      <main className="w-full min-h-screen px-4 py-8 flex items-center justify-center">
+        <div className="w-full max-w-5xl space-y-8">
+          <h1 className="text-3xl font-bold text-[#5f4b32] text-center md:text-left">
             {userName}
           </h1>
 
-          {successMessage && (
-            <div className="bg-[#f5ede6] text-[#5f4b32] border border-[#c8b29d] px-4 py-3 rounded-xl text-sm font-medium shadow-sm flex items-center gap-2 mb-6">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              Tu cita ha sido reservada correctamente.
-            </div>
-          )}
-
-          <div className="bg-white rounded-2xl shadow-2xl border border-[#e0d6ca] p-10">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#e0d6ca] p-6 md:p-10">
             <BookAppointmentFromUser
               uid={userUid}
               userEmail={userEmail}
               userName={userName}
               bonoPendiente={bonoPendiente}
-              onBooked={() => setSuccessMessage(true)}
+              onBooked={() => navigate("/panel/paciente/proxima-cita")}
             />
           </div>
         </div>
@@ -80,15 +92,5 @@ const BookAppointmentPage = () => {
 };
 
 export default BookAppointmentPage;
-
-
-
-
-
-
-
-
-
-
 
 

@@ -10,9 +10,19 @@ import {
   CalendarClock,
   UserCheck,
 } from "lucide-react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/UserSidebar";
+import HamburgerButton from "../components/HamburgerButton";
 import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { useLocation } from "react-router-dom";
 
 const pacienteNav = [
   { label: "Próxima cita", path: "/panel/paciente/proxima-cita", icon: <CalendarClock /> },
@@ -25,23 +35,58 @@ const pacienteNav = [
 const PatientBonoPage = () => {
   const [bono, setBono] = useState<{ total: number; usadas: number; pendientes: number } | null>(null);
   const [nombre, setNombre] = useState("");
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    setSidebarVisible(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const fetchBono = async () => {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
 
-      const docRef = doc(db, "usuarios", currentUser.uid);
+      const uid = currentUser.uid;
+      const docRef = doc(db, "usuarios", uid);
       const docSnap = await getDoc(docRef);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setNombre(data.nombre || "");
-        setBono(data.bono);
+      if (!docSnap.exists()) return;
+
+      const data = docSnap.data();
+      setNombre(data.nombre || "");
+
+      const total = data.bono?.total ?? 0;
+      const hoy = new Date().toISOString().split("T")[0];
+
+      const q = query(
+        collection(db, "citas"),
+        where("uid", "==", uid),
+        where("estado", "==", "aprobada")
+      );
+      const snapshot = await getDocs(q);
+
+      const futuras = snapshot.docs
+        .map((doc) => doc.data())
+        .filter((cita) => cita.fecha >= hoy);
+
+      const usadas = futuras.length;
+      const pendientes = total - usadas;
+
+      if (
+        data.bono?.pendientes !== pendientes ||
+        data.bono?.usadas !== usadas
+      ) {
+        await updateDoc(docRef, {
+          "bono.pendientes": pendientes,
+          "bono.usadas": usadas,
+        });
       }
+
+      setBono({ total, usadas, pendientes });
     };
 
-    fetchUser();
+    fetchBono();
   }, []);
 
   if (!bono) {
@@ -51,18 +96,27 @@ const PatientBonoPage = () => {
   const porcentaje = (bono.usadas / bono.total) * 100;
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar title="" items={pacienteNav} onLogout={() => auth.signOut()} />
+    <div className="flex min-h-screen bg-[#fdf8f4]">
+      <HamburgerButton
+        isOpen={sidebarVisible}
+        onToggle={() => setSidebarVisible(!sidebarVisible)}
+      />
 
-      <main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex flex-col items-center justify-center min-h-screen">
-        {/* Saludo fuera de las tarjetas */}
-        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-5xl ml-auto mr-auto lg:mr-24 text-center md:text-left">
+      <Sidebar
+        title=""
+        items={pacienteNav}
+        isOpen={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        onLogout={() => auth.signOut()}
+      />
+
+      <main className="w-full min-h-screen px-4 py-8 flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-5xl ml-auto mr-auto text-center md:text-left">
           {nombre}
         </h1>
 
-        {/* Tarjeta de contenido */}
-        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
-          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-10">
+        <div className="w-full max-w-5xl ml-auto mr-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
             <div className="bg-white border border-[#e0d6ca] rounded-xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -128,10 +182,3 @@ const PatientBonoPage = () => {
 };
 
 export default PatientBonoPage;
-
-
-
-
-
-
-

@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { db } from "../firebase";
-import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  arrayUnion,
+  setDoc,
+} from "firebase/firestore";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -14,14 +21,26 @@ interface Props {
   nota?: string;
   onClose: () => void;
   onUpdate: () => void;
-  onDeleteFromHistory: () => void;
+  onDeleteFromHistory: () => Promise<void>;
 }
+
+const liberarHoraEnDisponibilidad = async (fecha: string, hora: string) => {
+  const ref = doc(db, "disponibilidad", fecha);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    await updateDoc(ref, { horas: arrayUnion(hora) });
+  } else {
+    await setDoc(ref, { horas: [hora] });
+  }
+};
 
 const EditAppointmentModal = ({
   id,
   fecha,
   hora,
   nota,
+  email,
   onClose,
   onUpdate,
   onDeleteFromHistory,
@@ -31,20 +50,27 @@ const EditAppointmentModal = ({
   const [nuevaNota, setNuevaNota] = useState(nota || "");
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-  const [marcandoAusente, setMarcandoAusente] = useState(false);
 
   const handleGuardar = async () => {
     setGuardando(true);
     try {
+      // liberar la hora anterior
+      await liberarHoraEnDisponibilidad(
+        fecha.toISOString().split("T")[0],
+        hora
+      );
+
+      // actualizar la cita
       await updateDoc(doc(db, "citas", id), {
         fecha: nuevaFecha.toISOString().split("T")[0],
         hora: nuevaHora,
         nota: nuevaNota,
       });
+
       onUpdate();
+      onClose();
     } catch (err) {
-      console.error("Error al guardar cambios:", err);
-      alert("No se pudo guardar la cita.");
+      console.error("❌ Error al guardar cambios:", err);
     } finally {
       setGuardando(false);
     }
@@ -54,97 +80,55 @@ const EditAppointmentModal = ({
     setEliminando(true);
     try {
       await deleteDoc(doc(db, "citas", id));
-      await onDeleteFromHistory();
+      await onDeleteFromHistory(); // ya incluye liberar hora
       onUpdate();
+      onClose();
     } catch (err) {
-      console.error("Error al eliminar cita:", err);
-      alert("No se pudo eliminar la cita.");
+      console.error("❌ Error al eliminar cita:", err);
     } finally {
       setEliminando(false);
     }
   };
 
-  const handleMarcarAusente = async () => {
-    setMarcandoAusente(true);
-    try {
-      await updateDoc(doc(db, "citas", id), {
-        estado: "ausente",
-      });
-      onUpdate();
-    } catch (err) {
-      console.error(" Error al marcar como ausente:", err);
-      alert("No se pudo marcar como ausente.");
-    } finally {
-      setMarcandoAusente(false);
-    }
-  };
-
-  const yaHaPasado = nuevaFecha < new Date();
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 px-4">
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md space-y-4">
         <h3 className="text-lg font-semibold text-gray-800">Editar cita</h3>
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Fecha</label>
-          <DatePicker
-            selected={nuevaFecha}
-            onChange={(date) => setNuevaFecha(date!)}
-            className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
-            dateFormat="yyyy-MM-dd"
-          />
 
-          <label className="block text-sm font-medium text-gray-700">Hora</label>
-          <input
-            type="time"
-            value={nuevaHora}
-            onChange={(e) => setNuevaHora(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
-          />
+        <label className="block text-sm font-medium text-gray-700">Fecha</label>
+        <DatePicker
+          selected={nuevaFecha}
+          onChange={(date) => setNuevaFecha(date!)}
+          className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
+          dateFormat="yyyy-MM-dd"
+        />
 
-          <label className="block text-sm font-medium text-gray-700">Nota</label>
-          <textarea
-            value={nuevaNota}
-            onChange={(e) => setNuevaNota(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
-            rows={3}
-          />
-        </div>
+        <label className="block text-sm font-medium text-gray-700">Hora</label>
+        <input
+          type="time"
+          value={nuevaHora}
+          onChange={(e) => setNuevaHora(e.target.value)}
+          className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
+        />
 
-        <div className="flex flex-col sm:flex-row justify-between mt-6 gap-4">
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm"
-          >
+        <label className="block text-sm font-medium text-gray-700">Nota</label>
+        <textarea
+          value={nuevaNota}
+          onChange={(e) => setNuevaNota(e.target.value)}
+          className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
+          rows={3}
+        />
+
+        <div className="flex justify-end gap-3 pt-4">
+          <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded text-sm">
             Cancelar
           </button>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <button
-              onClick={handleGuardar}
-              disabled={guardando}
-              className="w-full px-4 py-2 rounded bg-[#b89b71] text-white hover:bg-[#9e855c] text-sm"
-            >
-              {guardando ? "Guardando..." : "Guardar"}
-            </button>
-            <button
-              onClick={handleEliminar}
-              disabled={eliminando}
-              className="w-full px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
-            >
-              {eliminando ? "Eliminando..." : "Eliminar"}
-            </button>
-            <button
-              onClick={handleMarcarAusente}
-              disabled={marcandoAusente || !yaHaPasado}
-              className={`w-full px-4 py-2 rounded text-white text-sm ${
-                !yaHaPasado
-                  ? "bg-yellow-400 cursor-not-allowed"
-                  : "bg-yellow-400 hover:bg-yellow-500"
-              }`}
-            >
-              {marcandoAusente ? "Marcando..." : "Ausente"}
-            </button>
-          </div>
+          <button onClick={handleGuardar} disabled={guardando} className="bg-blue-600 text-white px-4 py-2 rounded text-sm">
+            {guardando ? "Guardando..." : "Guardar"}
+          </button>
+          <button onClick={handleEliminar} disabled={eliminando} className="bg-red-600 text-white px-4 py-2 rounded text-sm">
+            {eliminando ? "Eliminando..." : "Eliminar"}
+          </button>
         </div>
       </div>
     </div>
@@ -152,6 +136,8 @@ const EditAppointmentModal = ({
 };
 
 export default EditAppointmentModal;
+
+
 
 
 

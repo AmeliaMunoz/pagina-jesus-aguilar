@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -10,8 +10,11 @@ import {
   query,
   updateDoc,
   where,
+  setDoc,
+  arrayUnion,
 } from "firebase/firestore";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/UserSidebar";
+import HamburgerButton from "../components/HamburgerButton";
 import {
   Calendar,
   Ticket,
@@ -45,7 +48,13 @@ const NextAppointmentPage = () => {
   const [mensajeEnviado, setMensajeEnviado] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarVisible(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,6 +94,17 @@ const NextAppointmentPage = () => {
     fetchData();
   }, [navigate]);
 
+  const liberarHoraEnDisponibilidad = async (fecha: string, hora: string) => {
+    const ref = doc(db, "disponibilidad", fecha);
+    const snap = await getDoc(ref);
+
+    if (snap.exists()) {
+      await updateDoc(ref, { horas: arrayUnion(hora) });
+    } else {
+      await setDoc(ref, { horas: [hora] });
+    }
+  };
+
   const anularCita = async () => {
     setError("");
     setSuccess("");
@@ -105,6 +125,8 @@ const NextAppointmentPage = () => {
       anuladaPorUsuario: true,
     });
 
+    await liberarHoraEnDisponibilidad(proximaCita.fecha, proximaCita.hora);
+
     setProximaCita(null);
     setSuccess("Cita anulada correctamente.");
   };
@@ -121,24 +143,30 @@ const NextAppointmentPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#fdf8f4]">
+      <HamburgerButton
+        isOpen={sidebarVisible}
+        onToggle={() => setSidebarVisible(!sidebarVisible)}
+      />
+
       <Sidebar
         title=""
         items={pacienteNav}
+        isOpen={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
         onLogout={() => {
           auth.signOut();
           navigate("/login");
         }}
       />
 
-      
-<main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex items-center justify-center min-h-screen">
-        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
+      <main className="w-full min-h-screen px-4 py-8 flex items-center justify-center">
+        <div className="w-full max-w-5xl">
           <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">
-           {nombre}
+            {nombre}
           </h1>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-10">
+          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
             <div className="bg-white border border-[#e0d6ca] rounded-xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-[#5f4b32]">Tu próxima cita</h2>
@@ -150,8 +178,16 @@ const NextAppointmentPage = () => {
                   <div className="mb-4 text-sm text-[#5f4b32] space-y-2">
                     <p>
                       <strong>Fecha:</strong>{" "}
-                      {new Date(proximaCita.fecha).toLocaleDateString("es-ES")} a las{" "}
-                      {proximaCita.hora}
+                      {(() => {
+                        const [year, month, day] = proximaCita.fecha.split("-");
+                        const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
+                        return fechaLocal.toLocaleDateString("es-ES", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        });
+                      })()} a las {proximaCita.hora}
                     </p>
                     <p>
                       <strong>Estado:</strong> {proximaCita.estado}
@@ -217,8 +253,5 @@ const NextAppointmentPage = () => {
 };
 
 export default NextAppointmentPage;
-
-
-
 
 

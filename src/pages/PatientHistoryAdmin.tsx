@@ -7,10 +7,10 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ManualAppointmentModal from "../components/ManualAppointmentModal";
 import AdminSidebar from "../components/AdminSidebar";
-
+import HamburgerButton from "../components/HamburgerButton";
 import {
   Mail,
   Phone,
@@ -47,11 +47,14 @@ const PatientHistory = () => {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [modalEdicionPaciente, setModalEdicionPaciente] = useState<Paciente | null>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     cargarPacientes();
-  }, []);
+    setSidebarVisible(false);
+  }, [location.pathname]);
 
   const cargarPacientes = async () => {
     const snapshot = await getDocs(collection(db, "pacientes"));
@@ -79,90 +82,119 @@ const PatientHistory = () => {
     cargarPacientes();
   };
 
-  const filtrados = pacientes.filter((p) =>
+  const pacientesFiltrados = pacientes.filter((p) =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
     p.email.toLowerCase().includes(busqueda.toLowerCase())
   );
 
+  const pacientesPorLetra = pacientesFiltrados
+    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+    .reduce((grupos: Record<string, Paciente[]>, paciente) => {
+      const letra = paciente.nombre.charAt(0).toUpperCase();
+      if (!grupos[letra]) grupos[letra] = [];
+      grupos[letra].push(paciente);
+      return grupos;
+    }, {});
+
   return (
-    <div className="flex bg-[#fdf8f4] min-h-screen">
-      <AdminSidebar />
+    <div className="flex bg-[#fdf8f4] min-h-screen overflow-x-hidden relative">
+      <HamburgerButton
+        isOpen={sidebarVisible}
+        onToggle={() => setSidebarVisible(!sidebarVisible)}
+      />
 
-      <main className="ml-64 flex-1 px-6 py-12">
-        <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6">Historial de pacientes</h2>
+      <AdminSidebar
+        isOpen={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+      />
 
-        <input
-          type="text"
-          placeholder="Buscar por nombre o email"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="w-full max-w-md mb-8 px-4 py-2 border border-gray-300 rounded text-sm"
-        />
+      <main className="w-full min-h-screen px-4 py-8 flex items-center justify-center">
+        <div className="w-full max-w-5xl">
+          <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6">Historial de pacientes</h2>
 
-        {cargando ? (
-          <p className="text-center">Cargando pacientes...</p>
-        ) : filtrados.length === 0 ? (
-          <p className="text-center text-gray-600">No se encontraron pacientes.</p>
-        ) : (
-          <div className="space-y-8">
-            {filtrados.map((paciente, index) => (
-              <div key={index} className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6">
-                <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                  <div>
-                    <p className="text-lg font-semibold text-gray-800">{paciente.nombre}</p>
-                    <p className="text-sm text-gray-700 flex items-center gap-2">
-                      <Mail size={16} className="text-[#5f4b32]" />
-                      {paciente.email}
-                    </p>
-                    <p className="text-sm text-gray-700 flex items-center gap-2">
-                      <Phone size={16} className="text-[#5f4b32]" />
-                      {paciente.telefono}
-                    </p>
-                  </div>
-                  <div className="flex gap-2 text-right">
-                    <button
-                      onClick={() => setModalEdicionPaciente(paciente)}
-                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                    >
-                      <Pencil size={14} className="text-[#5f4b32]" /> Editar
-                    </button>
-                    <button
-                      onClick={() => eliminarPaciente(paciente.email)}
-                      className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
-                    >
-                      <Trash2 size={14} className="text-red-600" /> Eliminar
-                    </button>
+          <input
+            type="text"
+            placeholder="Buscar por nombre o email"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="w-full max-w-md mb-8 px-4 py-2 border border-gray-300 rounded text-sm"
+          />
+
+          {cargando ? (
+            <p className="text-center">Cargando pacientes...</p>
+          ) : Object.keys(pacientesPorLetra).length === 0 ? (
+            <p className="text-center text-gray-600">No se encontraron pacientes.</p>
+          ) : (
+            <div className="space-y-12">
+              {Object.entries(pacientesPorLetra).map(([letra, pacientesGrupo]) => (
+                <div key={letra}>
+                  <h3 className="text-xl font-bold text-[#5f4b32] mb-4">{letra}</h3>
+                  <div className="space-y-8">
+                    {pacientesGrupo.map((paciente, index) => (
+                      <div key={index} className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6">
+                        <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                          <div>
+                            <p className="text-lg font-semibold text-gray-800">{paciente.nombre}</p>
+                            <p className="text-sm text-gray-700 flex items-center gap-2">
+                              <Mail size={16} className="text-[#5f4b32]" />
+                              {paciente.email}
+                            </p>
+                            <p className="text-sm text-gray-700 flex items-center gap-2">
+                              <Phone size={16} className="text-[#5f4b32]" />
+                              {paciente.telefono}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 text-right">
+                            <button
+                              onClick={() => setModalEdicionPaciente(paciente)}
+                              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                            >
+                              <Pencil size={14} className="text-[#5f4b32]" /> Editar
+                            </button>
+                            <button
+                              onClick={() => eliminarPaciente(paciente.email)}
+                              className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
+                            >
+                              <Trash2 size={14} className="text-red-600" /> Eliminar
+                            </button>
+                          </div>
+                        </div>
+
+                        {paciente.historial?.length > 0 ? (
+                          <ul className="space-y-4">
+                            {paciente.historial.map((cita, i) => (
+                              <li
+                                key={i}
+                                className="bg-[#fdf8f4] p-4 border border-[#d6c4b0] rounded-xl space-y-1"
+                              >
+                                <p className="text-sm flex items-center gap-2">
+                                  <CalendarDays size={16} className="text-[#5f4b32]" />
+                                  {cita.fecha} a las {cita.hora}
+                                </p>
+                                <p className="text-sm flex items-center gap-2">
+                                  <Activity size={16} className="text-green-700" />
+                                  Estado: {cita.estado}
+                                </p>
+                                {cita.nota && (
+                                  <p className="text-sm italic flex items-center gap-2">
+                                    <FileText size={16} className="text-[#b89b71]" />
+                                    {cita.nota}
+                                  </p>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-gray-500">Este paciente no tiene citas aún.</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
-
-                {paciente.historial?.length > 0 ? (
-                  <ul className="space-y-4">
-                    {paciente.historial.map((cita, i) => (
-                      <li key={i} className="bg-[#fdf8f4] p-4 border border-[#d6c4b0] rounded-xl space-y-1">
-                        <p className="text-sm flex items-center gap-2">
-                          <CalendarDays size={16} className="text-[#5f4b32]" />
-                          {cita.fecha} a las {cita.hora}
-                        </p>
-                        <p className="text-sm flex items-center gap-2">
-                          <Activity size={16} className="text-green-700" />
-                          Estado: {cita.estado}
-                        </p>
-                        {cita.nota && (
-                          <p className="text-sm italic flex items-center gap-2">
-                            <FileText size={16} className="text-[#b89b71]" />
-                            {cita.nota}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500">Este paciente no tiene citas aún.</p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
       {modalEdicionPaciente && (
@@ -186,15 +218,3 @@ const PatientHistory = () => {
 };
 
 export default PatientHistory;
-
-
-
-
-
- 
-
-
-
-
-
-

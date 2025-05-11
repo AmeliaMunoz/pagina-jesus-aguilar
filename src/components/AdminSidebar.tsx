@@ -1,61 +1,102 @@
-
 import { NavLink } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import {
+  Home,
+  Mail,
+  Users,
+  Calendar,
+  UserPlus,
+  Archive,
+  Settings,
+  BarChart,
+  LogOut,
+} from "lucide-react";
 import IconoLogo from "./IconoLogo";
 
 const adminNav = [
-  { label: "Mensajes formulario", path: "/admin/mensajes" },
-  { label: "Mensajes pacientes", path: "/admin/mensajes-pacientes" },
-  { label: "Citas", path: "/admin/citas" },
-  { label: "Crear usuario", path: "/admin/crear-usuario" },
-  { label: "Historial", path: "/admin/pacientes" },
-  { label: "Configuración", path: "/admin/configuracion" },
-  { label: "Estadísticas", path: "/admin/estadisticas" },
+  { label: "Mensajes formulario", path: "/admin/mensajes", icon: <Mail /> },
+  { label: "Mensajes pacientes", path: "/admin/mensajes-pacientes", icon: <Users /> },
+  { label: "Citas", path: "/admin/citas", icon: <Calendar /> },
+  { label: "Crear usuario", path: "/admin/crear-usuario", icon: <UserPlus /> },
+  { label: "Historial", path: "/admin/pacientes", icon: <Archive /> },
+  { label: "Configuración", path: "/admin/configuracion", icon: <Settings /> },
+  { label: "Estadísticas", path: "/admin/estadisticas", icon: <BarChart /> },
 ];
 
-const AdminSidebar = () => {
+interface Props {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const AdminSidebar = ({ isOpen = false, onClose }: Props) => {
   const handleLogout = () => {
     localStorage.removeItem("admin-autenticado");
     window.location.href = "/admin";
+    if (onClose) onClose();
   };
 
   return (
-    <aside className="w-64 h-screen fixed top-0 left-0 overflow-y-auto bg-[#735035] text-white px-6 py-8 flex flex-col justify-between">
+    <aside
+      className={`
+        fixed top-0 left-0 h-screen w-64 bg-[#735035] text-white px-6 py-8 z-40
+        transition-transform duration-300 overflow-y-auto
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0 lg:static lg:flex lg:flex-col lg:justify-between
+      `}
+    >
       <div>
         <div className="flex items-center gap-4 mb-10">
-          <div className="w-25 h-25">
+          <div className="w-24 h-24">
             <IconoLogo className="text-white" />
           </div>
           <h2 className="text-xl font-bold">Admin</h2>
         </div>
 
         <nav className="flex flex-col gap-4">
-          {adminNav.map(({ label, path }) => (
+          <NavLink
+            to="/admin"
+            end
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg transition text-md ${
+                isActive ? "bg-[#4e3e29]" : "hover:bg-[#4e3e29]/80"
+              }`
+            }
+          >
+            <Home className="w-5 h-5" />
+            <span>Inicio</span>
+          </NavLink>
+
+          {adminNav.map(({ label, path, icon }) => (
             <NavLink
               key={path}
               to={path}
-              end
+              onClick={onClose}
               className={({ isActive }) =>
-                `px-3 py-2 rounded-lg text-md transition ${
-                  isActive ? "bg-[#4e3e29]" : "hover:bg-[#4e3e29]/70"
+                `flex items-center gap-3 px-3 py-2 rounded-lg transition text-md ${
+                  isActive ? "bg-[#4e3e29]" : "hover:bg-[#4e3e29]/80"
                 }`
               }
             >
-              {label}
+              <span className="text-lg">{icon}</span>
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
       </div>
 
-      <button
-        onClick={handleLogout}
-        className="flex items-center gap-2 text-sm text-white/80 hover:text-white"
-      >
-        <LogOut size={16} /> Cerrar sesión
-      </button>
+      <div className="mt-auto pt-4">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 text-sm text-white/80 hover:text-white"
+        >
+          <LogOut size={16} /> Cerrar sesión
+        </button>
+      </div>
     </aside>
   );
 };
 
 export default AdminSidebar;
+
+
 

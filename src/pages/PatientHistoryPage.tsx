@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
-import Sidebar from "../components/Sidebar";
 import {
   CalendarCheck,
   Ban,
@@ -13,6 +10,11 @@ import {
   Mail,
   ClipboardList,
 } from "lucide-react";
+import Sidebar from "../components/UserSidebar";
+import HamburgerButton from "../components/HamburgerButton";
+import { auth, db } from "../firebase";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { useLocation } from "react-router-dom";
 
 const pacienteNav = [
   { label: "Próxima cita", path: "/panel/paciente/proxima-cita", icon: <CalendarClock /> },
@@ -32,6 +34,12 @@ interface Cita {
 const PatientHistoryPage = () => {
   const [historial, setHistorial] = useState<Cita[]>([]);
   const [nombre, setNombre] = useState("");
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarVisible(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchHistorial = async () => {
@@ -81,16 +89,27 @@ const PatientHistoryPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar title="" items={pacienteNav} onLogout={() => auth.signOut()} />
+    <div className="flex min-h-screen bg-[#fdf8f4]">
+      <HamburgerButton
+        isOpen={sidebarVisible}
+        onToggle={() => setSidebarVisible(!sidebarVisible)}
+      />
 
-      <main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex items-center justify-center -h-screen">
-        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
+      <Sidebar
+        title=""
+        items={pacienteNav}
+        isOpen={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        onLogout={() => auth.signOut()}
+      />
+
+      <main className="w-full min-h-screen px-4 py-8 flex items-center justify-center">
+        <div className="w-full max-w-5xl">
           <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">
             {nombre}
           </h1>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-10">
+          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
             <div className="bg-white border border-[#e0d6ca] rounded-xl p-6 max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-[#5f4b32]">Historial de citas</h2>
@@ -126,7 +145,3 @@ const PatientHistoryPage = () => {
 };
 
 export default PatientHistoryPage;
-
-
-
-

@@ -18,6 +18,8 @@ import {
   updateDoc,
   doc,
   getDoc,
+  arrayUnion,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { holidays2025 } from "../data/holidays";
@@ -37,23 +39,10 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: ToolbarProps<any>) =
   return (
     <div className="mb-4 space-y-3 px-4 sm:px-0">
       <div className="flex items-center justify-between">
-        <button
-          onClick={() => onNavigate("PREV")}
-          className="text-xl text-[#5f4b32] hover:text-[#b89b71] px-4"
-        >
-          ←
-        </button>
-        <span className="text-base font-semibold text-gray-800 text-center flex-1">
-          {label}
-        </span>
-        <button
-          onClick={() => onNavigate("NEXT")}
-          className="text-xl text-[#5f4b32] hover:text-[#b89b71] px-4"
-        >
-          →
-        </button>
+        <button onClick={() => onNavigate("PREV")} className="text-xl text-[#5f4b32] hover:text-[#b89b71] px-4">←</button>
+        <span className="text-base font-semibold text-gray-800 text-center flex-1">{label}</span>
+        <button onClick={() => onNavigate("NEXT")} className="text-xl text-[#5f4b32] hover:text-[#b89b71] px-4">→</button>
       </div>
-
       <div className="flex flex-wrap justify-center gap-3">
         {[
           { label: "Mes", value: "month" },
@@ -92,6 +81,17 @@ interface CalendarEvent extends Event {
   };
 }
 
+const liberarHoraEnDisponibilidad = async (fecha: string, hora: string) => {
+  const ref = doc(db, "disponibilidad", fecha);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    await updateDoc(ref, { horas: arrayUnion(hora) });
+  } else {
+    await setDoc(ref, { horas: [hora] });
+  }
+};
+
 const AppointmentCalendar = () => {
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState<View>("month");
@@ -111,13 +111,12 @@ const AppointmentCalendar = () => {
     const citas = snapshot.docs
       .map((doc) => {
         const data = doc.data();
-        const fecha = data.fechaPropuesta?.toDate() || new Date(data.fecha);
+        const fecha = data.fechaPropuesta?.toDate?.() || new Date(data.fecha);
         const hora = data.horaPropuesta || data.hora || "00:00";
 
         if (!fecha || !hora) return null;
 
-
-        const [h, m] = hora.split(":" ).map(Number);
+        const [h, m] = hora.split(":").map(Number);
         const start = new Date(fecha);
         start.setHours(h);
         start.setMinutes(m);
@@ -164,7 +163,7 @@ const AppointmentCalendar = () => {
 
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     const day = slotInfo.start.getDay();
-    if (day === 0 || day === 6) return;
+    if (day === 0 || day === 6) return; // ❌ bloquea domingos y sábados
 
     if (view === "day") {
       setSelectedSlot(slotInfo);
@@ -181,7 +180,7 @@ const AppointmentCalendar = () => {
       return {
         style: {
           backgroundColor: "#f4e9e1",
-          pointerEvents: "none" as React.CSSProperties["pointerEvents"],
+          pointerEvents: "none" as const,
           opacity: 0.5,
         },
       };
@@ -215,71 +214,70 @@ const AppointmentCalendar = () => {
 
   return (
     <div className="max-w-6xl mx-auto mt-16 px-4 sm:px-6">
-      <div className="overflow-x-auto">
-        <Calendar
-          localizer={localizer}
-          date={date}
-          onNavigate={(newDate) => setDate(newDate)}
-          view={view}
-          onView={(v) => setView(v)}
-          onSelectSlot={handleSelectSlot}
-          onSelectEvent={(event) => {
-            setEditEvent(event as CalendarEvent);
-          }}
-          selectable
-          events={[...eventos, ...festivos]}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: "500px" }}
-          views={["month", "week", "day"]}
-          defaultView="month"
-          messages={{
-            previous: "Anterior",
-            next: "Siguiente",
-            today: "Hoy",
-            month: "Mes",
-            week: "Semana",
-            day: "Día",
-            agenda: "Agenda",
-            date: "Fecha",
-            time: "Hora",
-            event: "Cita",
-            noEventsInRange: "No hay citas en este rango",
-            showMore: (total) => `+ Ver ${total} más`,
-          }}
-          components={{ toolbar: CustomToolbar }}
-          eventPropGetter={(event) => {
-            if (event.title === "Festivo") {
-              return {
-                style: {
-                  backgroundColor: "#f3e8ff",
-                  color: "#7e22ce",
-                  fontWeight: "bold",
-                  border: "1px solid #d8b4fe",
-                  borderRadius: "6px",
-                },
-              };
-            }
-            if (event.resource?.estado === "ausente") {
-              return {
-                style: {
-                  backgroundColor: "#fff3cd",
-                  color: "#856404",
-                  fontWeight: "bold",
-                  borderRadius: "6px",
-                },
-              };
-            }
-            return {};
-          }}
-          slotPropGetter={slotPropGetter}
-        />
-      </div>
+      <Calendar
+        localizer={localizer}
+        date={date}
+        onNavigate={(newDate) => setDate(newDate)}
+        view={view}
+        onView={(v) => setView(v)}
+        onSelectSlot={handleSelectSlot}
+        onSelectEvent={(event) => setEditEvent(event as CalendarEvent)}
+        selectable
+        events={[...eventos, ...festivos]}
+        startAccessor="start"
+        endAccessor="end"
+        style={{ height: "500px" }}
+        views={["month", "week", "day"]}
+        defaultView="month"
+        messages={{
+          previous: "Anterior",
+          next: "Siguiente",
+          today: "Hoy",
+          month: "Mes",
+          week: "Semana",
+          day: "Día",
+          agenda: "Agenda",
+          date: "Fecha",
+          time: "Hora",
+          event: "Cita",
+          noEventsInRange: "No hay citas en este rango",
+          showMore: (total) => `+ Ver ${total} más`,
+        }}
+        components={{ toolbar: CustomToolbar }}
+        eventPropGetter={(event) => {
+          if (event.title === "Festivo") {
+            return {
+              style: {
+                backgroundColor: "#f3e8ff",
+                color: "#7e22ce",
+                fontWeight: "bold",
+                border: "1px solid #d8b4fe",
+                borderRadius: "6px",
+              },
+            };
+          }
+          if (event.resource?.estado === "ausente") {
+            return {
+              style: {
+                backgroundColor: "#fff3cd",
+                color: "#856404",
+                fontWeight: "bold",
+                borderRadius: "6px",
+              },
+            };
+          }
+          return {};
+        }}
+        slotPropGetter={slotPropGetter}
+      />
 
       {modalOpen && selectedSlot && (
         <ManualAppointmentModal
           fecha={selectedSlot.start}
-          hora={selectedSlot.start.toTimeString().slice(0, 5)}
+          hora={selectedSlot.start.toLocaleTimeString("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
           onClose={closeModal}
           onSave={refreshAfterSave}
         />
@@ -296,45 +294,21 @@ const AppointmentCalendar = () => {
           nota={editEvent.resource.nota}
           onClose={() => setEditEvent(null)}
           onUpdate={refreshAfterSave}
-          onDeleteFromHistory={() =>
-            eliminarCitaDeHistorial(
-              editEvent.resource!.email,
-              format(editEvent.start, "yyyy-MM-dd"),
-              format(editEvent.start, "HH:mm")
-            )
-          }
+          onDeleteFromHistory={async () => {
+            if (!editEvent?.resource) return;
+            const fechaStr = format(editEvent.start, "yyyy-MM-dd");
+            const horaStr = format(editEvent.start, "HH:mm");
+            const { email } = editEvent.resource;
+
+            await eliminarCitaDeHistorial(email, fechaStr, horaStr);
+            await liberarHoraEnDisponibilidad(fechaStr, horaStr);
+          }}
         />
       )}
     </div>
   );
 };
 
-export default AppointmentCalendar; 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export default AppointmentCalendar;
 
 

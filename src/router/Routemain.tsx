@@ -11,7 +11,7 @@ import Configuration from "../pages/Configuration";
 import ScrollToTop from "../components/ScrollToTop";
 import AppointmentStatsPage from "../pages/AppointmentStatePage";
 import AdminAppointmentsPage from "../pages/AdminAppointmentsPage";
-import MessagePage from "../pages/MessagePage";
+import MessagePage from "../pages/FormMessagePage";
 import UserCreatePage from "../pages/UserCreatePage";
 import User from "../pages/User";
 import LoginPage from "../pages/LoginPage";

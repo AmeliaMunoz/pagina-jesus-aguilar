@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -10,7 +10,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/UserSidebar";
+import HamburgerButton from "../components/HamburgerButton";
 import {
   Calendar,
   Ticket,
@@ -46,7 +47,13 @@ const User = () => {
   const [nombre, setNombre] = useState<string>("");
   const [bono, setBono] = useState<Bono | null>(null);
   const [proximaCita, setProximaCita] = useState<Cita | null>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarVisible(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!auth.currentUser) {
@@ -93,25 +100,30 @@ const User = () => {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#fdf8f4]">
+      <HamburgerButton
+        isOpen={sidebarVisible}
+        onToggle={() => setSidebarVisible(!sidebarVisible)}
+      />
+
       <Sidebar
         title=""
         items={pacienteNav}
+        isOpen={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
         onLogout={() => {
           auth.signOut();
           navigate("/login");
         }}
       />
 
-      <main className="flex-1 bg-[#fdf8f4] px-6 py-12 flex flex-col items-center justify-center min-h-screen">
-        {/* Saludo FUERA de la tarjeta */}
-        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-5xl ml-auto mr-auto lg:mr-24 text-center md:text-left">
+      <main className="w-full min-h-screen px-4 py-8 flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-5xl ml-auto mr-auto text-center md:text-left">
           ¡Hola, {nombre}!
         </h1>
 
-        {/* Tarjeta de contenido */}
-        <div className="w-full max-w-5xl ml-auto mr-auto lg:mr-24">
-          <div className="bg-white rounded-2xl shadow-3xl border border-[#e0d6ca] p-20">
+        <div className="w-full max-w-5xl ml-auto mr-auto">
+          <div className="bg-white rounded-2xl shadow-3xl border border-[#e0d6ca] p-6 md:p-20">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
               {proximaCita && (
                 <PatientCard title="Próxima cita">
@@ -149,3 +161,4 @@ const User = () => {
 };
 
 export default User;
+
