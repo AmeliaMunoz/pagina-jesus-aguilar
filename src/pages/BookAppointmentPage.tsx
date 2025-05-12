@@ -6,9 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import BookAppointmentFromUser from "../components/BookAppointmentFromUser";
 import UserLayout from "../layouts/UserLayout";
 
-
 const BookAppointmentPage = () => {
-  const [bonoPendiente, setBonoPendiente] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
   const [userUid, setUserUid] = useState<string>("");
@@ -28,34 +26,34 @@ const BookAppointmentPage = () => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setUserName(data.nombre || "");
-        setBonoPendiente(data.bono?.pendientes ?? 0);
-      } else {
-        setBonoPendiente(0);
       }
     });
 
     return () => unsubscribe();
   }, [location.pathname]);
 
-  if (bonoPendiente === null) {
+  if (!userUid || !userEmail || !userName) {
     return <p className="p-6 text-gray-600">Cargando calendario...</p>;
   }
 
   return (
     <UserLayout>
-      <div className="w-full max-w-5xl space-y-8">
-        <h1 className="text-3xl font-bold text-[#5f4b32] text-center md:text-left">
+      <div className="w-full max-w-4xl mx-auto mt-10 px-4 space-y-12">
+        {/* Nombre del usuario */}
+        <h1 className="text-2xl md:text-3xl font-bold text-[#5f4b32] text-center md:text-left">
           {userName}
         </h1>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
-          <BookAppointmentFromUser
-            uid={userUid}
-            userEmail={userEmail}
-            userName={userName}
-
-            onBooked={() => navigate("/panel/paciente/proxima-cita")}
-          />
+        {/* Card de reserva */}
+        <div className="w-full max-w-5xl mx-auto px-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
+            <BookAppointmentFromUser
+              uid={userUid}
+              userEmail={userEmail}
+              userName={userName}
+              onBooked={() => navigate("/panel/paciente/proxima-cita")}
+            />
+          </div>
         </div>
       </div>
     </UserLayout>
@@ -63,6 +61,8 @@ const BookAppointmentPage = () => {
 };
 
 export default BookAppointmentPage;
+
+
 
 
 

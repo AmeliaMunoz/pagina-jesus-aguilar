@@ -10,14 +10,13 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import {
-  Calendar,
-  Clock,
-  Plus,
-  Mail,
-} from "lucide-react";
-import PatientCard from "../components/PatientCard";
 import UserLayout from "../layouts/UserLayout";
+import {
+  CalendarCheck2,
+  MessageSquareText,
+  History,
+  PlusCircle,
+} from "lucide-react";
 
 interface Cita {
   id: string;
@@ -26,13 +25,6 @@ interface Cita {
   estado: string;
   anuladaPorUsuario: boolean;
 }
-
-const pacienteNav = [
-  { label: "Próxima cita", path: "/panel/paciente/proxima-cita", icon: <Calendar /> },
-  { label: "Historial de citas", path: "/panel/paciente/historial", icon: <Clock /> },
-  { label: "Reservar nueva cita", path: "/panel/paciente/reservar", icon: <Plus /> },
-  { label: "Mensajes privados", path: "/panel/paciente/mensajes", icon: <Mail /> },
-];
 
 const User = () => {
   const [nombre, setNombre] = useState<string>("");
@@ -85,34 +77,68 @@ const User = () => {
 
   return (
     <UserLayout>
-      <div className="flex flex-col items-center justify-center w-full h-full">
-        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full text-center md:text-left">
-          ¡Hola, {nombre}!
-        </h1>
+      <div className="w-full max-w-4xl mx-auto mt-10 md:mt-16 lg:mt-24 space-y-16 px-4">
+        {/* Bienvenida */}
+        <div className="bg-white border border-[#e0d6ca] shadow-xl rounded-2xl p-6 md:p-10 text-[#5f4b32]">
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">
+            ¡Hola, {nombre}!
+          </h1>
+          <p className="text-sm md:text-base">
+            Bienvenido a tu espacio personal. Aquí puedes gestionar tus sesiones, revisar tu progreso y mantener el contacto con tu psicólogo.
+          </p>
+        </div>
 
-        <div className="bg-white rounded-2xl shadow-3xl border border-[#e0d6ca] p-6 md:p-20 w-full max-w-5xl">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {proximaCita && (
-              <PatientCard title="Próxima cita">
-                {new Date(proximaCita.fecha).toLocaleDateString("es-ES")},{" "}
-                {proximaCita.hora}
-              </PatientCard>
-            )}
+        {/* Estado actual */}
+        <div className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-2xl shadow-md p-6 space-y-4">
+          <h2 className="text-xl font-semibold text-[#5f4b32] flex items-center gap-2">
+            Tu situación actual
+          </h2>
 
-            <PatientCard
-              title="Historial de citas"
-              onClick={() => navigate("/panel/paciente/historial")}
-            >
-              Ver historial completo
-            </PatientCard>
+          <ul className="text-sm text-[#5f4b32] space-y-4">
+            <li className="flex items-start gap-2">
+              <CalendarCheck2 className="w-5 h-5 mt-0.5 text-green-700" />
+              <span>
+                Próxima cita:{" "}
+                {proximaCita
+                  ? `${new Date(proximaCita.fecha).toLocaleDateString("es-ES")} a las ${proximaCita.hora}`
+                  : "No tienes ninguna cita pendiente"}
+              </span>
+            </li>
 
-            <PatientCard
-              title="Mensajes privados"
-              onClick={() => navigate("/panel/paciente/mensajes")}
-            >
-              Ver mensajes
-            </PatientCard>
-          </div>
+            <li className="flex items-start gap-2">
+              <MessageSquareText className="w-5 h-5 mt-0.5 text-yellow-700" />
+              <span>Puedes enviar un mensaje privado en cualquier momento</span>
+            </li>
+
+            <li className="flex items-start gap-2">
+              <History className="w-5 h-5 mt-0.5 text-blue-700" />
+              <span>Accede a tu historial para ver tus sesiones anteriores</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Acciones rápidas */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={() => navigate("/panel/paciente/reservar")}
+            className="flex items-center justify-center gap-2 bg-[#5f4b32] text-white rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#a37c53] transition"
+          >
+            <PlusCircle className="w-5 h-5" /> Reservar nueva cita
+          </button>
+
+          <button
+            onClick={() => navigate("/panel/paciente/historial")}
+            className="flex items-center justify-center gap-2 border border-[#5f4b32] text-[#5f4b32] rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#f3ece4] transition"
+          >
+            <History className="w-5 h-5" /> Ver historial
+          </button>
+
+          <button
+            onClick={() => navigate("/panel/paciente/mensajes")}
+            className="flex items-center justify-center gap-2 border border-[#5f4b32] text-[#5f4b32] rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#f3ece4] transition"
+          >
+            <MessageSquareText className="w-5 h-5" /> Ir a mensajes
+          </button>
         </div>
       </div>
     </UserLayout>
@@ -120,6 +146,10 @@ const User = () => {
 };
 
 export default User;
+
+
+
+
 
 
 

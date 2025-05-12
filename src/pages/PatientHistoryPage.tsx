@@ -77,37 +77,43 @@ const PatientHistoryPage = () => {
 
   return (
     <UserLayout>
-      <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">
-        {nombre}
-      </h1>
+      <div className="w-full max-w-4xl mx-auto mt-10 px-4">
+        <h1 className="text-3xl font-bold text-[#5f4b32] mb-8 text-center md:text-left">
+          {nombre}
+        </h1>
 
-      <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
-        <div className="bg-white border border-[#e0d6ca] rounded-xl p-6 max-h-[80vh] overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-[#5f4b32]">Historial de citas</h2>
-            <ClipboardList className="hidden lg:block w-10 h-10 text-[#5f4b32]" />
+        <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
+          <div className="bg-white border border-[#e0d6ca] rounded-xl p-6 max-h-[70vh] md:max-h-[75vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg md:text-xl font-semibold text-[#5f4b32]">
+                Historial de citas
+              </h2>
+              <ClipboardList className="hidden lg:block w-10 h-10 text-[#5f4b32]" />
+            </div>
+
+            {historial.length === 0 ? (
+              <p className="text-gray-600 text-sm md:text-base">
+                No hay citas pasadas registradas.
+              </p>
+            ) : (
+              <ul className="divide-y divide-gray-200 text-sm md:text-base text-[#5f4b32]">
+                {historial.map((cita) => (
+                  <li key={cita.id} className="py-3 flex justify-between items-center">
+                    <span className="break-words">
+                      {new Date(cita.fecha).toLocaleDateString("es-ES")} — {cita.hora}
+                    </span>
+                    <span
+                      className={`flex items-center gap-2 font-medium capitalize ${
+                        estadoColor[cita.estado as keyof typeof estadoColor]
+                      }`}
+                    >
+                      {estadoIcon[cita.estado as keyof typeof estadoIcon]} {cita.estado}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-
-          {historial.length === 0 ? (
-            <p className="text-gray-600">No hay citas pasadas registradas.</p>
-          ) : (
-            <ul className="divide-y divide-gray-200 text-sm text-[#5f4b32]">
-              {historial.map((cita) => (
-                <li key={cita.id} className="py-3 flex justify-between items-center">
-                  <span>
-                    {new Date(cita.fecha).toLocaleDateString("es-ES")} — {cita.hora}
-                  </span>
-                  <span
-                    className={`flex items-center gap-2 font-medium capitalize ${
-                      estadoColor[cita.estado as keyof typeof estadoColor]
-                    }`}
-                  >
-                    {estadoIcon[cita.estado as keyof typeof estadoIcon]} {cita.estado}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       </div>
     </UserLayout>
@@ -115,3 +121,5 @@ const PatientHistoryPage = () => {
 };
 
 export default PatientHistoryPage;
+
+

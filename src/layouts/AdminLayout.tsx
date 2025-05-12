@@ -58,9 +58,9 @@ const AdminLayout = ({ children }: Props) => {
           onToggle={() => setSidebarVisible(!sidebarVisible)}
         />
 
-        <main className="flex-1 h-full flex items-center justify-center px-4 sm:px-6 py-12 bg-[#fdf8f4]">
-          <div className="w-full max-w-5xl">{children}</div>
-        </main>
+      <main className="flex-1 px-4 sm:px-6 py-12 overflow-y-auto">
+        <div className="w-full max-w-5xl mx-auto">{children}</div>
+      </main>
       </div>
     </div>
   );

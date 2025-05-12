@@ -224,7 +224,7 @@ const AppointmentCalendar = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl px-4 sm:px-6 mx-auto mt-12 bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
+    <div className="w-full max-w-6xl px-4 sm:px-6 mx-auto bg-white p-6 md:p-10">
       <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 text-center md:text-left">
         Calendario de citas
       </h2>

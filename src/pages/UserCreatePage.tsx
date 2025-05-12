@@ -48,59 +48,61 @@ const UserCreatePage = () => {
 
   return (
     <AdminLayout>
-      <div className="w-full max-w-xl mx-auto bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
-        <h2 className="text-2xl font-semibold mb-6 text-[#5f4b32] flex items-center gap-2">
-          <User /> Crear nuevo usuario
-        </h2>
+      <div className="w-full max-w-xl mx-auto mt-10 px-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
+          <h2 className="text-xl md:text-2xl font-semibold mb-6 text-[#5f4b32] flex items-center gap-2">
+             Crear nuevo usuario
+          </h2>
 
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Nombre completo"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-sm"
-          />
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Nombre completo"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded text-sm"
+            />
 
-          <input
-            type="email"
-            placeholder="Correo electrónico"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-sm"
-          />
+            <input
+              type="email"
+              placeholder="Correo electrónico"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded text-sm"
+            />
 
-          <input
-            type="tel"
-            placeholder="Teléfono"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-sm"
-          />
+            <input
+              type="tel"
+              placeholder="Teléfono"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded text-sm"
+            />
 
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-sm"
-          />
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded text-sm"
+            />
 
-          <input
-            type="number"
-            placeholder="Número de sesiones (bono)"
-            value={totalSesiones}
-            onChange={(e) => setTotalSesiones(parseInt(e.target.value))}
-            min={1}
-            className="w-full p-2 border border-gray-300 rounded text-sm"
-          />
+            <input
+              type="number"
+              placeholder="Número de sesiones (bono)"
+              value={totalSesiones}
+              onChange={(e) => setTotalSesiones(parseInt(e.target.value))}
+              min={1}
+              className="w-full p-3 border border-gray-300 rounded text-sm"
+            />
 
-          <button
-            onClick={crearUsuario}
-            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-          >
-            Crear usuario
-          </button>
+            <button
+              onClick={crearUsuario}
+              className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 text-sm font-medium"
+            >
+              Crear usuario
+            </button>
+          </div>
         </div>
       </div>
     </AdminLayout>
@@ -108,6 +110,7 @@ const UserCreatePage = () => {
 };
 
 export default UserCreatePage;
+
 
 
 

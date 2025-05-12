@@ -26,13 +26,12 @@ const WeeklySchedulePanel = () => {
     const snapshot = await getDocs(collection(db, "horarios_semanales"));
     const datos = snapshot.docs.map((doc) => ({
       dia: doc.id,
-      horas: (doc.data().horas || []).sort(), // ordena las horas dentro de cada día
+      horas: (doc.data().horas || []).sort(),
     }));
 
-    // Ordenar días según diasSemana
     const datosOrdenados = diasSemana
       .map((dia) => datos.find((d) => d.dia === dia))
-      .filter(Boolean); // elimina los días que no existen aún
+      .filter(Boolean);
 
     setHorarios(datosOrdenados as any[]);
   };
@@ -76,19 +75,14 @@ const WeeklySchedulePanel = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto mt-20">
-      <h2 className="text-xl md:text-2xl text-gray-700 tracking-widest uppercase mb-16 font-semibold">
-        Configuración de disponibilidad por semanas
-      </h2>
-
-     
-      <div className="bg-white border border-[#e8d4c3] p-6 rounded-xl shadow-sm mb-8">
-        <h3 className="text-md font-medium mb-4 text-gray-800">
+    <div className="max-w-5xl mx-auto mt-10">
+      <div className="bg-white border border-[#e8d4c3] p-6 rounded-xl shadow-md mb-8">
+        <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">
           Añadir hora disponible
         </h3>
         <div className="grid sm:grid-cols-3 gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600">Día</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-600 font-medium">Día</label>
             <select
               value={diaSeleccionado}
               onChange={(e) => setDiaSeleccionado(e.target.value)}
@@ -102,8 +96,8 @@ const WeeklySchedulePanel = () => {
             </select>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600">Hora</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-600 font-medium">Hora</label>
             <input
               type="time"
               value={nuevaHora}
@@ -115,7 +109,7 @@ const WeeklySchedulePanel = () => {
           <div className="flex items-end">
             <button
               onClick={agregarHora}
-              className="bg-[#b89b71] hover:bg-[#9e855c] text-white px-6 py-2 rounded text-sm"
+              className="bg-[#5f4b32] hover:bg-[#b89b71] text-white px-6 py-2 rounded text-sm w-full"
             >
               Añadir
             </button>
@@ -123,33 +117,37 @@ const WeeklySchedulePanel = () => {
         </div>
       </div>
 
-     
       <div className="space-y-6">
         {horarios.map((item) => (
           <div
             key={item.dia}
             className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6"
           >
-            <h4 className="font-semibold text-brown-800 capitalize mb-3">
+            <h4 className="font-semibold text-[#5f4b32] capitalize mb-3">
               {item.dia}
             </h4>
-            <div className="flex flex-wrap gap-3">
-              {item.horas.map((hora: string) => (
-                <div
-                  key={hora}
-                  className="bg-[#fdf8f4] border border-[#d6c4b0] px-3 py-1 rounded-full text-sm text-gray-800 flex items-center gap-2"
-                >
-                  {hora}
-                  <button
-                    onClick={() => eliminarHora(item.dia, hora)}
-                    className="text-red-500 hover:text-red-700"
-                    aria-label="Eliminar hora"
+
+            {item.horas.length === 0 ? (
+              <p className="text-sm text-gray-500">No hay horas configuradas para este día.</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {item.horas.map((hora: string) => (
+                  <div
+                    key={hora}
+                    className="bg-[#fdf8f4] border border-[#d6c4b0] px-3 py-1 rounded-full text-sm text-gray-800 flex items-center gap-2"
                   >
-                    <X/>
-                  </button>
-                </div>
-              ))}
-            </div>
+                    {hora}
+                    <button
+                      onClick={() => eliminarHora(item.dia, hora)}
+                      className="text-red-500 hover:text-red-700"
+                      aria-label="Eliminar hora"
+                    >
+                      <X />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

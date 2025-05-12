@@ -249,16 +249,23 @@ const BookAppointmentFromUser = ({
   };
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg border border-[#e0d6ca] max-w-5xl mx-auto w-full">
-      <h2 className="text-2xl font-bold text-[#5f4b32] mb-6 text-center">Reservar nueva cita</h2>
-
+    <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-[#e0d6ca] w-full">
+      <h2 className="text-2xl font-bold text-[#5f4b32] mb-6 text-center">
+        Reservar nueva cita
+      </h2>
+  
       {success ? (
-        <p className="text-green-600 font-medium text-center">Cita reservada correctamente.</p>
+        <p className="text-green-600 font-medium text-center">
+          Cita reservada correctamente.
+        </p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* FECHAS */}
           <div className="w-full">
-            <h3 className="text-lg font-semibold mb-2 text-[#5f4b32]">1. Elige una fecha disponible</h3>
-
+            <h3 className="text-lg font-semibold mb-2 text-[#5f4b32]">
+              1. Elige una fecha disponible
+            </h3>
+  
             <div className="block lg:hidden">
               <DatePicker
                 selected={selectedDate}
@@ -275,7 +282,7 @@ const BookAppointmentFromUser = ({
                 className="w-full border p-3 rounded text-sm"
               />
             </div>
-
+  
             <div className="hidden lg:block w-full max-w-[340px]">
               <DatePicker
                 selected={selectedDate}
@@ -291,17 +298,20 @@ const BookAppointmentFromUser = ({
                 locale="es"
               />
             </div>
-
+  
             {availableDates.length === 0 && (
               <p className="text-sm text-red-500 mt-4">
                 No hay fechas disponibles actualmente. Intenta más tarde.
               </p>
             )}
           </div>
-
+  
+          {/* HORAS + RESUMEN + BOTÓN */}
           <div className="w-full flex flex-col justify-between min-h-[400px]">
             <div>
-              <h3 className="text-lg font-semibold mb-2 text-[#5f4b32]">2. Selecciona una hora</h3>
+              <h3 className="text-lg font-semibold mb-2 text-[#5f4b32]">
+                2. Selecciona una hora
+              </h3>
               <div className="flex flex-wrap gap-2 mb-4">
                 {availableHours.length > 0 ? (
                   availableHours.map((hora) => (
@@ -318,14 +328,16 @@ const BookAppointmentFromUser = ({
                     </button>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500">Selecciona una fecha para ver las horas.</p>
+                  <p className="text-sm text-gray-500">
+                    Selecciona una fecha para ver las horas.
+                  </p>
                 )}
               </div>
             </div>
-
+  
             {selectedDate && selectedHour && (
               <div className="bg-[#f9f6f1] border border-[#e0d6ca] rounded-lg p-4 text-sm text-[#5f4b32] shadow-sm mb-4 flex items-start gap-3 mt-6">
-                <CalendarClock className="w-5 h-5 sm:w-6 sm:h-6 lg:w-10 lg:h-10 text-[#5f4b32]" />
+                <CalendarClock className="w-5 h-5 sm:w-6 sm:h-6 text-[#5f4b32]" />
                 <div>
                   <h4 className="font-semibold mb-2">Resumen de la cita:</h4>
                   <p>
@@ -343,7 +355,7 @@ const BookAppointmentFromUser = ({
                 </div>
               </div>
             )}
-
+  
             <button
               onClick={handleBooking}
               disabled={loading || !selectedDate || !selectedHour}
@@ -356,7 +368,7 @@ const BookAppointmentFromUser = ({
       )}
     </div>
   );
-};
+}  
 
 export default BookAppointmentFromUser;
 
