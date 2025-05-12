@@ -12,6 +12,7 @@ import {
   getDocs,
   query,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -62,28 +63,48 @@ const BookAppointmentFromUser = ({
         date.setDate(date.getDate() + i);
         const dateStr = formatDate(date);
 
-        const dayOfWeek = date.toLocaleDateString("es-ES", { weekday: "long" })
+        const dayOfWeek = date
+          .toLocaleDateString("es-ES", { weekday: "long" })
           .toLowerCase()
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "");
 
         if (holidays2025.includes(dateStr) || date.getDay() === 6) continue;
 
-        const disponibilidadDoc = await getDoc(doc(db, "disponibilidad", dateStr));
-        if (disponibilidadDoc.exists()) {
-          const data = disponibilidadDoc.data();
-          if (Array.isArray(data.horas) && data.horas.length > 0) {
-            result.push(new Date(date));
-            continue;
-          }
+        let horasDisponibles: string[] = [];
+
+        const disponibilidadSnap = await getDoc(doc(db, "disponibilidad", dateStr));
+        const tieneDocumento = disponibilidadSnap.exists();
+        const horasEnDoc = tieneDocumento ? disponibilidadSnap.data().horas || [] : [];
+
+        if (horasEnDoc.length < 3) {
+          const horarioSnap = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
+          const horasSemana = horarioSnap.exists() ? horarioSnap.data().horas || [] : [];
+
+          horasDisponibles = Array.from(new Set([...horasEnDoc, ...horasSemana]));
+
+          const mensajesSnap = await getDocs(
+            query(
+              collection(db, "mensajes"),
+              where(
+                "fechaPropuesta",
+                "==",
+                Timestamp.fromDate(
+                  new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                )
+              ),
+              where("estado", "==", "pendiente")
+            )
+          );
+
+          const horasBloqueadas = mensajesSnap.docs.map(doc => doc.data().horaPropuesta);
+          horasDisponibles = horasDisponibles.filter(h => !horasBloqueadas.includes(h));
+        } else {
+          horasDisponibles = horasEnDoc;
         }
 
-        const dayDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
-        if (dayDoc.exists()) {
-          const data = dayDoc.data();
-          if (Array.isArray(data.horas) && data.horas.length > 0) {
-            result.push(new Date(date));
-          }
+        if (horasDisponibles.length > 0) {
+          result.push(new Date(date));
         }
       }
 
@@ -102,50 +123,72 @@ const BookAppointmentFromUser = ({
   useEffect(() => {
     const fetchAvailableHours = async () => {
       if (!selectedDate) return;
-  
+
       const dateStr = formatDate(selectedDate);
       const dayOfWeek = selectedDate
         .toLocaleDateString("es-ES", { weekday: "long" })
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
-  
+
       let horasDisponibles: string[] = [];
-  
-      // Paso 1: obtenemos las horas desde disponibilidad
+
       const disponibilidadSnap = await getDoc(doc(db, "disponibilidad", dateStr));
       if (disponibilidadSnap.exists()) {
         const data = disponibilidadSnap.data();
         horasDisponibles = data?.horas || [];
       }
-  
-      // Paso 2: si hay pocas, completamos con el horario semanal
+
       if (horasDisponibles.length < 3) {
         const horarioDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
         if (horarioDoc.exists()) {
           const data = horarioDoc.data();
           const horasDelHorario = data.horas || [];
           horasDisponibles = Array.from(new Set([...horasDisponibles, ...horasDelHorario]));
+
+          const mensajesSnap = await getDocs(
+            query(
+              collection(db, "mensajes"),
+              where(
+                "fechaPropuesta",
+                "==",
+                Timestamp.fromDate(
+                  new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    selectedDate.getDate()
+                  )
+                )
+              ),
+              where("estado", "==", "pendiente")
+            )
+          );
+
+          const horasSolicitadas = mensajesSnap.docs.map(
+            (doc) => doc.data().horaPropuesta
+          );
+
+          horasDisponibles = horasDisponibles.filter(
+            (hora) => !horasSolicitadas.includes(hora)
+          );
         }
       }
-  
-      // Paso 3: filtramos las horas que ya estén ocupadas, ignorando citas anuladas
+
       const citasSnap = await getDocs(
         query(collection(db, "citas"), where("fecha", "==", dateStr))
       );
-  
+
       const usadas = citasSnap.docs
         .filter((doc) => doc.data().estado !== "anulada")
         .map((doc) => doc.data().hora);
-  
+
       const disponibles = horasDisponibles.filter((hora) => !usadas.includes(hora));
-  
+
       setAvailableHours(disponibles);
     };
-  
+
     fetchAvailableHours();
   }, [selectedDate, refreshKey]);
-  
 
   const handleBooking = async () => {
     if (!selectedDate || !selectedHour) return;
@@ -316,6 +359,7 @@ const BookAppointmentFromUser = ({
 };
 
 export default BookAppointmentFromUser;
+
 
 
 

@@ -7,7 +7,9 @@ import {
   addDoc,
   Timestamp,
   updateDoc,
-  arrayRemove
+  arrayRemove,
+  query,     
+  where         
 } from "firebase/firestore";
 import { db } from "../firebase";
 import DatePicker from "react-datepicker";
@@ -33,16 +35,19 @@ const ContactSection = () => {
   const generarFechasDisponibles = async (): Promise<Date[]> => {
     const hoy = new Date();
     const dias: Date[] = [];
-
+  
     const disponibilidadSnap = await getDocs(collection(db, "disponibilidad"));
-    const fechasPuntuales = disponibilidadSnap.docs.map((doc) => doc.id);
-
-    const horariosSnap = await getDocs(collection(db, "horarios_semanales"));
-    const diasRecurrentes: Record<string, string[]> = {};
-    horariosSnap.docs.forEach((doc) => {
-      diasRecurrentes[doc.id] = doc.data().horas || [];
+    const disponibilidadMap: Record<string, string[]> = {};
+    disponibilidadSnap.docs.forEach((docSnap) => {
+      disponibilidadMap[docSnap.id] = docSnap.data().horas || [];
     });
-
+  
+    const horariosSnap = await getDocs(collection(db, "horarios_semanales"));
+    const horariosMap: Record<string, string[]> = {};
+    horariosSnap.docs.forEach((doc) => {
+      horariosMap[doc.id] = doc.data().horas || [];
+    });
+  
     for (let i = 0; i < 30; i++) {
       const fecha = addDays(hoy, i);
       const yyyyMMdd = fecha.toLocaleDateString("sv-SE");
@@ -51,25 +56,29 @@ const ContactSection = () => {
         .toLowerCase()
         .normalize("NFD")
         .replace(/\p{Diacritic}/gu, "");
-
-      const esFestivo = holidays2025.includes(yyyyMMdd);
-
-      const tieneDisponibilidad =
-        !esFestivo &&
-        (fechasPuntuales.includes(yyyyMMdd) ||
-          (diasRecurrentes[diaSemana] &&
-            diasRecurrentes[diaSemana].some((hora) => {
-              const h = parseInt(hora.split(":" )[0]);
-              return h >= 7 && h < 22;
-            })));
-
-      if (tieneDisponibilidad) {
+  
+      if (holidays2025.includes(yyyyMMdd)) continue;
+  
+      const horasDisponibilidad = disponibilidadMap[yyyyMMdd] || [];
+      const horasSemana = horariosMap[diaSemana] || [];
+  
+      // Combinamos si hay pocas en disponibilidad
+      const horasCombinadas = horasDisponibilidad.length < 3
+        ? Array.from(new Set([...horasDisponibilidad, ...horasSemana]))
+        : horasDisponibilidad;
+  
+      const horasValidas = horasCombinadas.filter((hora) => {
+        const h = parseInt(hora.split(":")[0]);
+        return h >= 7 && h < 22;
+      });
+  
+      if (horasValidas.length > 0) {
         dias.push(fecha);
       }
     }
-
+  
     return dias;
-  };
+  };  
 
   useEffect(() => {
     const cargarFechasDisponibles = async () => {
@@ -82,38 +91,52 @@ const ContactSection = () => {
   useEffect(() => {
     const cargarHoras = async () => {
       if (!startDate) return;
-
+  
       const fechaSeleccionada = startDate.toLocaleDateString("sv-SE");
+      const diaSemana = startDate
+        .toLocaleDateString("es-ES", { weekday: "long" })
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "");
+  
+      let horas: string[] = [];
+  
       const docRef = doc(db, "disponibilidad", fechaSeleccionada);
       const docSnap = await getDoc(docRef);
-      let horas: string[] = [];
-
-      if (docSnap.exists()) {
-        horas = docSnap.data().horas || [];
-      } else {
-        const diaSemana = startDate.toLocaleDateString("es-ES", { weekday: "long" })
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/\p{Diacritic}/gu, "");
+      const horasDisponibilidad = docSnap.exists() ? docSnap.data().horas || [] : [];
+  
+      if (horasDisponibilidad.length < 3) {
         const horarioRef = doc(db, "horarios_semanales", diaSemana);
         const horarioSnap = await getDoc(horarioRef);
-
-        if (horarioSnap.exists()) {
-          horas = horarioSnap.data().horas || [];
-        }
+        const horasSemana = horarioSnap.exists() ? horarioSnap.data().horas || [] : [];
+  
+        horas = Array.from(new Set([...horasDisponibilidad, ...horasSemana]));
+      } else {
+        horas = horasDisponibilidad;
       }
-
+  
+      // ❌ Excluir horas ya reservadas en citas (excepto las anuladas)
+      const citasSnap = await getDocs(
+        query(collection(db, "citas"), where("fecha", "==", fechaSeleccionada))
+      );
+  
+      const horasOcupadas = citasSnap.docs
+        .filter((doc) => doc.data().estado !== "anulada")
+        .map((doc) => doc.data().hora);
+  
+      // 🔐 Filtrar solo horas válidas y disponibles
       const filtradas = horas.filter((hora) => {
-        const [h] = hora.split(":" );
-        return parseInt(h) >= 7 && parseInt(h) < 22;
+        const [h] = hora.split(":");
+        return parseInt(h) >= 7 && parseInt(h) < 22 && !horasOcupadas.includes(hora);
       });
-
+  
       setHorasDisponibles(filtradas);
       setHoraSeleccionada("");
     };
-
+  
     cargarHoras();
   }, [startDate]);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
