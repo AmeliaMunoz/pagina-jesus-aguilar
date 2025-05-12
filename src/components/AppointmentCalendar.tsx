@@ -44,11 +44,7 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: ToolbarProps<any>) =
         <button onClick={() => onNavigate("NEXT")} className="text-xl text-[#5f4b32] hover:text-[#b89b71] px-4">→</button>
       </div>
       <div className="flex flex-wrap justify-center gap-3">
-        {[
-          { label: "Mes", value: "month" },
-          { label: "Semana", value: "week" },
-          { label: "Día", value: "day" },
-        ].map(({ label, value }) => (
+        {["month", "week", "day"].map((value) => (
           <button
             key={value}
             onClick={() => onView(value as View)}
@@ -58,7 +54,7 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: ToolbarProps<any>) =
                 : "bg-white text-[#5f4b32] border-[#c8b29d] hover:text-[#b89b71]"
             }`}
           >
-            {label}
+            {value === "month" ? "Mes" : value === "week" ? "Semana" : "Día"}
           </button>
         ))}
       </div>
@@ -86,9 +82,19 @@ const liberarHoraEnDisponibilidad = async (fecha: string, hora: string) => {
   const snap = await getDoc(ref);
 
   if (snap.exists()) {
-    await updateDoc(ref, { horas: arrayUnion(hora) });
+    const data = snap.data();
+    const horas = Array.isArray(data.horas) ? data.horas : [];
+    if (!horas.includes(hora)) {
+      await updateDoc(ref, {
+        horas: [...horas, hora],
+        fecha: fecha,
+      });
+    }
   } else {
-    await setDoc(ref, { horas: [hora] });
+    await setDoc(ref, {
+      horas: [hora],
+      fecha: fecha,
+    });
   }
 };
 
@@ -116,10 +122,15 @@ const AppointmentCalendar = () => {
 
         if (!fecha || !hora) return null;
 
-        const [h, m] = hora.split(":").map(Number);
-        const start = new Date(fecha);
-        start.setHours(h);
-        start.setMinutes(m);
+        const [h, m] = hora.split(":" ).map(Number);
+
+        const start = new Date(
+          fecha.getFullYear(),
+          fecha.getMonth(),
+          fecha.getDate(),
+          h,
+          m
+        );
 
         const end = new Date(start);
         end.setMinutes(end.getMinutes() + (data.duracionMinutos || 60));
@@ -163,7 +174,7 @@ const AppointmentCalendar = () => {
 
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     const day = slotInfo.start.getDay();
-    if (day === 0 || day === 6) return; // ❌ bloquea domingos y sábados
+    if (day === 0 || day === 6) return;
 
     if (view === "day") {
       setSelectedSlot(slotInfo);
@@ -213,7 +224,11 @@ const AppointmentCalendar = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto mt-16 px-4 sm:px-6">
+    <div className="w-full max-w-6xl px-4 sm:px-6 mx-auto mt-12 bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
+      <h2 className="text-2xl font-semibold text-[#5f4b32] mb-6 text-center md:text-left">
+        Calendario de citas
+      </h2>
+
       <Calendar
         localizer={localizer}
         date={date}
@@ -310,5 +325,3 @@ const AppointmentCalendar = () => {
 };
 
 export default AppointmentCalendar;
-
-

@@ -1,41 +1,63 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import { useNavigate } from "react-router-dom";
 
-const Login = () => {
+interface Props {
+  redirectTo: string;
+  authKey: string;
+  title: string;
+}
+
+const Login = ({ redirectTo, authKey, title }: Props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      console.log("Inicio de sesión exitoso");
-      // Redirige al usuario a su perfil
+      localStorage.setItem(authKey, "true");
+      navigate(redirectTo);
     } catch (err: any) {
-      setError("Error en el inicio de sesión: " + err.message);
+      setError("Error: " + err.message);
     }
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Correo electrónico"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">Iniciar sesión</button>
-      </form>
-      {error && <p>{error}</p>}
+    <div className="min-h-screen bg-[#fdf8f4] flex flex-col justify-center items-center">
+      <div className="w-full max-w-sm bg-white p-8 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-semibold text-center text-[#5f4b32] mb-8">
+          {title}
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded"
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded"
+          />
+          <button
+            type="submit"
+            className="w-full bg-[#5f4b32] text-white py-2 rounded hover:bg-[#b89b71]"
+          >
+            Iniciar sesión
+          </button>
+          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+        </form>
+      </div>
     </div>
   );
 };

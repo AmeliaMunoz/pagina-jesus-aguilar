@@ -11,6 +11,8 @@ import {
   LogOut,
 } from "lucide-react";
 import IconoLogo from "./IconoLogo";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
 
 const adminNav = [
   { label: "Mensajes formulario", path: "/admin/mensajes", icon: <Mail /> },
@@ -28,16 +30,22 @@ interface Props {
 }
 
 const AdminSidebar = ({ isOpen = false, onClose }: Props) => {
-  const handleLogout = () => {
-    localStorage.removeItem("admin-autenticado");
-    window.location.href = "/admin";
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem("admin-autenticado");
+      window.location.href = "/admin";
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+
     if (onClose) onClose();
   };
 
   return (
     <aside
       className={`
-        fixed top-0 left-0 h-screen w-64 bg-[#735035] text-white px-6 py-8 z-40
+        fixed top-0 left-0 h-screen w-80 bg-[#735035] text-white px-6 py-8 z-40
         transition-transform duration-300 overflow-y-auto
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 lg:static lg:flex lg:flex-col lg:justify-between
@@ -84,10 +92,10 @@ const AdminSidebar = ({ isOpen = false, onClose }: Props) => {
         </nav>
       </div>
 
-      <div className="mt-auto pt-4">
+      <div className="pt-6 border-white/20">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-sm text-white/80 hover:text-white"
+          className="flex items-center gap-2 text-sm text-white/80 hover:text-white mt-4"
         >
           <LogOut size={16} /> Cerrar sesión
         </button>
@@ -97,6 +105,14 @@ const AdminSidebar = ({ isOpen = false, onClose }: Props) => {
 };
 
 export default AdminSidebar;
+
+
+
+
+
+
+
+
 
 
 

@@ -14,7 +14,7 @@ import {
   SendHorizontal,
   Mail,
 } from "lucide-react";
-import AdminSidebar from "../components/AdminSidebar";
+import AdminLayout from "../layouts/AdminLayout";
 
 interface Mensaje {
   id: string;
@@ -75,9 +75,6 @@ export default function AdminMessagesPage() {
     const texto = respuestas[selectedUid ?? ""]?.trim();
     if (!texto || !selectedUid) return;
 
-    const paciente = pacientesUnicos.find((p) => p.uid === selectedUid);
-    if (!paciente) return;
-
     await addDoc(collection(db, "mensajes"), {
       uid: selectedUid,
       nombre: "Psicólogo",
@@ -91,16 +88,12 @@ export default function AdminMessagesPage() {
   };
 
   return (
-    <div className="flex bg-[#f5ede3] min-h-screen">
-      <AdminSidebar />
-
-      <main className="w-full min-h-screen px-4 py-8 flex items-center justify-center">
-        <div className="w-full max-w-6xl bg-white rounded-xl shadow p-4 md:p-6 flex flex-col lg:flex-row gap-6">
+    <AdminLayout>
+      <div className="bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-10 w-full">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Lista de pacientes */}
           <aside className="w-full lg:w-1/4 border-r pr-0 lg:pr-4">
-            <h2 className="text-lg font-semibold mb-4 text-[#5f4b32]">
-              Pacientes
-            </h2>
+            <h2 className="text-lg font-semibold mb-4 text-[#5f4b32]">Pacientes</h2>
 
             {mensajesSinResponder.length > 0 && (
               <div className="mb-4 p-3 bg-red-100 text-red-800 text-sm rounded-md border border-red-300">
@@ -194,9 +187,10 @@ export default function AdminMessagesPage() {
             )}
           </section>
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
+
 
 

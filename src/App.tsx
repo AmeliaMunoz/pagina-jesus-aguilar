@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth"; 
-import LoginPage from "./pages/LoginPage";
+import LoginPage from "./pages/UserLoginPage";
 import Admin from "./pages/Admin"; 
 import User from "./pages/User";
 

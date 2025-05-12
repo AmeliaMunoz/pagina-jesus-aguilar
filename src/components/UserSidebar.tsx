@@ -26,7 +26,7 @@ const UserSidebar = ({ title, items, onLogout, isOpen = false, onClose }: Props)
   return (
     <aside
       className={`
-        fixed top-0 left-0 h-screen w-64 bg-[#735035] text-white px-6 py-8 z-40
+        fixed top-0 left-0 h-screen w-80 bg-[#735035] text-white px-6 py-8 z-40
         transition-transform duration-300 overflow-y-auto
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 lg:static lg:flex lg:flex-col lg:justify-between

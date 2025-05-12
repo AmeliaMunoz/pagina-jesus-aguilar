@@ -14,13 +14,13 @@ import AdminAppointmentsPage from "../pages/AdminAppointmentsPage";
 import MessagePage from "../pages/FormMessagePage";
 import UserCreatePage from "../pages/UserCreatePage";
 import User from "../pages/User";
-import LoginPage from "../pages/LoginPage";
+import LoginPage from "../pages/UserLoginPage";
 import BookAppointmentPage from "../pages/BookAppointmentPage";
-import PatientBonoPage from "../pages/PatientBonoPage";
 import NextAppointmentPage from "../pages/NextAppointmentPage";
 import PatientHistoryPage from "../pages/PatientHistoryPage";
 import PatientMessagesPage from "../pages/PatientMessagePage";
 import AdminMessagesPage from "../pages/AdminMessagePage";
+import AdminLoginPage from "../pages/AdminLoginPage";
 
 
 
@@ -45,12 +45,14 @@ const RouteMain = () => {
       <Route path="/login" element={<LoginPage />} /> 
       <Route path="/profile" element={User ? <User /> : <LoginPage />} />
       <Route path="/panel/paciente/reservar" element={<BookAppointmentPage />} />
-      <Route path="/panel/paciente/bono" element={<PatientBonoPage />} />
+
       <Route path="/panel/paciente/proxima-cita" element={<NextAppointmentPage />} />
       <Route path="/panel/paciente/historial" element={<PatientHistoryPage />} />
       <Route path="/panel/paciente/mensajes" element={<PatientMessagesPage />} />
       <Route path="/admin/mensajes-pacientes" element={<AdminMessagesPage />} />
       <Route path="/panel/paciente/user" element={<User />} />
+      <Route path="/admin-login" element={<AdminLoginPage />} />
+
 
 
 

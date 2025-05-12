@@ -10,8 +10,6 @@ import {
   CalendarClock,
   UserCheck,
 } from "lucide-react";
-import Sidebar from "../components/UserSidebar";
-import HamburgerButton from "../components/HamburgerButton";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -23,24 +21,12 @@ import {
   where,
 } from "firebase/firestore";
 import { useLocation } from "react-router-dom";
-
-const pacienteNav = [
-  { label: "Próxima cita", path: "/panel/paciente/proxima-cita", icon: <CalendarClock /> },
-  { label: "Mi bono", path: "/panel/paciente/bono", icon: <Ticket /> },
-  { label: "Historial de citas", path: "/panel/paciente/historial", icon: <BarChartHorizontal /> },
-  { label: "Reservar nueva cita", path: "/panel/paciente/reservar", icon: <Plus /> },
-  { label: "Mensajes privados", path: "/panel/paciente/mensajes", icon: <Mail /> },
-];
+import UserLayout from "../layouts/UserLayout";
 
 const PatientBonoPage = () => {
   const [bono, setBono] = useState<{ total: number; usadas: number; pendientes: number } | null>(null);
   const [nombre, setNombre] = useState("");
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    setSidebarVisible(false);
-  }, [location.pathname]);
 
   useEffect(() => {
     const fetchBono = async () => {
@@ -87,7 +73,7 @@ const PatientBonoPage = () => {
     };
 
     fetchBono();
-  }, []);
+  }, [location.pathname]);
 
   if (!bono) {
     return <p className="p-6 text-gray-600">Cargando información del bono...</p>;
@@ -96,89 +82,73 @@ const PatientBonoPage = () => {
   const porcentaje = (bono.usadas / bono.total) * 100;
 
   return (
-    <div className="flex min-h-screen bg-[#fdf8f4]">
-      <HamburgerButton
-        isOpen={sidebarVisible}
-        onToggle={() => setSidebarVisible(!sidebarVisible)}
-      />
+    <UserLayout>
+      <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 text-center md:text-left">
+        {nombre}
+      </h1>
 
-      <Sidebar
-        title=""
-        items={pacienteNav}
-        isOpen={sidebarVisible}
-        onClose={() => setSidebarVisible(false)}
-        onLogout={() => auth.signOut()}
-      />
+      <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
+        <div className="bg-white border border-[#e0d6ca] rounded-xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-[#5f4b32]">Mi bono de sesiones</h2>
+              <p className="text-sm text-gray-600">Aquí puedes ver el estado de tu bono activo.</p>
+            </div>
+            <UserCheck className="hidden lg:block w-10 h-10 text-[#5f4b32]" />
+          </div>
 
-      <main className="w-full min-h-screen px-4 py-8 flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full max-w-5xl ml-auto mr-auto text-center md:text-left">
-          {nombre}
-        </h1>
+          <div className="mb-6">
+            <h3 className="text-md font-medium text-[#5f4b32] mb-2 flex items-center gap-2">
+              <Ticket className="w-5 h-5" /> Progreso del bono
+            </h3>
+            <div className="w-full bg-gray-200 rounded-full h-5 shadow-inner overflow-hidden">
+              <div
+                className={`h-5 transition-all duration-300 ${
+                  porcentaje >= 70 ? "bg-green-500" : porcentaje >= 30 ? "bg-yellow-500" : "bg-red-500"
+                }`}
+                style={{ width: `${porcentaje}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-600 mt-2 text-right">
+              {bono.usadas} usadas de {bono.total} sesiones
+            </p>
+          </div>
 
-        <div className="w-full max-w-5xl ml-auto mr-auto">
-          <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
-            <div className="bg-white border border-[#e0d6ca] rounded-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-[#5f4b32]">Mi bono de sesiones</h2>
-                  <p className="text-sm text-gray-600">Aquí puedes ver el estado de tu bono activo.</p>
-                </div>
-                <UserCheck className="hidden lg:block w-10 h-10 text-[#5f4b32]" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mt-6">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#f9f6f1] border border-[#e0d6ca] shadow-sm">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <div>
+                <p className="text-xs text-gray-500">Total</p>
+                <p className="font-semibold text-[#5f4b32]">{bono.total}</p>
               </div>
-
-              <div className="mb-6">
-                <h3 className="text-md font-medium text-[#5f4b32] mb-2 flex items-center gap-2">
-                  <Ticket className="w-5 h-5" /> Progreso del bono
-                </h3>
-                <div className="w-full bg-gray-200 rounded-full h-5 shadow-inner overflow-hidden">
-                  <div
-                    className={`h-5 transition-all duration-300 ${
-                      porcentaje >= 70 ? "bg-green-500" : porcentaje >= 30 ? "bg-yellow-500" : "bg-red-500"
-                    }`}
-                    style={{ width: `${porcentaje}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-gray-600 mt-2 text-right">
-                  {bono.usadas} usadas de {bono.total} sesiones
-                </p>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#f9f6f1] border border-[#e0d6ca] shadow-sm">
+              <BarChartHorizontal className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="text-xs text-gray-500">Usadas</p>
+                <p className="font-semibold text-[#5f4b32]">{bono.usadas}</p>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mt-6">
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-[#f9f6f1] border border-[#e0d6ca] shadow-sm">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">Total</p>
-                    <p className="font-semibold text-[#5f4b32]">{bono.total}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-[#f9f6f1] border border-[#e0d6ca] shadow-sm">
-                  <BarChartHorizontal className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">Usadas</p>
-                    <p className="font-semibold text-[#5f4b32]">{bono.usadas}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-[#f9f6f1] border border-[#e0d6ca] shadow-sm">
-                  <Info className="w-5 h-5 text-orange-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">Pendientes</p>
-                    <p className="font-semibold text-[#5f4b32]">{bono.pendientes}</p>
-                  </div>
-                </div>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#f9f6f1] border border-[#e0d6ca] shadow-sm">
+              <Info className="w-5 h-5 text-orange-600" />
+              <div>
+                <p className="text-xs text-gray-500">Pendientes</p>
+                <p className="font-semibold text-[#5f4b32]">{bono.pendientes}</p>
               </div>
-
-              {bono.pendientes === 0 && (
-                <div className="mt-6 text-red-600 font-medium flex items-center gap-2 bg-red-100 border border-red-300 p-3 rounded-md">
-                  <AlertTriangle className="w-5 h-5" />
-                  Ya no te quedan sesiones disponibles. Contacta con tu psicólogo para renovar tu bono.
-                </div>
-              )}
             </div>
           </div>
+
+          {bono.pendientes === 0 && (
+            <div className="mt-6 text-red-600 font-medium flex items-center gap-2 bg-red-100 border border-red-300 p-3 rounded-md">
+              <AlertTriangle className="w-5 h-5" />
+              Ya no te quedan sesiones disponibles. Contacta con tu psicólogo para renovar tu bono.
+            </div>
+          )}
         </div>
-      </main>
-    </div>
+      </div>
+    </UserLayout>
   );
 };
 
 export default PatientBonoPage;
+

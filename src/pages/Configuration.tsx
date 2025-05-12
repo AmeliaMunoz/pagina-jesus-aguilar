@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import AdminSidebar from "../components/AdminSidebar";
 import AvailabilityPanel from "../components/AvailabilityPanel";
 import WeeklySchedulePanel from "../components/WeeklySchedulePanel";
-import HamburgerButton from "../components/HamburgerButton";
+import AdminLayout from "../layouts/AdminLayout";
 
 const Configuracion = () => {
-  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [_, setSidebarVisible] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -14,31 +13,24 @@ const Configuracion = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex bg-[#fdf8f4] min-h-screen overflow-x-hidden relative">
-      <HamburgerButton
-        isOpen={sidebarVisible}
-        onToggle={() => setSidebarVisible(!sidebarVisible)}
-      />
-
-      <AdminSidebar
-        isOpen={sidebarVisible}
-        onClose={() => setSidebarVisible(false)}
-      />
-
-      <main className="w-full min-h-screen px-4 sm:px-6 py-8 sm:py-12 flex flex-col items-center justify-center space-y-16">
-        <section id="disponibilidad" className="w-full max-w-5xl">
+    <AdminLayout>
+      <div className="w-full max-w-5xl bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-10 space-y-16">
+        <section id="disponibilidad" className="space-y-6">
+          <h2 className="text-2xl font-semibold text-[#5f4b32]">Disponibilidad específica</h2>
           <AvailabilityPanel />
         </section>
 
-        <section id="horarios" className="w-full max-w-5xl">
+        <section id="horarios" className="space-y-6">
+          <h2 className="text-2xl font-semibold text-[#5f4b32]">Horarios semanales</h2>
           <WeeklySchedulePanel />
         </section>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 
 export default Configuracion;
+
 
 
 

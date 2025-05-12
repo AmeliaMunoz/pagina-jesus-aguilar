@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { CalendarDays, Clock, AlertCircle, Mail } from "lucide-react";
-import AdminSidebar from "../components/AdminSidebar";
-import HamburgerButton from "../components/HamburgerButton";
 import { useLocation } from "react-router-dom";
+import AdminLayout from "../layouts/AdminLayout";
 
 interface MensajeFormulario {
   id: string;
@@ -29,17 +28,12 @@ const Admin = () => {
   const [citasHoy, setCitasHoy] = useState<MensajeFormulario[]>([]);
   const [mensajesFormulario, setMensajesFormulario] = useState<MensajeFormulario[]>([]);
   const [mensajesPacientes, setMensajesPacientes] = useState<MensajePaciente[]>([]);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const location = useLocation();
 
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
   const mañana = new Date(hoy);
   mañana.setDate(hoy.getDate() + 1);
-
-  useEffect(() => {
-    setSidebarVisible(false);
-  }, [location.pathname]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,16 +94,12 @@ const Admin = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex bg-[#fdf8f4] min-h-screen overflow-x-hidden relative">
-      <HamburgerButton isOpen={sidebarVisible} onToggle={() => setSidebarVisible(!sidebarVisible)} />
-
-      <AdminSidebar isOpen={sidebarVisible} onClose={() => setSidebarVisible(false)} />
-
-      <main className="w-full min-h-screen px-4 py-8 flex flex-col items-center justify-center">
-        <div className="w-full max-w-5xl space-y-16">
+    <AdminLayout>
+      <div className="bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-10 w-full">
+        <div className="space-y-16">
           {/* Citas de hoy */}
-          <section>
-            <h2 className="text-xl md:text-2xl font-semibold text-[#5f4b32] mb-4 md:mb-6 flex items-center gap-2">
+          <section className="space-y-6">
+            <h2 className="text-xl md:text-2xl font-semibold text-[#5f4b32] flex items-center gap-2 text-center md:text-left">
               <CalendarDays size={20} className="md:size-6" /> Citas de hoy
             </h2>
             {citasHoy.length === 0 ? (
@@ -122,11 +112,11 @@ const Admin = () => {
                     className={`p-3 md:p-4 rounded-lg shadow-sm border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 ${
                       cita.estado === "ausente"
                         ? "bg-yellow-100 border-yellow-300"
-                        : "bg-white border-gray-300"
+                        : "bg-[#fdf8f4] border-[#e0d6ca]"
                     }`}
                   >
-                    <div className="flex items-center gap-2 text-sm md:text-base">
-                      <Clock size={16} className="text-[#5f4b32]" />
+                    <div className="flex items-center gap-2 text-sm md:text-base text-[#5f4b32]">
+                      <Clock size={16} />
                       <span>
                         {cita.horaPropuesta} — {cita.nombre} ({cita.email})
                       </span>
@@ -147,8 +137,8 @@ const Admin = () => {
           </section>
 
           {/* Mensajes formulario */}
-          <section>
-            <h2 className="text-xl md:text-2xl font-semibold text-[#5f4b32] mb-4 md:mb-6 flex items-center gap-2">
+          <section className="space-y-6">
+            <h2 className="text-xl md:text-2xl font-semibold text-[#5f4b32] flex items-center gap-2 text-center md:text-left">
               <AlertCircle size={20} className="md:size-6" /> Mensajes del formulario pendientes
             </h2>
             {mensajesFormulario.length === 0 ? (
@@ -158,10 +148,10 @@ const Admin = () => {
                 {mensajesFormulario.map((msg) => (
                   <li
                     key={msg.id}
-                    className="p-3 md:p-4 rounded-lg shadow-sm border bg-white border-[#f3d4a3] flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm md:text-base"
+                    className="p-3 md:p-4 rounded-lg shadow-sm border bg-[#fdf8f4] border-[#f3d4a3] flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm md:text-base text-[#5f4b32]"
                   >
                     <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-[#5f4b32]" />
+                      <Mail size={16} />
                       <span>
                         {msg.nombre} — {msg.email} —{" "}
                         {msg.fechaPropuesta?.toLocaleDateString("es-ES")}{" "}
@@ -175,8 +165,8 @@ const Admin = () => {
           </section>
 
           {/* Mensajes pacientes */}
-          <section>
-            <h2 className="text-xl md:text-2xl font-semibold text-[#5f4b32] mb-4 md:mb-6 flex items-center gap-2">
+          <section className="space-y-6">
+            <h2 className="text-xl md:text-2xl font-semibold text-[#5f4b32] flex items-center gap-2 text-center md:text-left">
               <AlertCircle size={20} className="md:size-6" /> Mensajes de pacientes sin responder
             </h2>
             {mensajesPacientes.length === 0 ? (
@@ -186,10 +176,10 @@ const Admin = () => {
                 {mensajesPacientes.map((msg) => (
                   <li
                     key={msg.id}
-                    className="p-3 md:p-4 rounded-lg shadow-sm border bg-white border-[#f3d4a3] flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm md:text-base"
+                    className="p-3 md:p-4 rounded-lg shadow-sm border bg-[#fdf8f4] border-[#f3d4a3] flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm md:text-base text-[#5f4b32]"
                   >
                     <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-[#5f4b32]" />
+                      <Mail size={16} />
                       <span>
                         {msg.nombre} — {msg.email} — {msg.fecha.toLocaleDateString("es-ES")}
                       </span>
@@ -200,10 +190,12 @@ const Admin = () => {
             )}
           </section>
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 
 export default Admin;
+
+
 

@@ -23,7 +23,6 @@ interface Props {
   uid: string;
   userEmail: string;
   userName: string;
-  bonoPendiente: number;
   onBooked: () => void;
 }
 
@@ -37,7 +36,6 @@ const BookAppointmentFromUser = ({
   uid,
   userEmail,
   userName,
-  bonoPendiente,
   onBooked,
 }: Props): JSX.Element => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -46,11 +44,14 @@ const BookAppointmentFromUser = ({
   const [selectedHour, setSelectedHour] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const formatDate = (date: Date) => date.toLocaleDateString("sv-SE");
-
-  const isDateAvailable = (date: Date) =>
-    availableDates.some((d) => formatDate(d) === formatDate(date));
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
     const fetchAvailableDates = async () => {
@@ -66,69 +67,91 @@ const BookAppointmentFromUser = ({
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "");
 
-        if (holidays2025.includes(dateStr) || date.getDay() === 6) continue; // ✅ bloquea sábados
+        if (holidays2025.includes(dateStr) || date.getDay() === 6) continue;
 
-        const disponibilidadSnap = await getDocs(
-          query(collection(db, "disponibilidad"), where("fecha", "==", dateStr))
-        );
-        if (!disponibilidadSnap.empty) {
-          result.push(new Date(date));
-          continue;
+        const disponibilidadDoc = await getDoc(doc(db, "disponibilidad", dateStr));
+        if (disponibilidadDoc.exists()) {
+          const data = disponibilidadDoc.data();
+          if (Array.isArray(data.horas) && data.horas.length > 0) {
+            result.push(new Date(date));
+            continue;
+          }
         }
 
         const dayDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
-        if (dayDoc.exists()) result.push(new Date(date));
+        if (dayDoc.exists()) {
+          const data = dayDoc.data();
+          if (Array.isArray(data.horas) && data.horas.length > 0) {
+            result.push(new Date(date));
+          }
+        }
       }
 
       setAvailableDates(result);
     };
 
+    const needsRefresh = localStorage.getItem("recargar-disponibilidad");
+    if (needsRefresh) {
+      localStorage.removeItem("recargar-disponibilidad");
+      setRefreshKey((prev) => prev + 1);
+    }
+
     fetchAvailableDates();
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     const fetchAvailableHours = async () => {
       if (!selectedDate) return;
-
+  
       const dateStr = formatDate(selectedDate);
       const dayOfWeek = selectedDate
         .toLocaleDateString("es-ES", { weekday: "long" })
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
-
+  
       let horasDisponibles: string[] = [];
-
-      const disponibilidadSnap = await getDocs(
-        query(collection(db, "disponibilidad"), where("fecha", "==", dateStr))
-      );
-      if (!disponibilidadSnap.empty) {
-        horasDisponibles = HOURS;
-      } else {
-        const docSnap = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          horasDisponibles = data.horas || [];
+  
+      // Paso 1: obtenemos las horas desde disponibilidad
+      const disponibilidadSnap = await getDoc(doc(db, "disponibilidad", dateStr));
+      if (disponibilidadSnap.exists()) {
+        const data = disponibilidadSnap.data();
+        horasDisponibles = data?.horas || [];
+      }
+  
+      // Paso 2: si hay pocas, completamos con el horario semanal
+      if (horasDisponibles.length < 3) {
+        const horarioDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
+        if (horarioDoc.exists()) {
+          const data = horarioDoc.data();
+          const horasDelHorario = data.horas || [];
+          horasDisponibles = Array.from(new Set([...horasDisponibles, ...horasDelHorario]));
         }
       }
-
+  
+      // Paso 3: filtramos las horas que ya estén ocupadas, ignorando citas anuladas
       const citasSnap = await getDocs(
         query(collection(db, "citas"), where("fecha", "==", dateStr))
       );
-      const usadas = citasSnap.docs.map(doc => doc.data().hora);
-      const disponibles = horasDisponibles.filter(hora => !usadas.includes(hora));
-
+  
+      const usadas = citasSnap.docs
+        .filter((doc) => doc.data().estado !== "anulada")
+        .map((doc) => doc.data().hora);
+  
+      const disponibles = horasDisponibles.filter((hora) => !usadas.includes(hora));
+  
       setAvailableHours(disponibles);
     };
-
+  
     fetchAvailableHours();
-  }, [selectedDate]);
+  }, [selectedDate, refreshKey]);
+  
 
   const handleBooking = async () => {
     if (!selectedDate || !selectedHour) return;
     setLoading(true);
 
-    const dateStr = selectedDate.toLocaleDateString("sv-SE");
+    const dateStr = formatDate(selectedDate);
 
     try {
       const cita = {
@@ -139,16 +162,16 @@ const BookAppointmentFromUser = ({
         hora: selectedHour,
         estado: "aprobada",
         anuladaPorUsuario: false,
-        descontadaDelBono: false,
         creadoEl: new Date().toISOString(),
       };
 
       await addDoc(collection(db, "citas"), cita);
 
-      await updateDoc(doc(db, "usuarios", uid), {
-        "bono.pendientes": bonoPendiente - 1,
-        ...(bonoPendiente === 1 && { "bono.usadas": 1 }),
-      });
+      const disponibilidadRef = doc(db, "disponibilidad", dateStr);
+      const disponibilidadSnap = await getDoc(disponibilidadRef);
+      const data = disponibilidadSnap.data();
+      const horasActualizadas = (data?.horas || []).filter((h: string) => h !== selectedHour);
+      await setDoc(disponibilidadRef, { horas: horasActualizadas, fecha: dateStr });
 
       const pacienteRef = doc(db, "pacientes", userEmail);
       const pacienteSnap = await getDoc(pacienteRef);
@@ -174,6 +197,7 @@ const BookAppointmentFromUser = ({
 
       setLoading(false);
       setSuccess(true);
+      setRefreshKey((prev) => prev + 1);
       onBooked();
     } catch (error) {
       console.error("Error al reservar cita:", error);
@@ -199,7 +223,7 @@ const BookAppointmentFromUser = ({
                   setSelectedDate(date);
                   setSelectedHour("");
                 }}
-                filterDate={(date) => date.getDay() !== 6} // ✅ bloquea sábados
+                filterDate={(date) => date.getDay() !== 6}
                 includeDates={availableDates}
                 minDate={new Date()}
                 dateFormat="dd/MM/yyyy"
@@ -216,7 +240,7 @@ const BookAppointmentFromUser = ({
                   setSelectedDate(date);
                   setSelectedHour("");
                 }}
-                filterDate={(date) => date.getDay() !== 6} // ✅ bloquea sábados
+                filterDate={(date) => date.getDay() !== 6}
                 includeDates={availableDates}
                 minDate={new Date()}
                 inline
@@ -292,3 +316,6 @@ const BookAppointmentFromUser = ({
 };
 
 export default BookAppointmentFromUser;
+
+
+
