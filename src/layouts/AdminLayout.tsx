@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import HamburgerButton from "../components/HamburgerButton";
-import { auth, signOut } from "../firebase"; // 🔐 Asegúrate de importar esto
+import { auth, signOut } from "../firebase";
 
 interface Props {
   children: ReactNode;
@@ -26,7 +26,7 @@ const AdminLayout = ({ children }: Props) => {
     setSidebarVisible(false);
   }, [location.pathname]);
 
-  // 🔐 Cierre de sesión automático al cerrar pestaña o recargar
+  // Cierre de sesión automático al cerrar pestaña o recargar
   useEffect(() => {
     const handleUnload = async () => {
       try {
@@ -44,25 +44,31 @@ const AdminLayout = ({ children }: Props) => {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-[#fdf8f4] overflow-x-hidden relative">
-      <HamburgerButton
-        isOpen={sidebarVisible}
-        onToggle={() => setSidebarVisible(!sidebarVisible)}
-      />
-
+    <div className="flex h-screen bg-[#fdf8f4] overflow-hidden">
+      {/* Sidebar fijo */}
       <AdminSidebar
         isOpen={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
       />
 
-      <main className="flex-1 min-h-screen px-4 sm:px-6 py-12 bg-[#fdf8f4] flex items-center justify-center">
-        <div className="w-full max-w-5xl">{children}</div>
-      </main>
+      {/* Contenido del admin */}
+      <div className="flex flex-col flex-1 overflow-y-auto">
+        <HamburgerButton
+          isOpen={sidebarVisible}
+          onToggle={() => setSidebarVisible(!sidebarVisible)}
+        />
+
+        <main className="flex-1 h-full flex items-center justify-center px-4 sm:px-6 py-12 bg-[#fdf8f4]">
+          <div className="w-full max-w-5xl">{children}</div>
+        </main>
+      </div>
     </div>
   );
 };
 
 export default AdminLayout;
+
+
 
 
 

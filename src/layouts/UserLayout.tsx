@@ -30,12 +30,8 @@ const UserLayout = ({ children }: Props) => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen bg-[#fdf8f4] overflow-x-hidden">
-      <HamburgerButton
-        isOpen={sidebarVisible}
-        onToggle={() => setSidebarVisible(!sidebarVisible)}
-      />
-
+    <div className="flex h-screen bg-[#fdf8f4] overflow-hidden">
+      {/* Sidebar fijo */}
       <Sidebar
         title=""
         items={pacienteNav}
@@ -47,9 +43,17 @@ const UserLayout = ({ children }: Props) => {
         }}
       />
 
-      <main className="w-full min-h-screen px-4 sm:px-6 py-12 flex items-center justify-center">
-        <div className="w-full max-w-5xl">{children}</div>
-      </main>
+      {/* Contenido */}
+      <div className="flex flex-col flex-1 overflow-y-auto">
+        <HamburgerButton
+          isOpen={sidebarVisible}
+          onToggle={() => setSidebarVisible(!sidebarVisible)}
+        />
+
+        <main className="flex-1 h-full flex items-center justify-center px-4 sm:px-6 py-12">
+          <div className="w-full max-w-5xl">{children}</div>
+        </main>
+      </div>
     </div>
   );
 };

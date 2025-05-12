@@ -3,9 +3,16 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   @apply font-playfair;
 }
+
 
 
 

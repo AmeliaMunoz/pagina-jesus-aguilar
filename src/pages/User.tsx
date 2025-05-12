@@ -85,32 +85,34 @@ const User = () => {
 
   return (
     <UserLayout>
-      <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full text-center md:text-left">
-        ¡Hola, {nombre}!
-      </h1>
+      <div className="flex flex-col items-center justify-center w-full h-full">
+        <h1 className="text-3xl font-bold text-[#5f4b32] mb-10 w-full text-center md:text-left">
+          ¡Hola, {nombre}!
+        </h1>
 
-      <div className="bg-white rounded-2xl shadow-3xl border border-[#e0d6ca] p-6 md:p-20">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {proximaCita && (
-            <PatientCard title="Próxima cita">
-              {new Date(proximaCita.fecha).toLocaleDateString("es-ES")},{" "}
-              {proximaCita.hora}
+        <div className="bg-white rounded-2xl shadow-3xl border border-[#e0d6ca] p-6 md:p-20 w-full max-w-5xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {proximaCita && (
+              <PatientCard title="Próxima cita">
+                {new Date(proximaCita.fecha).toLocaleDateString("es-ES")},{" "}
+                {proximaCita.hora}
+              </PatientCard>
+            )}
+
+            <PatientCard
+              title="Historial de citas"
+              onClick={() => navigate("/panel/paciente/historial")}
+            >
+              Ver historial completo
             </PatientCard>
-          )}
 
-          <PatientCard
-            title="Historial de citas"
-            onClick={() => navigate("/panel/paciente/historial")}
-          >
-            Ver historial completo
-          </PatientCard>
-
-          <PatientCard
-            title="Mensajes privados"
-            onClick={() => navigate("/panel/paciente/mensajes")}
-          >
-            Ver mensajes
-          </PatientCard>
+            <PatientCard
+              title="Mensajes privados"
+              onClick={() => navigate("/panel/paciente/mensajes")}
+            >
+              Ver mensajes
+            </PatientCard>
+          </div>
         </div>
       </div>
     </UserLayout>
@@ -118,6 +120,7 @@ const User = () => {
 };
 
 export default User;
+
 
 
 
