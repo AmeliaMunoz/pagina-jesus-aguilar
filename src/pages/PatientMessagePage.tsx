@@ -106,9 +106,9 @@ const PatientMessagesPage = () => {
                   key={msg.id}
                   className={`max-w-[80%] px-4 py-2 rounded-xl text-sm ${
                     msg.enviadoPorPaciente
-                      ? "bg-[#f5ede3] self-end text-right"
-                      : "bg-[#e9e2d7] self-start text-left"
-                  }`}
+                      ? "bg-blue-100 text-blue-800 self-end text-right"
+                      : "bg-green-100 text-green-800 self-start text-left"
+                  }`}                  
                 >
                   <p>{msg.texto}</p>
                   <p className="text-xs text-gray-500 mt-1">
