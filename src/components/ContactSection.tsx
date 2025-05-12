@@ -15,7 +15,7 @@ import { db } from "../firebase";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { addDays } from "date-fns";
-import { es } from "date-fns/locale"; // ← idioma español para el calendario
+import { es } from "date-fns/locale"; 
 import Button from "./Button";
 import { holidays2025 } from "../data/holidays";
 import { CheckCircle, Mail, Phone, XCircle } from "lucide-react";

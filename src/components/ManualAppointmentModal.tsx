@@ -69,39 +69,62 @@ const ManualAppointmentModal = ({
         setSearchResults([]);
         return;
       }
-
+  
       const nombreQuery = query(
         collection(db, "usuarios"),
         where("nombre", ">=", searchTerm),
         where("nombre", "<=", searchTerm + "\uf8ff")
       );
-
+  
       const emailQuery = query(
         collection(db, "usuarios"),
         where("email", ">=", searchTerm),
         where("email", "<=", searchTerm + "\uf8ff")
       );
-
-      const [nombreSnap, emailSnap] = await Promise.all([
+  
+      const pacientesQuery = query(
+        collection(db, "pacientes")
+      );
+  
+      const [nombreSnap, emailSnap, pacientesSnap] = await Promise.all([
         getDocs(nombreQuery),
         getDocs(emailQuery),
+        getDocs(pacientesQuery),
       ]);
-
-      const results: Paciente[] = [...nombreSnap.docs, ...emailSnap.docs].map((doc) => {
+  
+      const resultsUsuarios: Paciente[] = [...nombreSnap.docs, ...emailSnap.docs].map((doc) => {
         const data = doc.data() as Omit<Paciente, "id">;
         return { id: doc.id, ...data };
       });
-
-      const únicos = results.filter(
+  
+      const resultsPacientes: Paciente[] = pacientesSnap.docs
+        .map((doc) => {
+          const data = doc.data() as any;
+          return {
+            id: doc.id,
+            nombre: data.nombre || "",
+            email: data.email || "",
+            telefono: data.telefono || "",
+          };
+        })
+        .filter((p) =>
+          p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+  
+      const combinados = [...resultsUsuarios, ...resultsPacientes];
+  
+      const únicos = combinados.filter(
         (pac, index, self) =>
           index === self.findIndex((p) => p.email === pac.email)
       );
-
+  
       setSearchResults(únicos);
     };
-
+  
     fetchPacientes();
   }, [searchTerm]);
+  
 
   useEffect(() => {
     const fetchAvailableHours = async () => {
