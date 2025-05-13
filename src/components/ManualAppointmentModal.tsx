@@ -134,38 +134,43 @@ const ManualAppointmentModal = ({
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
-
+  
       let horasDisponibles: string[] = [];
-
-      const disponibilidadDoc = await getDoc(doc(db, "disponibilidad", dateStr));
-      if (disponibilidadDoc.exists()) {
-        horasDisponibles = disponibilidadDoc.data().horas || [];
-      } else {
+  
+      const disponibilidadSnap = await getDoc(doc(db, "disponibilidad", dateStr));
+      const tieneDocumento = disponibilidadSnap.exists();
+      const horasEnDoc = tieneDocumento ? disponibilidadSnap.data().horas || [] : [];
+  
+      // Si hay menos de 3 horas en disponibilidad, completa con horario semanal
+      if (horasEnDoc.length < 3) {
         const horarioSnap = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
-        if (horarioSnap.exists()) {
-          horasDisponibles = horarioSnap.data().horas || [];
-        }
+        const horasSemana = horarioSnap.exists() ? horarioSnap.data().horas || [] : [];
+  
+        horasDisponibles = Array.from(new Set([...horasEnDoc, ...horasSemana]));
+      } else {
+        horasDisponibles = horasEnDoc;
       }
-
-      const citasSnap = await getDocs(query(collection(db, "citas")));
+  
+      // Eliminar horas ocupadas por otras citas
+      const citasSnap = await getDocs(
+        query(collection(db, "citas"))
+      );
+  
       const ocupadas = citasSnap.docs
-        .map(doc => doc.data())
-        .filter(cita =>
-          cita.fecha === dateStr &&
-          ["aprobada", "ausente"].includes(cita.estado)
-        )
-        .map(cita => cita.hora?.trim())
+        .map((doc) => doc.data())
+        .filter((cita) => cita.fecha === dateStr && ["aprobada", "ausente"].includes(cita.estado))
+        .map((cita) => cita.hora?.trim())
         .filter((hora): hora is string => !!hora);
-
-      const disponibles = horasDisponibles.filter(h => !ocupadas.includes(h));
-      setAvailableHours(disponibles);
-
-      // Si la hora inicial no está disponible, limpiarla
-      if (!disponibles.includes(selectedHour)) {
+  
+      const disponiblesFinal = horasDisponibles.filter((h) => !ocupadas.includes(h));
+      setAvailableHours(disponiblesFinal);
+  
+      // Si la hora seleccionada ya no está disponible, limpiala
+      if (!disponiblesFinal.includes(selectedHour)) {
         setSelectedHour("");
       }
     };
-
+  
     fetchAvailableHours();
   }, [fecha]);
 
@@ -179,15 +184,15 @@ const ManualAppointmentModal = ({
 
   const handleGuardar = async () => {
     setLoading(true);
-  
-    if (!nombre || !email || !fecha || !hora) {
+
+    if (!nombre || !email || !fecha || !selectedHour) {
       alert("Faltan datos para guardar la cita.");
       setLoading(false);
       return;
     }
-  
-    const dateStr = fecha.toLocaleDateString("sv-SE"); // ✅
-  
+
+    const dateStr = fecha.toLocaleDateString("sv-SE"); // yyyy-MM-dd
+
     try {
       let uid: string | null = null;
       const usuariosSnap = await getDocs(
@@ -196,28 +201,38 @@ const ManualAppointmentModal = ({
       if (!usuariosSnap.empty) {
         uid = usuariosSnap.docs[0].id;
       }
-  
+
       const cita = {
         nombre,
         email,
         telefono,
         nota,
         fecha: dateStr,
-        hora,
+        hora: selectedHour,
         estado: "aprobada",
         uid,
         creadoEl: new Date().toISOString(),
         anuladaPorUsuario: false,
         descontadaDelBono: false,
       };
-  
+
       await addDoc(collection(db, "citas"), cita);
-  
+
+      const disponibilidadRef = doc(db, "disponibilidad", dateStr);
+      const snap = await getDoc(disponibilidadRef);
+      const data = snap.data();
+      const horasActualizadas = (data?.horas || []).filter((h: string) => h !== selectedHour);
+
+      await setDoc(disponibilidadRef, {
+        horas: horasActualizadas,
+        fecha: dateStr,
+      });
+
       const pacienteRef = doc(db, "pacientes", email);
-      const snap = await getDoc(pacienteRef);
-      const nuevaEntrada = { fecha: dateStr, hora, estado: "aprobada", nota };
-  
-      if (!snap.exists()) {
+      const pacienteSnap = await getDoc(pacienteRef);
+      const nuevaEntrada = { fecha: dateStr, hora: selectedHour, estado: "aprobada", nota };
+
+      if (!pacienteSnap.exists()) {
         await setDoc(pacienteRef, {
           nombre,
           email,
@@ -225,20 +240,20 @@ const ManualAppointmentModal = ({
           historial: [nuevaEntrada],
         });
       } else {
-        const data = snap.data();
+        const data = pacienteSnap.data();
         const historial = data.historial || [];
         historial.push(nuevaEntrada);
         await updateDoc(pacienteRef, { historial });
       }
-  
+
       onSave({ nombre, email, telefono });
     } catch (error) {
-      console.error("❌ Error inesperado:", error);
+      console.error(" Error inesperado:", error);
       alert("Ha ocurrido un error al guardar la cita.");
     }
-  
+
     setLoading(false);
-  };  
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 px-4">

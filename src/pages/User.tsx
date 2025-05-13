@@ -54,7 +54,7 @@ const User = () => {
       const q = query(
         collection(db, "citas"),
         where("uid", "==", uid),
-        where("estado", "==", "pendiente"),
+        where("estado", "==", "aprobada"),
         orderBy("fecha")
       );
 

@@ -63,16 +63,30 @@ const Admin = () => {
       mañana.setDate(hoy.getDate() + 1);
 
       const pendientesFormulario = mensajes.filter((m) => m.estado === "pendiente");
-      const hoyCitas = mensajes.filter(
-        (m) =>
-          m.fechaPropuesta &&
-          m.fechaPropuesta >= hoy &&
-          m.fechaPropuesta < mañana &&
-          ["aprobada", "ausente"].includes(m.estado || "")
-      );
-
       setMensajesFormulario(pendientesFormulario);
-      setCitasHoy(hoyCitas);
+
+      const citasSnap = await getDocs(collection(db, "citas"));
+      const citasHoy: MensajeFormulario[] = citasSnap.docs
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            nombre: data.nombre,
+            email: data.email,
+            fechaPropuesta: data.fecha ? new Date(data.fecha) : undefined,
+            horaPropuesta: data.hora,
+            estado: data.estado,
+          };
+        })
+        .filter(
+          (cita) =>
+            cita.fechaPropuesta &&
+            cita.fechaPropuesta >= hoy &&
+            cita.fechaPropuesta < mañana &&
+            ["aprobada", "ausente"].includes(cita.estado || "")
+        );
+
+      setCitasHoy(citasHoy);
 
       const mensajesSnap = await getDocs(query(collection(db, "mensajes"), orderBy("fecha", "asc")));
       const pacientes = new Map<string, MensajePaciente[]>();

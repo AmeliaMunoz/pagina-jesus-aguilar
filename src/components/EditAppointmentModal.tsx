@@ -19,6 +19,7 @@ interface Props {
   email: string;
   telefono: string;
   nota?: string;
+  mensajeDelPaciente?: string;
   onClose: () => void;
   onUpdate: () => void;
   onDeleteFromHistory: () => Promise<void>;
@@ -40,6 +41,7 @@ const EditAppointmentModal = ({
   fecha,
   hora,
   nota,
+  mensajeDelPaciente,
   email,
   onClose,
   onUpdate,
@@ -54,13 +56,11 @@ const EditAppointmentModal = ({
   const handleGuardar = async () => {
     setGuardando(true);
     try {
-      // liberar la hora anterior
       await liberarHoraEnDisponibilidad(
         fecha.toISOString().split("T")[0],
         hora
       );
 
-      // actualizar la cita
       await updateDoc(doc(db, "citas", id), {
         fecha: nuevaFecha.toISOString().split("T")[0],
         hora: nuevaHora,
@@ -80,7 +80,7 @@ const EditAppointmentModal = ({
     setEliminando(true);
     try {
       await deleteDoc(doc(db, "citas", id));
-      await onDeleteFromHistory(); // ya incluye liberar hora
+      await onDeleteFromHistory();
       onUpdate();
       onClose();
     } catch (err) {
@@ -111,13 +111,20 @@ const EditAppointmentModal = ({
           className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
         />
 
-        <label className="block text-sm font-medium text-gray-700">Nota</label>
+        <label className="block text-sm font-medium text-gray-700">Nota (solo visible por el profesional)</label>
         <textarea
           value={nuevaNota}
           onChange={(e) => setNuevaNota(e.target.value)}
           className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
           rows={3}
         />
+
+        {mensajeDelPaciente && (
+          <div className="mt-4 p-4 bg-[#fdf8f4] border border-[#e0d6ca] rounded">
+            <p className="text-sm text-[#5f4b32] font-medium mb-2">Mensaje del paciente:</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{mensajeDelPaciente}</p>
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-4">
           <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded text-sm">
@@ -136,6 +143,8 @@ const EditAppointmentModal = ({
 };
 
 export default EditAppointmentModal;
+
+
 
 
 

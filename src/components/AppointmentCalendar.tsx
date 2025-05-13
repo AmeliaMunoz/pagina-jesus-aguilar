@@ -68,6 +68,7 @@ interface CalendarEvent extends Event {
   start: Date;
   end: Date;
   resource?: {
+    mensajeDelPaciente: string | undefined;
     id: string;
     nombre: string;
     email: string;
@@ -113,17 +114,17 @@ const AppointmentCalendar = () => {
       where("estado", "in", ["aprobada", "ausente"])
     );
     const snapshot = await getDocs(q);
-
+  
     const citas = snapshot.docs
       .map((doc) => {
         const data = doc.data();
         const fecha = data.fechaPropuesta?.toDate?.() || new Date(data.fecha);
         const hora = data.horaPropuesta || data.hora || "00:00";
-
+  
         if (!fecha || !hora) return null;
-
+  
         const [h, m] = hora.split(":" ).map(Number);
-
+  
         const start = new Date(
           fecha.getFullYear(),
           fecha.getMonth(),
@@ -131,10 +132,10 @@ const AppointmentCalendar = () => {
           h,
           m
         );
-
+  
         const end = new Date(start);
         end.setMinutes(end.getMinutes() + (data.duracionMinutos || 60));
-
+  
         return {
           id: doc.id,
           title: data.nombre,
@@ -145,13 +146,14 @@ const AppointmentCalendar = () => {
             nombre: data.nombre,
             email: data.email,
             telefono: data.telefono || "",
-            nota: data.mensaje || "",
+            nota: data.nota || "",
+            mensajeDelPaciente: data.mensajeDelPaciente || "",
             estado: data.estado,
           },
         } as CalendarEvent;
       })
       .filter((e): e is CalendarEvent => e !== null);
-
+  
     const festivosEventos: CalendarEvent[] = holidays2025.map((fecha) => {
       const [year, month, day] = fecha.split("-").map(Number);
       const start = new Date(year, month - 1, day, 0, 0, 0);
@@ -163,10 +165,11 @@ const AppointmentCalendar = () => {
         end,
       };
     });
-
+  
     setEventos(citas);
     setFestivos(festivosEventos);
   };
+  
 
   useEffect(() => {
     cargarEventos();
@@ -307,6 +310,7 @@ const AppointmentCalendar = () => {
           email={editEvent.resource.email}
           telefono={editEvent.resource.telefono || ""}
           nota={editEvent.resource.nota}
+          mensajeDelPaciente={editEvent.resource.mensajeDelPaciente}
           onClose={() => setEditEvent(null)}
           onUpdate={refreshAfterSave}
           onDeleteFromHistory={async () => {
