@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, updateDoc, doc, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  getDoc,
+  updateDoc,
+  doc,
+  Timestamp,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import desbloquearHora from "./UnblockHour";
 import { CalendarDays, Phone, Mail } from "lucide-react";
@@ -9,6 +17,8 @@ interface Props {
 }
 
 const AdminMessages = ({ onToast }: Props) => {
+  console.log("🧠 ADMINMESSAGES MONTADO");
+
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("pendiente");
@@ -26,13 +36,92 @@ const AdminMessages = ({ onToast }: Props) => {
   }, []);
 
   const cambiarEstado = async (id: string, nuevoEstado: string, fecha?: string, hora?: string) => {
-    await updateDoc(doc(db, "mensajes", id), {
+    console.log("🟡 clic detectado — entrando a cambiarEstado", id, nuevoEstado);
+
+    const mensajeRef = doc(db, "mensajes", id);
+    const mensajeSnap = await getDoc(mensajeRef);
+    if (!mensajeSnap.exists()) {
+      console.warn("❌ No se encontró el mensaje con ID:", id);
+      return;
+    }
+
+    const mensaje = mensajeSnap.data();
+    const email = mensaje.email?.trim().toLowerCase();
+    const nombre = mensaje.nombre || "";
+    const telefono = mensaje.telefono || "";
+    const nota = mensaje.mensaje || "";
+    const fechaStr = fecha || mensaje.fechaPropuesta?.toDate()?.toLocaleDateString("sv-SE");
+    const horaStr = hora || mensaje.horaPropuesta;
+
+    console.log("⏳ Aprobando mensaje...");
+    console.log("email:", email);
+    console.log("fecha:", fechaStr);
+    console.log("hora:", horaStr);
+
+    // 1. Actualizar mensaje
+    await updateDoc(mensajeRef, {
       estado: nuevoEstado,
       actualizado: Timestamp.now(),
     });
-    if (nuevoEstado === "rechazada" && fecha && hora) {
-      await desbloquearHora(fecha, hora);
+
+    // 2. Si RECHAZADA → liberar hora
+    if (nuevoEstado === "rechazada" && fechaStr && horaStr) {
+      await desbloquearHora(fechaStr, horaStr);
+      console.log("🧹 Hora liberada:", fechaStr, horaStr);
     }
+
+    // 3. Si APROBADA → actualizar cita + historial
+    if (nuevoEstado === "aprobada") {
+      if (!email || !fechaStr || !horaStr) {
+        console.warn("❌ Faltan datos para aprobar:", { email, fechaStr, horaStr });
+        return;
+      }
+
+      const citasSnap = await getDocs(collection(db, "citas"));
+      const citaDoc = citasSnap.docs.find((doc) => {
+        const data = doc.data();
+        return (
+          data.email?.trim().toLowerCase() === email &&
+          data.fecha === fechaStr &&
+          data.hora === horaStr
+        );
+      });
+
+      if (citaDoc) {
+        await updateDoc(doc(db, "citas", citaDoc.id), {
+          estado: "aprobada",
+        });
+        console.log("✅ Cita actualizada a aprobada");
+      } else {
+        console.warn("⚠️ No se encontró cita con email + fecha + hora");
+      }
+
+      const pacienteRef = doc(db, "pacientes", email);
+      const pacienteSnap = await getDoc(pacienteRef);
+      const nuevaEntrada = {
+        fecha: fechaStr,
+        hora: horaStr,
+        estado: "aprobada",
+        nota,
+      };
+
+      if (!pacienteSnap.exists()) {
+        console.log("➕ Creando nuevo paciente:", email);
+        await setDoc(pacienteRef, {
+          nombre,
+          email,
+          telefono,
+          historial: [nuevaEntrada],
+        });
+      } else {
+        console.log("📌 Añadiendo entrada a historial:", email);
+        const data = pacienteSnap.data();
+        const historial = Array.isArray(data.historial) ? data.historial : [];
+        historial.push(nuevaEntrada);
+        await updateDoc(pacienteRef, { historial });
+      }
+    }
+
     await obtenerMensajes();
     onToast(`Mensaje marcado como "${nuevoEstado}"`);
   };
@@ -43,7 +132,6 @@ const AdminMessages = ({ onToast }: Props) => {
   return (
     <main className="min-h-screen w-full lg:ml-64 px-4 py-8 flex items-center justify-center">
       <section className="w-full max-w-5xl mb-16 scroll-mt-32" id="mensajes">
-        {/* Filtros */}
         <div className="flex flex-wrap gap-3 justify-center mb-8">
           {["pendiente", "rechazada", "aprobada", "todos"].map((estado) => (
             <button
@@ -60,7 +148,6 @@ const AdminMessages = ({ onToast }: Props) => {
           ))}
         </div>
 
-        {/* Contenido */}
         {cargando ? (
           <p className="text-center text-brown-700">Cargando mensajes...</p>
         ) : mensajesFiltrados.length === 0 ? (
@@ -124,7 +211,7 @@ const AdminMessages = ({ onToast }: Props) => {
                         cambiarEstado(
                           m.id,
                           "rechazada",
-                          m.fechaPropuesta?.toDate()?.toISOString().split("T")[0],
+                          m.fechaPropuesta?.toDate()?.toLocaleDateString("sv-SE"),
                           m.horaPropuesta
                         )
                       }
@@ -144,7 +231,6 @@ const AdminMessages = ({ onToast }: Props) => {
 };
 
 export default AdminMessages;
-
 
 
 

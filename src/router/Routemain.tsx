@@ -19,7 +19,7 @@ import BookAppointmentPage from "../pages/BookAppointmentPage";
 import NextAppointmentPage from "../pages/NextAppointmentPage";
 import PatientHistoryPage from "../pages/PatientHistoryPage";
 import PatientMessagesPage from "../pages/PatientMessagePage";
-import AdminMessagesPage from "../pages/AdminMessagePage";
+import AdminMessagesPage from "../pages/AdminMessageChatPage";
 import AdminLoginPage from "../pages/AdminLoginPage";
 
 

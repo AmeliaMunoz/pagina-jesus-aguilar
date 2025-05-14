@@ -57,139 +57,170 @@ const BookAppointmentFromUser = ({
   useEffect(() => {
     const fetchAvailableDates = async () => {
       const result: Date[] = [];
-
+  
       for (let i = 1; i <= 30; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
         const dateStr = formatDate(date);
-
+  
         const dayOfWeek = date
           .toLocaleDateString("es-ES", { weekday: "long" })
           .toLowerCase()
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "");
-
+  
         if (holidays2025.includes(dateStr) || date.getDay() === 6) continue;
-
+  
         let horasDisponibles: string[] = [];
-
+  
+        // 1. Obtener disponibilidad puntual
         const disponibilidadSnap = await getDoc(doc(db, "disponibilidad", dateStr));
-        const tieneDocumento = disponibilidadSnap.exists();
-        const horasEnDoc = tieneDocumento ? disponibilidadSnap.data().horas || [] : [];
-
+        const horasEnDoc = disponibilidadSnap.exists()
+          ? disponibilidadSnap.data().horas || []
+          : [];
+  
+        // 2. Si hay pocas, combinar con horarios semanales
         if (horasEnDoc.length < 3) {
           const horarioSnap = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
           const horasSemana = horarioSnap.exists() ? horarioSnap.data().horas || [] : [];
-
+  
           horasDisponibles = Array.from(new Set([...horasEnDoc, ...horasSemana]));
-
-          const mensajesSnap = await getDocs(
-            query(
-              collection(db, "mensajes"),
-              where(
-                "fechaPropuesta",
-                "==",
-                Timestamp.fromDate(
-                  new Date(date.getFullYear(), date.getMonth(), date.getDate())
-                )
-              ),
-              where("estado", "==", "pendiente")
-            )
-          );
-
-          const horasBloqueadas = mensajesSnap.docs.map(doc => doc.data().horaPropuesta);
-          horasDisponibles = horasDisponibles.filter(h => !horasBloqueadas.includes(h));
         } else {
           horasDisponibles = horasEnDoc;
         }
-
-        if (horasDisponibles.length > 0) {
+  
+        // 3. Bloquear mensajes pendientes
+        const mensajesSnap = await getDocs(
+          query(
+            collection(db, "mensajes"),
+            where(
+              "fechaPropuesta",
+              "==",
+              Timestamp.fromDate(
+                new Date(date.getFullYear(), date.getMonth(), date.getDate())
+              )
+            ),
+            where("estado", "==", "pendiente")
+          )
+        );
+  
+        const horasBloqueadasPorMensajes = mensajesSnap.docs.map(
+          (doc) => doc.data().horaPropuesta
+        );
+  
+        // 4. Bloquear citas activas (sin rechazar ni anular)
+        const citasSnap = await getDocs(
+          query(collection(db, "citas"), where("fecha", "==", dateStr))
+        );
+  
+        const horasBloqueadasPorCitas = citasSnap.docs
+          .filter((doc) =>
+            ["aprobada", "ausente", "pendiente"].includes(doc.data().estado)
+          )
+          .map((doc) => doc.data().hora);
+  
+        // 5. Aplicar filtros
+        const horasFinales = horasDisponibles.filter(
+          (h) =>
+            !horasBloqueadasPorMensajes.includes(h) &&
+            !horasBloqueadasPorCitas.includes(h)
+        );
+  
+        console.log("🗓️", dateStr, "→", horasFinales);
+  
+        if (horasFinales.length > 0) {
           result.push(new Date(date));
         }
       }
-
+  
+      console.log("📆 Días disponibles:", result);
       setAvailableDates(result);
     };
-
-    const needsRefresh = localStorage.getItem("recargar-disponibilidad");
-    if (needsRefresh) {
-      localStorage.removeItem("recargar-disponibilidad");
-      setRefreshKey((prev) => prev + 1);
-    }
-
+  
     fetchAvailableDates();
-  }, [refreshKey]);
+  }, []);
+  
 
   useEffect(() => {
     const fetchAvailableHours = async () => {
       if (!selectedDate) return;
-
+  
       const dateStr = formatDate(selectedDate);
       const dayOfWeek = selectedDate
         .toLocaleDateString("es-ES", { weekday: "long" })
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
-
+  
       let horasDisponibles: string[] = [];
-
+  
+      // 1. Obtener disponibilidad directa
       const disponibilidadSnap = await getDoc(doc(db, "disponibilidad", dateStr));
-      if (disponibilidadSnap.exists()) {
-        const data = disponibilidadSnap.data();
-        horasDisponibles = data?.horas || [];
-      }
-
-      if (horasDisponibles.length < 3) {
-        const horarioDoc = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
-        if (horarioDoc.exists()) {
-          const data = horarioDoc.data();
-          const horasDelHorario = data.horas || [];
-          horasDisponibles = Array.from(new Set([...horasDisponibles, ...horasDelHorario]));
-
-          const mensajesSnap = await getDocs(
-            query(
-              collection(db, "mensajes"),
-              where(
-                "fechaPropuesta",
-                "==",
-                Timestamp.fromDate(
-                  new Date(
-                    selectedDate.getFullYear(),
-                    selectedDate.getMonth(),
-                    selectedDate.getDate()
-                  )
+      const horasEnDoc = disponibilidadSnap.exists() ? disponibilidadSnap.data().horas || [] : [];
+  
+      // 2. Si hay pocas, combinar con horarios semanales
+      if (horasEnDoc.length < 3) {
+        const horarioSnap = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
+        const horasSemana = horarioSnap.exists() ? horarioSnap.data().horas || [] : [];
+  
+        horasDisponibles = Array.from(new Set([...horasEnDoc, ...horasSemana]));
+  
+        // 3. Bloquear por mensajes pendientes
+        const mensajesSnap = await getDocs(
+          query(
+            collection(db, "mensajes"),
+            where(
+              "fechaPropuesta",
+              "==",
+              Timestamp.fromDate(
+                new Date(
+                  selectedDate.getFullYear(),
+                  selectedDate.getMonth(),
+                  selectedDate.getDate()
                 )
-              ),
-              where("estado", "==", "pendiente")
-            )
-          );
-
-          const horasSolicitadas = mensajesSnap.docs.map(
-            (doc) => doc.data().horaPropuesta
-          );
-
-          horasDisponibles = horasDisponibles.filter(
-            (hora) => !horasSolicitadas.includes(hora)
-          );
-        }
+              )
+            ),
+            where("estado", "==", "pendiente")
+          )
+        );
+  
+        const horasBloqueadasPorMensajes = mensajesSnap.docs.map(
+          (doc) => doc.data().horaPropuesta
+        );
+  
+        horasDisponibles = horasDisponibles.filter(
+          (hora) => !horasBloqueadasPorMensajes.includes(hora)
+        );
+      } else {
+        horasDisponibles = horasEnDoc;
       }
-
+  
+      // 4. Obtener citas y filtrar solo las activas
       const citasSnap = await getDocs(
         query(collection(db, "citas"), where("fecha", "==", dateStr))
       );
-
-      const usadas = citasSnap.docs
-        .filter((doc) => doc.data().estado !== "anulada")
+  
+      // 🔍 Log para verificar qué se recibe
+      console.log("📂 Citas obtenidas para", dateStr, "→", citasSnap.docs.map((doc) => doc.data()));
+  
+      const horasBloqueadasPorCitas = citasSnap.docs
+        .filter((doc) =>
+          ["aprobada", "ausente", "pendiente"].includes(doc.data().estado)
+        )
         .map((doc) => doc.data().hora);
-
-      const disponibles = horasDisponibles.filter((hora) => !usadas.includes(hora));
-
-      setAvailableHours(disponibles);
+  
+      console.log("⛔ Horas bloqueadas por citas:", horasBloqueadasPorCitas);
+  
+      // 5. Filtrar final
+      const filtradas = horasDisponibles.filter((hora) => !horasBloqueadasPorCitas.includes(hora));
+  
+      console.log("✅ Horas finales disponibles:", filtradas);
+      setAvailableHours(filtradas);
     };
-
+  
     fetchAvailableHours();
   }, [selectedDate, refreshKey]);
-
+  
   const handleBooking = async () => {
     if (!selectedDate || !selectedHour) return;
     setLoading(true);

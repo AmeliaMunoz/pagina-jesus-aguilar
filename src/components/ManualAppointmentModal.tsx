@@ -54,6 +54,7 @@ const ManualAppointmentModal = ({
   const [loading, setLoading] = useState(false);
   const [availableHours, setAvailableHours] = useState<string[]>([]);
   const [selectedHour, setSelectedHour] = useState(hora);
+  const [customHour, setCustomHour] = useState("");
 
   useEffect(() => {
     setNombre(nombreInicial);
@@ -69,37 +70,35 @@ const ManualAppointmentModal = ({
         setSearchResults([]);
         return;
       }
-  
+
       const nombreQuery = query(
         collection(db, "usuarios"),
         where("nombre", ">=", searchTerm),
         where("nombre", "<=", searchTerm + "\uf8ff")
       );
-  
+
       const emailQuery = query(
         collection(db, "usuarios"),
         where("email", ">=", searchTerm),
         where("email", "<=", searchTerm + "\uf8ff")
       );
-  
-      const pacientesQuery = query(
-        collection(db, "pacientes")
-      );
-  
+
+      const pacientesQuery = query(collection(db, "pacientes"));
+
       const [nombreSnap, emailSnap, pacientesSnap] = await Promise.all([
         getDocs(nombreQuery),
         getDocs(emailQuery),
         getDocs(pacientesQuery),
       ]);
-  
+
       const resultsUsuarios: Paciente[] = [...nombreSnap.docs, ...emailSnap.docs].map((doc) => {
         const data = doc.data() as Omit<Paciente, "id">;
         return { id: doc.id, ...data };
       });
-  
+
       const resultsPacientes: Paciente[] = pacientesSnap.docs
         .map((doc) => {
-          const data = doc.data() as any;
+          const data = doc.data();
           return {
             id: doc.id,
             nombre: data.nombre || "",
@@ -107,24 +106,24 @@ const ManualAppointmentModal = ({
             telefono: data.telefono || "",
           };
         })
-        .filter((p) =>
-          p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+        .filter(
+          (p) =>
+            p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.nombre.toLowerCase().includes(searchTerm.toLowerCase())
         );
-  
+
       const combinados = [...resultsUsuarios, ...resultsPacientes];
-  
+
       const únicos = combinados.filter(
         (pac, index, self) =>
           index === self.findIndex((p) => p.email === pac.email)
       );
-  
+
       setSearchResults(únicos);
     };
-  
+
     fetchPacientes();
   }, [searchTerm]);
-  
 
   useEffect(() => {
     const fetchAvailableHours = async () => {
@@ -134,43 +133,37 @@ const ManualAppointmentModal = ({
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
-  
+
       let horasDisponibles: string[] = [];
-  
+
       const disponibilidadSnap = await getDoc(doc(db, "disponibilidad", dateStr));
-      const tieneDocumento = disponibilidadSnap.exists();
-      const horasEnDoc = tieneDocumento ? disponibilidadSnap.data().horas || [] : [];
-  
-      // Si hay menos de 3 horas en disponibilidad, completa con horario semanal
+      const horasEnDoc = disponibilidadSnap.exists()
+        ? disponibilidadSnap.data().horas || []
+        : [];
+
       if (horasEnDoc.length < 3) {
         const horarioSnap = await getDoc(doc(db, "horarios_semanales", dayOfWeek));
         const horasSemana = horarioSnap.exists() ? horarioSnap.data().horas || [] : [];
-  
         horasDisponibles = Array.from(new Set([...horasEnDoc, ...horasSemana]));
       } else {
         horasDisponibles = horasEnDoc;
       }
-  
-      // Eliminar horas ocupadas por otras citas
-      const citasSnap = await getDocs(
-        query(collection(db, "citas"))
-      );
-  
+
+      const citasSnap = await getDocs(collection(db, "citas"));
       const ocupadas = citasSnap.docs
         .map((doc) => doc.data())
         .filter((cita) => cita.fecha === dateStr && ["aprobada", "ausente"].includes(cita.estado))
         .map((cita) => cita.hora?.trim())
         .filter((hora): hora is string => !!hora);
-  
+
       const disponiblesFinal = horasDisponibles.filter((h) => !ocupadas.includes(h));
       setAvailableHours(disponiblesFinal);
-  
-      // Si la hora seleccionada ya no está disponible, limpiala
+
       if (!disponiblesFinal.includes(selectedHour)) {
         setSelectedHour("");
       }
     };
-  
+
     fetchAvailableHours();
   }, [fecha]);
 
@@ -185,13 +178,14 @@ const ManualAppointmentModal = ({
   const handleGuardar = async () => {
     setLoading(true);
 
-    if (!nombre || !email || !fecha || !selectedHour) {
+    const horaFinal = selectedHour || customHour;
+    if (!nombre || !email || !fecha || !horaFinal) {
       alert("Faltan datos para guardar la cita.");
       setLoading(false);
       return;
     }
 
-    const dateStr = fecha.toLocaleDateString("sv-SE"); // yyyy-MM-dd
+    const dateStr = fecha.toLocaleDateString("sv-SE");
 
     try {
       let uid: string | null = null;
@@ -208,29 +202,33 @@ const ManualAppointmentModal = ({
         telefono,
         nota,
         fecha: dateStr,
-        hora: selectedHour,
+        hora: horaFinal,
         estado: "aprobada",
         uid,
         creadoEl: new Date().toISOString(),
         anuladaPorUsuario: false,
         descontadaDelBono: false,
+        forzada: !!customHour, // ✅ Marcar si fue forzada
       };
 
       await addDoc(collection(db, "citas"), cita);
 
-      const disponibilidadRef = doc(db, "disponibilidad", dateStr);
-      const snap = await getDoc(disponibilidadRef);
-      const data = snap.data();
-      const horasActualizadas = (data?.horas || []).filter((h: string) => h !== selectedHour);
+      // ✅ Solo liberar hora si no fue forzada
+      if (!customHour) {
+        const disponibilidadRef = doc(db, "disponibilidad", dateStr);
+        const snap = await getDoc(disponibilidadRef);
+        const data = snap.data();
+        const horasActualizadas = (data?.horas || []).filter((h: string) => h !== horaFinal);
 
-      await setDoc(disponibilidadRef, {
-        horas: horasActualizadas,
-        fecha: dateStr,
-      });
+        await setDoc(disponibilidadRef, {
+          horas: horasActualizadas,
+          fecha: dateStr,
+        });
+      }
 
       const pacienteRef = doc(db, "pacientes", email);
       const pacienteSnap = await getDoc(pacienteRef);
-      const nuevaEntrada = { fecha: dateStr, hora: selectedHour, estado: "aprobada", nota };
+      const nuevaEntrada = { fecha: dateStr, hora: horaFinal, estado: "aprobada", nota };
 
       if (!pacienteSnap.exists()) {
         await setDoc(pacienteRef, {
@@ -248,7 +246,7 @@ const ManualAppointmentModal = ({
 
       onSave({ nombre, email, telefono });
     } catch (error) {
-      console.error(" Error inesperado:", error);
+      console.error("❌ Error inesperado:", error);
       alert("Ha ocurrido un error al guardar la cita.");
     }
 
@@ -263,60 +261,71 @@ const ManualAppointmentModal = ({
         </h3>
 
         {!soloEditarPaciente && (
-          <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-            <CalendarDays />
-            {fecha.toLocaleDateString("es-ES")} a las {selectedHour}
-          </p>
-        )}
+          <>
+            <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+              <CalendarDays />
+              {fecha.toLocaleDateString("es-ES")} a las {selectedHour || customHour}
+            </p>
 
-        {!soloEditarPaciente && (
-          <div className="mb-4">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar paciente por nombre o email..."
-              className="w-full border px-4 py-2 rounded text-sm"
-            />
-            {searchResults.length > 0 && (
-              <ul className="bg-white border rounded mt-1 max-h-40 overflow-y-auto text-sm">
-                {searchResults.map((paciente) => (
-                  <li
-                    key={paciente.id}
-                    onClick={() => handleSelectPaciente(paciente)}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  >
-                    {paciente.nombre} — {paciente.email}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {!soloEditarPaciente && (
-          <div className="mb-4 space-y-2">
-            <label className="text-sm font-medium text-[#5f4b32]">Selecciona hora disponible:</label>
-            <div className="flex flex-wrap gap-2">
-              {availableHours.length > 0 ? (
-                availableHours.map((h) => (
-                  <button
-                    key={h}
-                    onClick={() => setSelectedHour(h)}
-                    className={`px-3 py-1 rounded border text-sm transition ${
-                      selectedHour === h
-                        ? "bg-[#5f4b32] text-white"
-                        : "bg-white text-[#5f4b32] border-[#e0d6ca] hover:bg-[#f9f6f1]"
-                    }`}
-                  >
-                    {h}
-                  </button>
-                ))
-              ) : (
-                <p className="text-sm text-red-500">No hay horas disponibles.</p>
+            <div className="mb-4">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar paciente por nombre o email..."
+                className="w-full border px-4 py-2 rounded text-sm"
+              />
+              {searchResults.length > 0 && (
+                <ul className="bg-white border rounded mt-1 max-h-40 overflow-y-auto text-sm">
+                  {searchResults.map((paciente) => (
+                    <li
+                      key={paciente.id}
+                      onClick={() => handleSelectPaciente(paciente)}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {paciente.nombre} — {paciente.email}
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-          </div>
+
+            <div className="mb-4 space-y-2">
+              <label className="text-sm font-medium text-[#5f4b32]">Selecciona hora disponible:</label>
+              <div className="flex flex-wrap gap-2">
+                {availableHours.length > 0 ? (
+                  availableHours.map((h) => (
+                    <button
+                      key={h}
+                      onClick={() => {
+                        setSelectedHour(h);
+                        setCustomHour("");
+                      }}
+                      className={`px-3 py-1 rounded border text-sm transition ${
+                        selectedHour === h
+                          ? "bg-[#5f4b32] text-white"
+                          : "bg-white text-[#5f4b32] border-[#e0d6ca] hover:bg-[#f9f6f1]"
+                      }`}
+                    >
+                      {h}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-sm text-red-500">No hay horas disponibles.</p>
+                )}
+              </div>
+              <input
+                type="time"
+                value={customHour}
+                onChange={(e) => {
+                  setSelectedHour("");
+                  setCustomHour(e.target.value);
+                }}
+                className="w-full border border-gray-300 px-4 py-2 rounded text-sm mt-2"
+                placeholder="O introduce una hora manual"
+              />
+            </div>
+          </>
         )}
 
         <div className="space-y-3">
@@ -359,7 +368,7 @@ const ManualAppointmentModal = ({
           </button>
           <button
             onClick={handleGuardar}
-            disabled={loading || !selectedHour}
+            disabled={loading || (!selectedHour && !customHour)}
             className="px-4 py-2 rounded bg-[#b89b71] text-white hover:bg-[#9e855c] text-sm w-full sm:w-auto"
           >
             {loading ? "Guardando..." : "Guardar"}

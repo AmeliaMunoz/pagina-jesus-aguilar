@@ -1,5 +1,3 @@
-// Rediseño visual uniforme sin tocar la lógica
-
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -31,7 +29,6 @@ interface CitaHistorial {
 }
 
 interface Paciente {
-  uid: string;
   nombre: string;
   email: string;
   telefono: string;
@@ -46,12 +43,12 @@ const PatientHistoryAdmin = () => {
   const [pacienteEditando, setPacienteEditando] = useState<Paciente | null>(null);
   const [editandoNota, setEditandoNota] = useState<string | null>(null);
   const [nuevaNota, setNuevaNota] = useState<string>("");
-  const [notaEditandoSesion, setNotaEditandoSesion] = useState<{ uid: string; index: number } | null>(null);
+  const [notaEditandoSesion, setNotaEditandoSesion] = useState<{ email: string; index: number } | null>(null);
   const [notaSesion, setNotaSesion] = useState<string>("");
 
   const cargarPacientes = async () => {
     const snapshot = await getDocs(collection(db, "pacientes"));
-    const datos = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() })) as Paciente[];
+    const datos = snapshot.docs.map((doc) => ({ email: doc.id, ...doc.data() })) as Paciente[];
     setPacientes(datos);
   };
 
@@ -59,16 +56,16 @@ const PatientHistoryAdmin = () => {
     cargarPacientes();
   }, []);
 
-  const guardarNotaGeneral = async (uid: string, nota: string) => {
-    await updateDoc(doc(db, "pacientes", uid), { notaGeneral: nota });
+  const guardarNotaGeneral = async (email: string, nota: string) => {
+    await updateDoc(doc(db, "pacientes", email), { notaGeneral: nota });
     setEditandoNota(null);
     await cargarPacientes();
   };
 
-  const guardarNotaSesion = async (uid: string, index: number, nota: string) => {
-    const ref = doc(db, "pacientes", uid);
+  const guardarNotaSesion = async (email: string, index: number, nota: string) => {
+    const ref = doc(db, "pacientes", email);
     const snap = await getDocs(collection(db, "pacientes"));
-    const docSnap = snap.docs.find((d) => d.id === uid);
+    const docSnap = snap.docs.find((d) => d.id === email);
     if (!docSnap) return;
     const data = docSnap.data() as Paciente;
     const historialActualizado = [...data.historial];
@@ -78,11 +75,11 @@ const PatientHistoryAdmin = () => {
     await cargarPacientes();
   };
 
-  const eliminarPaciente = async (uid: string) => {
+  const eliminarPaciente = async (email: string) => {
     const confirmar = window.confirm("¿Estás seguro de eliminar este paciente?");
     if (!confirmar) return;
-    await deleteDoc(doc(db, "pacientes", uid));
-    setPacientes((prev) => prev.filter((p) => p.uid !== uid));
+    await deleteDoc(doc(db, "pacientes", email));
+    setPacientes((prev) => prev.filter((p) => p.email !== email));
   };
 
   const pacientesFiltrados = pacientes
@@ -116,65 +113,65 @@ const PatientHistoryAdmin = () => {
           />
 
           {Object.entries(pacientesPorLetra).map(([letra, grupo]) => (
-            <div key={letra} className="mb-10">
+            <div key={letra} className="mb-8">
               <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">{letra}</h3>
               <div className="space-y-4">
                 {grupo.map((paciente) => (
                   <div
-                    key={paciente.uid}
-                    className="bg-[#fdf8f4] border border-[#e8d4c3] rounded-xl shadow-sm p-6"
+                    key={paciente.email}
+                    className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4"
                   >
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-semibold text-[#5f4b32]">{paciente.nombre}</p>
-                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                        <p className="text-base font-semibold text-[#5f4b32]">{paciente.nombre}</p>
+                        <p className="text-sm text-gray-700 flex items-center gap-1">
                           <Mail size={14} /> {paciente.email}
                         </p>
-                        <p className="text-sm text-gray-700 flex items-center gap-2">
+                        <p className="text-sm text-gray-700 flex items-center gap-1">
                           <Phone size={14} /> {paciente.telefono}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3 items-start">
                         <button
                           onClick={() => setPacienteEditando(paciente)}
-                          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                          className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
                         >
                           <Pencil size={14} /> Editar
                         </button>
                         <button
-                          onClick={() => eliminarPaciente(paciente.uid)}
-                          className="text-sm text-red-600 hover:text-red-800 flex items-center gap-1"
+                          onClick={() => eliminarPaciente(paciente.email)}
+                          className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
                         >
                           <Trash2 size={14} /> Eliminar
                         </button>
                         <button
                           onClick={() =>
                             setPacienteExpandido(
-                              pacienteExpandido === paciente.uid ? null : paciente.uid
+                              pacienteExpandido === paciente.email ? null : paciente.email
                             )
                           }
-                          className="text-sm text-[#5f4b32]"
+                          className="text-xs text-[#5f4b32]"
                         >
-                          {pacienteExpandido === paciente.uid ? <ChevronUp /> : <ChevronDown />}
+                          {pacienteExpandido === paciente.email ? <ChevronUp /> : <ChevronDown />}
                         </button>
                       </div>
                     </div>
 
-                    {pacienteExpandido === paciente.uid && (
-                      <div className="mt-4 space-y-4">
+                    {pacienteExpandido === paciente.email && (
+                      <div className="mt-4 space-y-3 text-sm">
                         <div>
-                          <p className="text-sm font-medium text-[#5f4b32] mb-1">Nota general:</p>
-                          {editandoNota === paciente.uid ? (
+                          <p className="font-medium text-[#5f4b32] mb-1">Nota general:</p>
+                          {editandoNota === paciente.email ? (
                             <div className="space-y-2">
                               <textarea
-                                className="w-full border border-gray-300 rounded p-2 text-sm"
+                                className="w-full border border-gray-300 rounded p-2"
                                 rows={3}
                                 value={nuevaNota}
                                 onChange={(e) => setNuevaNota(e.target.value)}
                               />
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => guardarNotaGeneral(paciente.uid, nuevaNota)}
+                                  onClick={() => guardarNotaGeneral(paciente.email, nuevaNota)}
                                   className="text-sm px-4 py-2 rounded bg-[#5f4b32] text-white hover:bg-[#9e855c]"
                                 >
                                   Guardar
@@ -189,12 +186,12 @@ const PatientHistoryAdmin = () => {
                             </div>
                           ) : (
                             <div className="flex justify-between items-start">
-                              <p className="text-sm text-gray-700 italic">
+                              <p className="text-gray-700 italic">
                                 {paciente.notaGeneral || "Sin nota general"}
                               </p>
                               <button
                                 onClick={() => {
-                                  setEditandoNota(paciente.uid);
+                                  setEditandoNota(paciente.email);
                                   setNuevaNota(paciente.notaGeneral || "");
                                 }}
                                 className="text-sm text-blue-600 hover:text-blue-800"
@@ -206,7 +203,7 @@ const PatientHistoryAdmin = () => {
                         </div>
 
                         <div>
-                          <p className="text-sm font-medium text-[#5f4b32] mb-1">Historial de sesiones:</p>
+                          <p className="font-medium text-[#5f4b32] mb-1">Historial de sesiones:</p>
                           {paciente.historial.length > 0 ? (
                             <ul className="space-y-2">
                               {paciente.historial.map((cita, index) => (
@@ -215,23 +212,24 @@ const PatientHistoryAdmin = () => {
                                   className="bg-white p-3 border border-[#e0d6ca] rounded"
                                 >
                                   <p className="text-sm flex items-center gap-2">
-                                    <CalendarDays size={14} className="text-[#5f4b32]" /> {cita.fecha} a las {cita.hora}
+                                    <CalendarDays size={14} className="text-[#5f4b32]" />
+                                    {cita.fecha} a las {cita.hora}
                                   </p>
                                   <p className="text-sm flex items-center gap-2">
                                     <Activity size={14} className="text-green-700" /> Estado: {cita.estado}
                                   </p>
                                   <div className="flex justify-between items-start">
-                                    {notaEditandoSesion?.uid === paciente.uid && notaEditandoSesion.index === index ? (
+                                    {notaEditandoSesion?.email === paciente.email && notaEditandoSesion.index === index ? (
                                       <div className="w-full space-y-2">
                                         <textarea
-                                          className="w-full border border-gray-300 rounded p-2 text-sm"
+                                          className="w-full border border-gray-300 rounded p-2"
                                           rows={2}
                                           value={notaSesion}
                                           onChange={(e) => setNotaSesion(e.target.value)}
                                         />
                                         <div className="flex gap-2">
                                           <button
-                                            onClick={() => guardarNotaSesion(paciente.uid, index, notaSesion)}
+                                            onClick={() => guardarNotaSesion(paciente.email, index, notaSesion)}
                                             className="text-sm px-4 py-1 bg-[#5f4b32] text-white rounded"
                                           >
                                             Guardar
@@ -255,7 +253,7 @@ const PatientHistoryAdmin = () => {
                                         )}
                                         <button
                                           onClick={() => {
-                                            setNotaEditandoSesion({ uid: paciente.uid, index });
+                                            setNotaEditandoSesion({ email: paciente.email, index });
                                             setNotaSesion(cita.nota || "");
                                           }}
                                           className="text-sm text-blue-600 hover:text-blue-800"
@@ -269,7 +267,7 @@ const PatientHistoryAdmin = () => {
                               ))}
                             </ul>
                           ) : (
-                            <p className="text-sm text-gray-500">Este paciente no tiene citas aún.</p>
+                            <p className="text-gray-500">Este paciente no tiene citas aún.</p>
                           )}
                         </div>
                       </div>
@@ -280,22 +278,22 @@ const PatientHistoryAdmin = () => {
             </div>
           ))}
         </div>
-      </div>
 
-      {pacienteEditando && (
-        <ManualAppointmentModal
-          fecha={new Date()}
-          hora={"10:00"}
-          onClose={() => setPacienteEditando(null)}
-          onSave={() => setPacienteEditando(null)}
-          nombre={pacienteEditando.nombre}
-          email={pacienteEditando.email}
-          telefono={pacienteEditando.telefono}
-          nota={""}
-          modoEdicion
-          soloEditarPaciente
-        />
-      )}
+        {pacienteEditando && (
+          <ManualAppointmentModal
+            fecha={new Date()}
+            hora={"10:00"}
+            onClose={() => setPacienteEditando(null)}
+            onSave={() => setPacienteEditando(null)}
+            nombre={pacienteEditando.nombre}
+            email={pacienteEditando.email}
+            telefono={pacienteEditando.telefono}
+            nota={""}
+            modoEdicion
+            soloEditarPaciente
+          />
+        )}
+      </div>
     </AdminLayout>
   );
 };

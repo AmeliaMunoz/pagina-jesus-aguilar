@@ -318,10 +318,11 @@ const AppointmentCalendar = () => {
             const fechaStr = format(editEvent.start, "yyyy-MM-dd");
             const horaStr = format(editEvent.start, "HH:mm");
             const { email } = editEvent.resource;
-
+          
             await eliminarCitaDeHistorial(email, fechaStr, horaStr);
-            await liberarHoraEnDisponibilidad(fechaStr, horaStr);
+          
           }}
+          
         />
       )}
     </div>

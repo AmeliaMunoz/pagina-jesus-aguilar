@@ -34,7 +34,7 @@ const PatientHistoryPage = () => {
       if (!user) return;
 
       const userDoc = await getDocs(
-        query(collection(db, "usuarios"), where("uid", "==", user.uid))
+        query(collection(db, "usuarios"), where("email", "==", user.email))
       );
       const docData = userDoc.docs[0]?.data();
       setNombre(docData?.nombre || "");

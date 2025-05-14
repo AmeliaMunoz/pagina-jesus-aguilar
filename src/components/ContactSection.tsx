@@ -8,14 +8,12 @@ import {
   Timestamp,
   updateDoc,
   arrayRemove,
-  query,     
-  where         
 } from "firebase/firestore";
 import { db } from "../firebase";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { addDays } from "date-fns";
-import { es } from "date-fns/locale"; 
+import { es } from "date-fns/locale";
 import Button from "./Button";
 import { holidays2025 } from "../data/holidays";
 import { CheckCircle, Mail, Phone, XCircle } from "lucide-react";
@@ -35,19 +33,19 @@ const ContactSection = () => {
   const generarFechasDisponibles = async (): Promise<Date[]> => {
     const hoy = new Date();
     const dias: Date[] = [];
-  
+
     const disponibilidadSnap = await getDocs(collection(db, "disponibilidad"));
     const disponibilidadMap: Record<string, string[]> = {};
     disponibilidadSnap.docs.forEach((docSnap) => {
       disponibilidadMap[docSnap.id] = docSnap.data().horas || [];
     });
-  
+
     const horariosSnap = await getDocs(collection(db, "horarios_semanales"));
     const horariosMap: Record<string, string[]> = {};
     horariosSnap.docs.forEach((doc) => {
       horariosMap[doc.id] = doc.data().horas || [];
     });
-  
+
     for (let i = 0; i < 30; i++) {
       const fecha = addDays(hoy, i);
       const yyyyMMdd = fecha.toLocaleDateString("sv-SE");
@@ -56,29 +54,29 @@ const ContactSection = () => {
         .toLowerCase()
         .normalize("NFD")
         .replace(/\p{Diacritic}/gu, "");
-  
+
       if (holidays2025.includes(yyyyMMdd)) continue;
-  
+
       const horasDisponibilidad = disponibilidadMap[yyyyMMdd] || [];
       const horasSemana = horariosMap[diaSemana] || [];
-  
-      // Combinamos si hay pocas en disponibilidad
-      const horasCombinadas = horasDisponibilidad.length < 3
-        ? Array.from(new Set([...horasDisponibilidad, ...horasSemana]))
-        : horasDisponibilidad;
-  
+
+      const horasCombinadas =
+        horasDisponibilidad.length < 3
+          ? Array.from(new Set([...horasDisponibilidad, ...horasSemana]))
+          : horasDisponibilidad;
+
       const horasValidas = horasCombinadas.filter((hora) => {
         const h = parseInt(hora.split(":")[0]);
         return h >= 7 && h < 22;
       });
-  
+
       if (horasValidas.length > 0) {
         dias.push(fecha);
       }
     }
-  
+
     return dias;
-  };  
+  };
 
   useEffect(() => {
     const cargarFechasDisponibles = async () => {
@@ -91,52 +89,55 @@ const ContactSection = () => {
   useEffect(() => {
     const cargarHoras = async () => {
       if (!startDate) return;
-  
+
       const fechaSeleccionada = startDate.toLocaleDateString("sv-SE");
       const diaSemana = startDate
         .toLocaleDateString("es-ES", { weekday: "long" })
         .toLowerCase()
         .normalize("NFD")
         .replace(/\p{Diacritic}/gu, "");
-  
+
       let horas: string[] = [];
-  
+
       const docRef = doc(db, "disponibilidad", fechaSeleccionada);
       const docSnap = await getDoc(docRef);
       const horasDisponibilidad = docSnap.exists() ? docSnap.data().horas || [] : [];
-  
+
       if (horasDisponibilidad.length < 3) {
         const horarioRef = doc(db, "horarios_semanales", diaSemana);
         const horarioSnap = await getDoc(horarioRef);
         const horasSemana = horarioSnap.exists() ? horarioSnap.data().horas || [] : [];
-  
+
         horas = Array.from(new Set([...horasDisponibilidad, ...horasSemana]));
       } else {
         horas = horasDisponibilidad;
       }
-  
-      // ❌ Excluir horas ya reservadas en citas (excepto las anuladas)
-      const citasSnap = await getDocs(
-        query(collection(db, "citas"), where("fecha", "==", fechaSeleccionada))
-      );
-  
+
+      const citasSnap = await getDocs(collection(db, "citas"));
       const horasOcupadas = citasSnap.docs
-        .filter((doc) => doc.data().estado !== "anulada")
-        .map((doc) => doc.data().hora);
-  
-      // 🔐 Filtrar solo horas válidas y disponibles
+        .map((doc) => doc.data())
+        .filter(
+          (cita) =>
+            cita.fecha === fechaSeleccionada &&
+            ["aprobada", "ausente", "pendiente"].includes(cita.estado)
+        )
+        .map((cita) => cita.hora);
+
       const filtradas = horas.filter((hora) => {
         const [h] = hora.split(":");
-        return parseInt(h) >= 7 && parseInt(h) < 22 && !horasOcupadas.includes(hora);
+        return (
+          parseInt(h) >= 7 &&
+          parseInt(h) < 22 &&
+          !horasOcupadas.includes(hora)
+        );
       });
-  
+
       setHorasDisponibles(filtradas);
       setHoraSeleccionada("");
     };
-  
+
     cargarHoras();
   }, [startDate]);
-  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,20 +150,21 @@ const ContactSection = () => {
         return;
       }
 
-      const [h, m] = horaSeleccionada.split(":" ).map(Number);
+      const [h, m] = horaSeleccionada.split(":").map(Number);
       const fechaConHora = new Date(
         startDate.getFullYear(),
         startDate.getMonth(),
         startDate.getDate(),
         h,
-        m,
-        0,
-        0
+        m
       );
+
+      const fechaStr = startDate.toLocaleDateString("sv-SE");
+      const emailNormalizado = email.trim().toLowerCase();
 
       await addDoc(collection(db, "mensajes"), {
         nombre,
-        email,
+        email: emailNormalizado,
         telefono,
         mensaje,
         fechaPropuesta: Timestamp.fromDate(fechaConHora),
@@ -172,29 +174,24 @@ const ContactSection = () => {
         creado: Timestamp.now(),
       });
 
-      const fecha = startDate.toLocaleDateString("sv-SE");
-      const ref = doc(db, "disponibilidad", fecha);
-      const snap = await getDoc(ref);
+      await addDoc(collection(db, "citas"), {
+        nombre,
+        email: emailNormalizado,
+        telefono,
+        mensajeDelPaciente: mensaje,
+        fecha: fechaStr,
+        hora: horaSeleccionada,
+        estado: "pendiente",
+        duracionMinutos: 60,
+        creadoEl: new Date().toISOString(),
+      });
 
+      const ref = doc(db, "disponibilidad", fechaStr);
+      const snap = await getDoc(ref);
       if (snap.exists()) {
         await updateDoc(ref, {
           horas: arrayRemove(horaSeleccionada),
         });
-      } else {
-        const diaSemana = startDate
-          .toLocaleDateString("es-ES", { weekday: "long" })
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/\u0300-\u036f/g, "");
-
-        const semanaRef = doc(db, "horarios_semanales", diaSemana);
-        const semanaSnap = await getDoc(semanaRef);
-
-        if (semanaSnap.exists()) {
-          await updateDoc(semanaRef, {
-            horas: arrayRemove(horaSeleccionada),
-          });
-        }
       }
 
       setEnviado(true);
@@ -204,7 +201,6 @@ const ContactSection = () => {
       setMensaje("");
       setStartDate(null);
       setHoraSeleccionada("");
-
       setTimeout(() => setEnviado(false), 5000);
     } catch (err) {
       console.error("Error al enviar:", err);
@@ -221,21 +217,18 @@ const ContactSection = () => {
             Contacto
           </h2>
           <p className="text-gray-700 mb-6 text-base sm:text-lg">
-            No dudes en comunicarte para obtener más información o agendar una cita. <strong>¡Estaré encantado de ayudarte!</strong>
+            No dudes en comunicarte para obtener más información o agendar una cita.{" "}
+            <strong>¡Estaré encantado de ayudarte!</strong>
           </p>
           <div className="space-y-4 text-gray-700 text-base">
             <div className="flex items-center gap-3">
-              <span className="text-xl">
-                <Mail />
-              </span>
+              <span className="text-xl"><Mail /></span>
               <a href="mailto:jesusaguilarpsicologia@gmail.com" className="hover:underline break-all">
                 jesusaguilarpsicologia@gmail.com
               </a>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xl">
-                <Phone />
-              </span>
+              <span className="text-xl"><Phone /></span>
               <a href="tel:+34123456789" className="hover:underline">
                 +34 123 456 789
               </a>
@@ -265,9 +258,7 @@ const ContactSection = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label htmlFor="nombre" className="text-gray-700 font-medium">
-                  Nombre
-                </label>
+                <label htmlFor="nombre" className="text-gray-700 font-medium">Nombre</label>
                 <input
                   id="nombre"
                   type="text"
@@ -278,9 +269,7 @@ const ContactSection = () => {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-gray-700 font-medium">
-                  Email
-                </label>
+                <label htmlFor="email" className="text-gray-700 font-medium">Email</label>
                 <input
                   id="email"
                   type="email"
@@ -291,9 +280,7 @@ const ContactSection = () => {
                 />
               </div>
               <div className="flex flex-col gap-2 sm:col-span-2">
-                <label htmlFor="telefono" className="text-gray-700 font-medium">
-                  Teléfono
-                </label>
+                <label htmlFor="telefono" className="text-gray-700 font-medium">Teléfono</label>
                 <input
                   id="telefono"
                   type="tel"
@@ -314,11 +301,7 @@ const ContactSection = () => {
                 placeholderText="Selecciona una fecha"
                 includeDates={fechasDisponibles}
                 className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
-                dayClassName={(date) => {
-                  const yyyyMMdd = date.toLocaleDateString("sv-SE");
-                  return holidays2025.includes(yyyyMMdd) ? "text-red-500" : "";
-                }}
-                locale={es} // ← español activado
+                locale={es}
               />
             </div>
 
@@ -333,18 +316,14 @@ const ContactSection = () => {
                 >
                   <option value="">Selecciona una hora</option>
                   {horasDisponibles.map((hora, index) => (
-                    <option key={index} value={hora}>
-                      {hora}
-                    </option>
+                    <option key={index} value={hora}>{hora}</option>
                   ))}
                 </select>
               </div>
             )}
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="mensaje" className="text-gray-700 font-medium">
-                Dime en qué te puedo ayudar
-              </label>
+              <label htmlFor="mensaje" className="text-gray-700 font-medium">Dime en qué te puedo ayudar</label>
               <textarea
                 id="mensaje"
                 rows={4}

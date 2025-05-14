@@ -7,6 +7,8 @@ import {
   doc,
   Timestamp,
   addDoc,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import desbloquearHora from "../components/UnblockHour";
@@ -38,30 +40,85 @@ const FormMessagesPage = () => {
     hora?: string,
     msgData?: any
   ) => {
+    const email = msgData?.email?.trim().toLowerCase();
+    const nombre = msgData?.nombre || "";
+    const telefono = msgData?.telefono || "";
+    const nota = msgData?.mensaje || "";
+    const fechaStr = fecha;
+    const horaStr = hora;
+
     await updateDoc(doc(db, "mensajes", id), {
       estado: nuevoEstado,
       actualizado: Timestamp.now(),
     });
 
-    if (nuevoEstado === "rechazada" && fecha && hora) {
-      await desbloquearHora(fecha, hora);
+    if (nuevoEstado === "rechazada" && fechaStr && horaStr && email) {
+      // Buscar cita existente y marcarla como rechazada
+      const citasSnap = await getDocs(collection(db, "citas"));
+      const citaDoc = citasSnap.docs.find((doc) => {
+        const data = doc.data();
+        return (
+          data.email?.trim().toLowerCase() === email &&
+          data.fecha === fechaStr &&
+          data.hora === horaStr
+        );
+      });
+
+      if (citaDoc) {
+        await updateDoc(doc(db, "citas", citaDoc.id), {
+          estado: "rechazada",
+        });
+        console.log("🗑️ Cita marcada como rechazada");
+      } else {
+        console.warn("⚠️ No se encontró cita para rechazar");
+      }
+
+      await desbloquearHora(fechaStr, horaStr);
+      console.log("✅ Hora liberada:", fechaStr, horaStr);
     }
 
     if (nuevoEstado === "aprobada" && msgData) {
       const cita = {
         uid: msgData.uid || "",
-        email: msgData.email,
-        nombre: msgData.nombre,
-        telefono: msgData.telefono || "",
-        mensaje: msgData.mensaje || "",
-        fecha: msgData.fechaPropuesta.toDate().toISOString().split("T")[0],
-        hora: msgData.horaPropuesta,
+        email,
+        nombre,
+        telefono,
+        mensajeDelPaciente: nota,
+        fecha: fechaStr,
+        hora: horaStr,
         estado: "aprobada",
         anuladaPorUsuario: false,
         descontadaDelBono: false,
         creadoEl: new Date().toISOString(),
       };
+
       await addDoc(collection(db, "citas"), cita);
+      console.log("✅ Cita guardada en 'citas'");
+
+      const pacienteRef = doc(db, "pacientes", email);
+      const pacienteSnap = await getDoc(pacienteRef);
+      const entradaHistorial = {
+        fecha: fechaStr,
+        hora: horaStr,
+        estado: "aprobada",
+        nota,
+      };
+
+      if (!pacienteSnap.exists()) {
+        console.log("➕ Creando nuevo paciente:", email);
+        await setDoc(pacienteRef, {
+          nombre,
+          email,
+          telefono,
+          historial: [entradaHistorial],
+        });
+      } else {
+        console.log("📌 Añadiendo al historial de:", email);
+        const data = pacienteSnap.data();
+        const historial = Array.isArray(data.historial) ? data.historial : [];
+        historial.push(entradaHistorial);
+        await updateDoc(pacienteRef, { historial });
+      }
     }
 
     await obtenerMensajes();
@@ -170,7 +227,8 @@ const FormMessagesPage = () => {
                             m.id,
                             "rechazada",
                             m.fechaPropuesta?.toDate()?.toISOString().split("T")[0],
-                            m.horaPropuesta
+                            m.horaPropuesta,
+                            m
                           )
                         }
                         className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
@@ -190,13 +248,3 @@ const FormMessagesPage = () => {
 };
 
 export default FormMessagesPage;
-
-
-
-
-
-
-
-
-
-

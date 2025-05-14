@@ -79,7 +79,25 @@ const EditAppointmentModal = ({
   const handleEliminar = async () => {
     setEliminando(true);
     try {
-      await deleteDoc(doc(db, "citas", id));
+      const citaRef = doc(db, "citas", id);
+      const citaSnap = await getDoc(citaRef);
+
+      if (citaSnap.exists()) {
+        const citaData = citaSnap.data();
+        const fueForzada = citaData.forzada === true;
+        const sePuedeLiberar = !fueForzada || typeof citaData.forzada === "undefined";
+
+        console.log("🔍 ¿Cita forzada?:", fueForzada, "| ¿Se puede liberar?:", sePuedeLiberar);
+
+        if (sePuedeLiberar) {
+          await liberarHoraEnDisponibilidad(
+            fecha.toISOString().split("T")[0],
+            hora
+          );
+        }
+      }
+
+      await deleteDoc(citaRef);
       await onDeleteFromHistory();
       onUpdate();
       onClose();
@@ -111,7 +129,9 @@ const EditAppointmentModal = ({
           className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
         />
 
-        <label className="block text-sm font-medium text-gray-700">Nota (solo visible por el profesional)</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Nota (solo visible por el profesional)
+        </label>
         <textarea
           value={nuevaNota}
           onChange={(e) => setNuevaNota(e.target.value)}
@@ -127,13 +147,24 @@ const EditAppointmentModal = ({
         )}
 
         <div className="flex justify-end gap-3 pt-4">
-          <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded text-sm">
+          <button
+            onClick={onClose}
+            className="bg-gray-200 px-4 py-2 rounded text-sm"
+          >
             Cancelar
           </button>
-          <button onClick={handleGuardar} disabled={guardando} className="bg-blue-600 text-white px-4 py-2 rounded text-sm">
+          <button
+            onClick={handleGuardar}
+            disabled={guardando}
+            className="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+          >
             {guardando ? "Guardando..." : "Guardar"}
           </button>
-          <button onClick={handleEliminar} disabled={eliminando} className="bg-red-600 text-white px-4 py-2 rounded text-sm">
+          <button
+            onClick={handleEliminar}
+            disabled={eliminando}
+            className="bg-red-600 text-white px-4 py-2 rounded text-sm"
+          >
             {eliminando ? "Eliminando..." : "Eliminar"}
           </button>
         </div>
@@ -143,13 +174,3 @@ const EditAppointmentModal = ({
 };
 
 export default EditAppointmentModal;
-
-
-
-
-
-
-
-
-
-

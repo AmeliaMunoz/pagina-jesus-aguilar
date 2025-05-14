@@ -53,7 +53,7 @@ const NextAppointmentPage = () => {
 
       const q = query(
         collection(db, "citas"),
-        where("uid", "==", currentUser.uid),
+        where("email", "==", currentUser.email),
         where("estado", "==", "aprobada"),
         orderBy("fecha")
       );
