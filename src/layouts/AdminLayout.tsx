@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import HamburgerButton from "../components/HamburgerButton";
 import { auth, signOut } from "../firebase";
+import AdminHeader from "../components/AdminHeader";
 
 interface Props {
   children: ReactNode;
@@ -57,6 +58,7 @@ const AdminLayout = ({ children }: Props) => {
           isOpen={sidebarVisible}
           onToggle={() => setSidebarVisible(!sidebarVisible)}
         />
+        <AdminHeader/>
 
       <main className="flex-1 px-4 sm:px-6 py-12 overflow-y-auto">
         <div className="w-full max-w-5xl mx-auto">{children}</div>

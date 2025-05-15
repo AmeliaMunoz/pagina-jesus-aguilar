@@ -56,7 +56,6 @@ const AdminSidebar = ({ isOpen = false, onClose }: Props) => {
       <div className="w-24 h-24">
         <IconoLogo className="text-white" />
       </div>
-      <h2 className="text-xl font-bold">Admin</h2>
     </div>
 
     <nav className="flex flex-col gap-4">
