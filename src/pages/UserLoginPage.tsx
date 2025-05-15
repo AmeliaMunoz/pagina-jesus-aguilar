@@ -2,7 +2,7 @@ import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import IconoLogo from "../components/IconoLogo";
 
 const UserLoginPage = () => {
@@ -88,7 +88,7 @@ const UserLoginPage = () => {
 
           <button
             type="submit"
-            className="w-full py-2 bg-[#5f4b32] text-white text-lg font-semibold rounded-lg hover:bg-[#b89b71] transition"
+            className="w-full py-2 bg-[#b89b71] text-white text-lg font-semibold rounded-lg hover:bg-[#9e855c] transition"
           >
             Iniciar sesión
           </button>
@@ -99,12 +99,11 @@ const UserLoginPage = () => {
         </form>
 
         <div className="mt-4 text-center">
-          <a
-            href="/forgot-password"
-            className="text-sm text-[#5f4b32] hover:underline"
-          >
-            ¿Olvidaste tu contraseña?
-          </a>
+            <Link
+              to="/forgot-password"
+              className="text-sm text-[#5f4b32] hover:underline">
+              ¿Olvidaste tu contraseña?
+            </Link>
         </div>
       </div>
     </div>

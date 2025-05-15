@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from "../components/UserSidebar";
 import HamburgerButton from "../components/HamburgerButton";
+import UserHeader from "../components/UserHeader"; // 👈 Importamos el header
 import {
   CalendarClock,
   Ticket,
@@ -50,13 +51,16 @@ const UserLayout = ({ children }: Props) => {
           onToggle={() => setSidebarVisible(!sidebarVisible)}
         />
 
-        <main className="flex-1 px-4 sm:px-6 py-12 overflow-y-auto">
-           <div className="w-full max-w-5xl mx-auto">{children}</div>
-        </main>
+        {/* Header del usuario 👇 */}
+        <UserHeader />
 
+        <main className="flex-1 px-4 sm:px-6 py-12 overflow-y-auto">
+          <div className="w-full max-w-5xl mx-auto">{children}</div>
+        </main>
       </div>
     </div>
   );
 };
 
 export default UserLayout;
+

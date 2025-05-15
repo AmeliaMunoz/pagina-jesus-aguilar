@@ -26,7 +26,7 @@ const UserSidebar = ({ title, items, onLogout, isOpen = false, onClose }: Props)
   return (
     <aside
       className={`
-        fixed top-0 left-0 h-screen w-80 bg-[#735035] text-white px-6 py-8 z-40
+        fixed top-0 left-0 h-screen w-80 bg-[#9f8a6d] text-white px-6 py-8 z-40
         transition-transform duration-300 overflow-y-auto
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 lg:static lg:flex lg:flex-col lg:justify-between
@@ -48,7 +48,7 @@ const UserSidebar = ({ title, items, onLogout, isOpen = false, onClose }: Props)
               onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-lg transition text-md ${
-                  isActive ? "bg-[#4e3e29]" : "hover:bg-[#4e3e29]/80"
+                  isActive ? "bg-[#c1b5a4]" : "hover:bg-[#c1b5a4]"
                 }`
               }
             >
@@ -63,7 +63,7 @@ const UserSidebar = ({ title, items, onLogout, isOpen = false, onClose }: Props)
                 onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 rounded-lg transition text-md ${
-                    isActive ? "bg-[#4e3e29]" : "hover:bg-[#4e3e29]/80"
+                    isActive ? "bg-[#c1b5a4]" : "hover:bg-[#c1b5a4]"
                   }`
                 }
               >
@@ -88,6 +88,7 @@ const UserSidebar = ({ title, items, onLogout, isOpen = false, onClose }: Props)
 };
 
 export default UserSidebar;
+
 
 
 

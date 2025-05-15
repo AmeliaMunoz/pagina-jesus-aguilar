@@ -85,7 +85,6 @@ const PatientMessagesPage = () => {
     <UserLayout>
       <div className="w-full max-w-4xl mx-auto mt-10 px-4 space-y-10">
         <h1 className="text-2xl md:text-3xl font-bold text-[#5f4b32] text-center md:text-left">
-          {nombre}
         </h1>
 
         <div className="w-full max-w-5xl mx-auto px-4">

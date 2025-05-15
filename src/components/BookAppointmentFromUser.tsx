@@ -351,7 +351,7 @@ const BookAppointmentFromUser = ({
                       onClick={() => setSelectedHour(hora)}
                       className={`px-3 py-2 rounded border text-sm transition ${
                         selectedHour === hora
-                          ? "bg-[#5f4b32] text-white"
+                          ? "bg-[#836a48] text-white"
                           : "bg-white text-[#5f4b32] border-[#e0d6ca] hover:bg-[#f9f6f1]"
                       }`}
                     >
@@ -390,7 +390,7 @@ const BookAppointmentFromUser = ({
             <button
               onClick={handleBooking}
               disabled={loading || !selectedDate || !selectedHour}
-              className="bg-[#5f4b32] mt-2 w-full text-white py-3 rounded font-medium hover:bg-[#b89b71] disabled:opacity-50 transition"
+              className="bg-[#836a48] mt-2 w-full text-white py-3 rounded font-medium hover:bg-[#a38862] disabled:opacity-50 transition"
             >
               {loading ? "Reservando..." : "Confirmar cita"}
             </button>

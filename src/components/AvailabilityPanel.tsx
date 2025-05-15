@@ -101,7 +101,7 @@ const AvailabilityPanel = () => {
           <div className="flex items-end">
             <button
               onClick={addAvailability}
-              className="bg-[#5f4b32] hover:bg-[#b89b71] text-white px-6 py-2 rounded text-sm w-full"
+              className="bg-[#775d3e] hover:bg-[#836a48] text-white px-6 py-2 rounded text-sm w-full"
             >
               Añadir
             </button>

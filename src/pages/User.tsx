@@ -74,23 +74,25 @@ const User = () => {
 
     fetchData();
   }, [navigate, location.pathname]);
-
   return (
     <UserLayout>
-      <div className="w-full max-w-4xl mx-auto mt-10 md:mt-16 lg:mt-24 space-y-16 px-4">
+      <div className="w-full max-w-5xl mx-auto mt-10 md:mt-16 px-4 space-y-16">
+
         {/* Bienvenida */}
-        <div className="bg-white border border-[#e0d6ca] shadow-xl rounded-2xl p-6 md:p-10 text-[#5f4b32]">
-          <h1 className="text-2xl md:text-3xl font-bold mb-4">
-            ¡Hola, {nombre}!
-          </h1>
-          <p className="text-sm md:text-base">
+        <div className="relative bg-white border border-[#e0d6ca] shadow-xl rounded-2xl p-6 md:p-10 text-[#5f4b32]">
+          <h1 className="text-3xl font-bold mb-2">¡Hola, {nombre}!</h1>
+          <p className="text-base text-[#5f4b32]/90">
             Bienvenido a tu espacio personal. Aquí puedes gestionar tus sesiones, revisar tu progreso y mantener el contacto con tu psicólogo.
           </p>
+          <div className="absolute top-4 right-4 opacity-10">
+            <PlusCircle className="w-12 h-12 text-[#b89b71]" />
+          </div>
         </div>
 
         {/* Estado actual */}
-        <div className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-2xl shadow-md p-6 space-y-4">
+        <div className="bg-white border-l-4 border-[#b89b71] border-opacity-30 rounded-xl shadow-md p-6 space-y-4">
           <h2 className="text-xl font-semibold text-[#5f4b32] flex items-center gap-2">
+            <CalendarCheck2 className="w-6 h-6 text-[#5f4b32]" />
             Tu situación actual
           </h2>
 
@@ -107,12 +109,12 @@ const User = () => {
 
             <li className="flex items-start gap-2">
               <MessageSquareText className="w-5 h-5 mt-0.5 text-yellow-700" />
-              <span>Puedes enviar un mensaje privado en cualquier momento</span>
+              <span>Puedes enviar un mensaje privado en cualquier momento.</span>
             </li>
 
             <li className="flex items-start gap-2">
               <History className="w-5 h-5 mt-0.5 text-blue-700" />
-              <span>Accede a tu historial para ver tus sesiones anteriores</span>
+              <span>Consulta tu historial de sesiones anteriores.</span>
             </li>
           </ul>
         </div>
@@ -121,21 +123,21 @@ const User = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={() => navigate("/panel/paciente/reservar")}
-            className="flex items-center justify-center gap-2 bg-[#5f4b32] text-white rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#a37c53] transition"
+            className="flex items-center justify-center gap-2 bg-[#9e7c52] text-white rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#b89b71] transition shadow-md"
           >
             <PlusCircle className="w-5 h-5" /> Reservar nueva cita
           </button>
 
           <button
             onClick={() => navigate("/panel/paciente/historial")}
-            className="flex items-center justify-center gap-2 border border-[#5f4b32] text-[#5f4b32] rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#f3ece4] transition"
+            className="flex items-center justify-center gap-2 border border-[#5f4b32] text-[#5f4b32] rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#f3ece4] transition shadow-sm"
           >
             <History className="w-5 h-5" /> Ver historial
           </button>
 
           <button
             onClick={() => navigate("/panel/paciente/mensajes")}
-            className="flex items-center justify-center gap-2 border border-[#5f4b32] text-[#5f4b32] rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#f3ece4] transition"
+            className="flex items-center justify-center gap-2 border border-[#5f4b32] text-[#5f4b32] rounded-full px-6 py-3 text-sm font-semibold hover:bg-[#f3ece4] transition shadow-sm"
           >
             <MessageSquareText className="w-5 h-5" /> Ir a mensajes
           </button>

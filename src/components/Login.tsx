@@ -51,7 +51,7 @@ const Login = ({ redirectTo, authKey, title }: Props) => {
           />
           <button
             type="submit"
-            className="w-full bg-[#5f4b32] text-white py-2 rounded hover:bg-[#b89b71]"
+            className="w-full bg-[#b89b71] text-white py-2 rounded hover:bg-[#9e855c]"
           >
             Iniciar sesión
           </button>

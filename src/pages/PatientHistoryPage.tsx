@@ -79,7 +79,6 @@ const PatientHistoryPage = () => {
     <UserLayout>
       <div className="w-full max-w-4xl mx-auto mt-10 px-4">
         <h1 className="text-3xl font-bold text-[#5f4b32] mb-8 text-center md:text-left">
-          {nombre}
         </h1>
 
         <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">

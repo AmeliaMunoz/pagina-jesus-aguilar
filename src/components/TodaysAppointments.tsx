@@ -1,4 +1,4 @@
-// src/components/TodaysAppointments.tsx
+
 import { useEffect, useState } from "react";
 import { onSnapshot, query, collection, where } from "firebase/firestore";
 import { db } from "../firebase";

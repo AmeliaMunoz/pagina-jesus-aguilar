@@ -70,7 +70,7 @@ const AdminLoginPage = () => {
 
           <button
             type="submit"
-            className="w-full py-2 bg-[#5f4b32] text-white text-lg font-semibold rounded-lg hover:bg-[#b89b71]"
+            className="w-full py-2 bg-[#b89b71] text-white text-lg font-semibold rounded-lg hover:bg-[#9e855c]"
           >
             Iniciar sesión
           </button>

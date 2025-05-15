@@ -13,9 +13,9 @@ const HamburgerButton = ({ isOpen, onToggle }: Props) => {
         className="p-2 rounded bg-[#f5ede3] shadow"
       >
         {isOpen ? (
-          <X className="text-[#5f4b32] w-6 h-6" />
+          <X className="text-[#b89b71] w-6 h-6" />
         ) : (
-          <Menu className="text-[#5f4b32] w-6 h-6" />
+          <Menu className="text-[#b89b71] w-6 h-6" />
         )}
       </button>
     </div>

@@ -132,7 +132,7 @@ const NextAppointmentPage = () => {
     <div className="w-full max-w-4xl mx-auto mt-10 px-4">
       {/* Nombre del usuario */}
       <h1 className="text-3xl font-bold text-[#5f4b32] mb-8 text-center md:text-left">
-        {nombre}
+  
       </h1>
   
       {/* Tarjeta principal */}

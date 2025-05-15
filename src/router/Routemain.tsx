@@ -1,4 +1,4 @@
-// src/router/RouteMain.tsx
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
 import AboutMePage from "../pages/AboutMePage";
@@ -21,6 +21,7 @@ import PatientHistoryPage from "../pages/PatientHistoryPage";
 import PatientMessagesPage from "../pages/PatientMessagePage";
 import AdminMessagesPage from "../pages/AdminMessageChatPage";
 import AdminLoginPage from "../pages/AdminLoginPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 
 
 
@@ -52,13 +53,7 @@ const RouteMain = () => {
       <Route path="/admin/mensajes-pacientes" element={<AdminMessagesPage />} />
       <Route path="/panel/paciente/user" element={<User />} />
       <Route path="/admin-login" element={<AdminLoginPage />} />
-
-
-
-
-
-
-
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
     </Routes>
     </BrowserRouter>

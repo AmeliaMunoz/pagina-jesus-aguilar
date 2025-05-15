@@ -39,9 +39,7 @@ const BookAppointmentPage = () => {
   return (
     <UserLayout>
       <div className="w-full max-w-4xl mx-auto mt-10 px-4 space-y-12">
-        {/* Nombre del usuario */}
         <h1 className="text-2xl md:text-3xl font-bold text-[#5f4b32] text-center md:text-left">
-          {userName}
         </h1>
 
         {/* Card de reserva */}
