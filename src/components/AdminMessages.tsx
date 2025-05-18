@@ -7,6 +7,7 @@ import {
   doc,
   Timestamp,
   setDoc,
+  addDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import desbloquearHora from "./UnblockHour";
@@ -22,6 +23,7 @@ const AdminMessages = ({ onToast }: Props) => {
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("pendiente");
+  const [busqueda, setBusqueda] = useState("");
 
   const obtenerMensajes = async () => {
     setCargando(true);
@@ -88,13 +90,31 @@ const AdminMessages = ({ onToast }: Props) => {
       });
 
       if (citaDoc) {
-        await updateDoc(doc(db, "citas", citaDoc.id), {
+        const citaRef = doc(db, "citas", citaDoc.id);
+        await updateDoc(citaRef, {
           estado: "aprobada",
+          mensajeDelPaciente: nota,
+          actualizado: Timestamp.now(),
         });
-        console.log("✅ Cita actualizada a aprobada");
+        console.log("✅ Cita pendiente actualizada a 'aprobada'");
       } else {
-        console.warn("⚠️ No se encontró cita con email + fecha + hora");
-      }
+        // Si no existe una cita pendiente, crearla
+        const nuevaCita = {
+          uid: mensaje.uid || "",
+          email,
+          nombre,
+          telefono,
+          mensajeDelPaciente: nota,
+          fecha: fechaStr,
+          hora: horaStr,
+          estado: "aprobada",
+          creadoEl: new Date().toISOString(),
+          anuladaPorUsuario: false,
+          descontadaDelBono: false,
+        };
+        await addDoc(collection(db, "citas"), nuevaCita);
+        console.log("✅ Nueva cita creada con estado 'aprobada'");
+      }      
 
       const pacienteRef = doc(db, "pacientes", email);
       const pacienteSnap = await getDoc(pacienteRef);
@@ -127,108 +147,133 @@ const AdminMessages = ({ onToast }: Props) => {
   };
 
   const mensajesFiltrados =
-    filtroEstado === "todos" ? mensajes : mensajes.filter((m) => m.estado === filtroEstado);
+  filtroEstado === "todos" ? mensajes : mensajes.filter((m) => m.estado === filtroEstado);
 
   return (
     <main className="min-h-screen w-full lg:ml-64 px-4 py-8 flex items-center justify-center">
       <section className="w-full max-w-5xl mb-16 scroll-mt-32" id="mensajes">
-        <div className="flex flex-wrap gap-3 justify-center mb-8">
-          {["pendiente", "rechazada", "aprobada", "todos"].map((estado) => (
+        {/* Filtros */}
+        <div className="flex flex-wrap gap-3 justify-center mb-4">
+          {['pendiente', 'rechazada', 'aprobada', 'todos'].map((estado) => (
             <button
               key={estado}
               onClick={() => setFiltroEstado(estado)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                 filtroEstado === estado
-                  ? "bg-[#b89b71] text-white"
-                  : "bg-white border border-[#c8b29d] text-[#5f4b32]"
+                  ? 'bg-[#b89b71] text-white'
+                  : 'bg-white border border-[#c8b29d] text-[#5f4b32]'
               }`}
             >
-              {estado === "todos" ? "Todos" : estado.charAt(0).toUpperCase() + estado.slice(1)}
+              {estado === 'todos' ? 'Todos' : estado.charAt(0).toUpperCase() + estado.slice(1)}
             </button>
           ))}
         </div>
-
+  
+        {/* Buscador */}
+        <div className="mb-8 text-center">
+          <input
+            type="text"
+            placeholder="Buscar por nombre o email"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded text-sm"
+          />
+        </div>
+  
+        {/* Lista de mensajes */}
         {cargando ? (
           <p className="text-center text-brown-700">Cargando mensajes...</p>
         ) : mensajesFiltrados.length === 0 ? (
           <p className="text-center text-brown-700">No hay mensajes en esta categoría.</p>
         ) : (
-          <div className="grid gap-6">
-            {mensajesFiltrados.map((m) => (
-              <div key={m.id} className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6">
-                <p className="text-sm text-gray-500 mb-1">
-                  {m.creado?.toDate().toLocaleString()}
-                </p>
-                <h3 className="text-lg font-semibold text-gray-800">{m.nombre}</h3>
-
-                <p className="text-sm text-gray-700 flex items-center gap-2">
-                  <Mail size={16} />
-                  {m.email}
-                </p>
-                {m.telefono && (
-                  <p className="text-sm text-gray-700 flex items-center gap-2">
-                    <Phone />
-                    {m.telefono}
-                  </p>
-                )}
-
-                {m.fechaPropuesta && (
-                  <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
-                    <CalendarDays />
-                    <span className="font-medium">Fecha propuesta:</span>{" "}
-                    {m.fechaPropuesta.toDate().toLocaleDateString("es-ES")}{" "}
-                    {m.horaPropuesta ? `a las ${m.horaPropuesta}` : ""}
-                  </p>
-                )}
-
-                <p className="mt-2 text-gray-800">{m.mensaje}</p>
-
-                <p className="mt-2 font-medium text-sm">
-                  Estado:{" "}
-                  <span
-                    className={
-                      m.estado === "pendiente"
-                        ? "text-yellow-600"
-                        : m.estado === "aprobada"
-                        ? "text-green-700"
-                        : "text-red-600"
-                    }
-                  >
-                    {m.estado}
-                  </span>
-                </p>
-
-                {filtroEstado !== "todos" && (
-                  <div className="mt-4 flex gap-4 flex-wrap">
-                    <button
-                      onClick={() => cambiarEstado(m.id, "aprobada")}
-                      className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
-                    >
-                      Aprobar
-                    </button>
-                    <button
-                      onClick={() =>
-                        cambiarEstado(
-                          m.id,
-                          "rechazada",
-                          m.fechaPropuesta?.toDate()?.toLocaleDateString("sv-SE"),
-                          m.horaPropuesta
-                        )
-                      }
-                      className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
-                    >
-                      Rechazar
-                    </button>
+          Object.entries(
+            mensajesFiltrados
+              .filter((m) =>
+                m.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+                m.email?.toLowerCase().includes(busqueda.toLowerCase())
+              )
+              .sort((a, b) => a.nombre.localeCompare(b.nombre))
+              .reduce((acc: Record<string, any[]>, msg) => {
+                const letra = msg.nombre.charAt(0).toUpperCase();
+                if (!acc[letra]) acc[letra] = [];
+                acc[letra].push(msg);
+                return acc;
+              }, {})
+          ).map(([letra, grupo]) => (
+            <div key={letra} className="mb-6">
+              <h3 className="text-lg font-bold text-[#5f4b32] mb-2">{letra}</h3>
+              <div className="grid gap-6">
+                {grupo.map((m) => (
+                  <div key={m.id} className="bg-white border border-[#e8d4c3] rounded-xl shadow-sm p-6">
+                    <p className="text-sm text-gray-500 mb-1">
+                      {m.creado?.toDate().toLocaleString()}
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-800">{m.nombre}</h3>
+  
+                    <p className="text-sm text-gray-700 flex items-center gap-2">
+                      <Mail size={16} /> {m.email}
+                    </p>
+  
+                    {m.telefono && (
+                      <p className="text-sm text-gray-700 flex items-center gap-2">
+                        <Phone size={16} /> {m.telefono}
+                      </p>
+                    )}
+  
+                    {m.fechaPropuesta && (
+                      <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
+                        <CalendarDays size={16} />
+                        Fecha propuesta: {m.fechaPropuesta.toDate().toLocaleDateString("es-ES")} {m.horaPropuesta && `a las ${m.horaPropuesta}`}
+                      </p>
+                    )}
+  
+                    {m.mensaje && <p className="mt-2 text-gray-800">{m.mensaje}</p>}
+  
+                    <p className="mt-2 font-medium text-sm">
+                      Estado: <span className={
+                        m.estado === 'pendiente'
+                          ? 'text-yellow-600'
+                          : m.estado === 'aprobada'
+                          ? 'text-green-700'
+                          : 'text-red-600'
+                      }>
+                        {m.estado}
+                      </span>
+                    </p>
+  
+                    {filtroEstado !== 'todos' && (
+                      <div className="mt-4 flex flex-wrap gap-4">
+                        <button
+                          onClick={() => cambiarEstado(m.id, 'aprobada')}
+                          className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
+                        >
+                          Aprobar
+                        </button>
+                        <button
+                          onClick={() =>
+                            cambiarEstado(
+                              m.id,
+                              'rechazada',
+                              m.fechaPropuesta?.toDate()?.toLocaleDateString('sv-SE'),
+                              m.horaPropuesta
+                            )
+                          }
+                          className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
       </section>
     </main>
   );
-};
+}  
 
 export default AdminMessages;
 

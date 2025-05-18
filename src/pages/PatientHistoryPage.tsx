@@ -4,13 +4,13 @@ import {
   Ban,
   HelpCircle,
   ClipboardList,
+  XCircle,
 } from "lucide-react";
 import { auth, db } from "../firebase";
 import {
   collection,
   query,
   where,
-  orderBy,
   getDocs,
 } from "firebase/firestore";
 import { useLocation } from "react-router-dom";
@@ -33,29 +33,32 @@ const PatientHistoryPage = () => {
       const user = auth.currentUser;
       if (!user) return;
 
+      // Obtener nombre del usuario
       const userDoc = await getDocs(
         query(collection(db, "usuarios"), where("email", "==", user.email))
       );
       const docData = userDoc.docs[0]?.data();
       setNombre(docData?.nombre || "");
 
+      // Obtener todas las citas del usuario
       const q = query(
         collection(db, "citas"),
-        where("uid", "==", user.uid),
-        where("estado", "in", ["realizada", "anulada", "ausente"]),
-        orderBy("fecha", "desc")
+        where("uid", "==", user.uid)
       );
 
       const snapshot = await getDocs(q);
-      const citas = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          fecha: data.fecha ?? "",
-          hora: data.hora ?? "",
-          estado: data.estado ?? "",
-        };
-      });
+      const citas = snapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            fecha: data.fecha ?? "",
+            hora: data.hora ?? "",
+            estado: data.estado ?? "",
+          };
+        })
+        .filter((cita) => cita.estado !== "pendiente") // Excluir solo las pendientes
+        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()); // Ordenar por fecha descendente
 
       setHistorial(citas);
     };
@@ -67,12 +70,14 @@ const PatientHistoryPage = () => {
     realizada: "text-green-600",
     anulada: "text-red-500",
     ausente: "text-yellow-500",
+    rechazada: "text-gray-500",
   };
 
   const estadoIcon = {
     realizada: <CalendarCheck className="w-4 h-4" />,
     anulada: <Ban className="w-4 h-4" />,
     ausente: <HelpCircle className="w-4 h-4" />,
+    rechazada: <XCircle className="w-4 h-4" />,
   };
 
   return (
@@ -103,10 +108,11 @@ const PatientHistoryPage = () => {
                     </span>
                     <span
                       className={`flex items-center gap-2 font-medium capitalize ${
-                        estadoColor[cita.estado as keyof typeof estadoColor]
+                        estadoColor[cita.estado as keyof typeof estadoColor] || "text-gray-600"
                       }`}
                     >
-                      {estadoIcon[cita.estado as keyof typeof estadoIcon]} {cita.estado}
+                      {estadoIcon[cita.estado as keyof typeof estadoIcon] || <HelpCircle className="w-4 h-4" />}
+                      {cita.estado}
                     </span>
                   </li>
                 ))}
@@ -120,5 +126,3 @@ const PatientHistoryPage = () => {
 };
 
 export default PatientHistoryPage;
-
-

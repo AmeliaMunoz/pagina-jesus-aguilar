@@ -45,6 +45,9 @@ const PatientHistoryAdmin = () => {
   const [nuevaNota, setNuevaNota] = useState<string>("");
   const [notaEditandoSesion, setNotaEditandoSesion] = useState<{ email: string; index: number } | null>(null);
   const [notaSesion, setNotaSesion] = useState<string>("");
+  const [mensajeExito, setMensajeExito] = useState("");
+  const [mensajeError, setMensajeError] = useState("");
+  const [pacienteAEliminar, setPacienteAEliminar] = useState<Paciente | null>(null);
 
   const cargarPacientes = async () => {
     const snapshot = await getDocs(collection(db, "pacientes"));
@@ -75,11 +78,29 @@ const PatientHistoryAdmin = () => {
     await cargarPacientes();
   };
 
-  const eliminarPaciente = async (email: string) => {
-    const confirmar = window.confirm("¿Estás seguro de eliminar este paciente?");
-    if (!confirmar) return;
-    await deleteDoc(doc(db, "pacientes", email));
-    setPacientes((prev) => prev.filter((p) => p.email !== email));
+  const eliminarPacienteConfirmado = async () => {
+    if (!pacienteAEliminar) return;
+
+    try {
+      const email = pacienteAEliminar.email;
+      const citasSnap = await getDocs(collection(db, "citas"));
+      const citasPaciente = citasSnap.docs.filter((doc) => doc.data().email === email);
+
+      for (const cita of citasPaciente) {
+        await deleteDoc(doc(db, "citas", cita.id));
+      }
+
+      await deleteDoc(doc(db, "pacientes", email));
+      setPacientes((prev) => prev.filter((p) => p.email !== email));
+
+      setMensajeExito(`🗑️ Paciente eliminado correctamente (${citasPaciente.length} citas borradas).`);
+      setTimeout(() => setMensajeExito(""), 4000);
+      setPacienteAEliminar(null);
+    } catch (error) {
+      console.error("❌ Error al eliminar paciente y sus citas:", error);
+      setMensajeError("❌ Ocurrió un error al eliminar el paciente.");
+      setTimeout(() => setMensajeError(""), 4000);
+    }
   };
 
   const pacientesFiltrados = pacientes
@@ -112,15 +133,24 @@ const PatientHistoryAdmin = () => {
             className="w-full max-w-md mx-auto block mb-10 px-4 py-2 border border-gray-300 rounded text-sm"
           />
 
+          {mensajeExito && (
+            <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-2 rounded mb-6 text-sm text-center">
+              {mensajeExito}
+            </div>
+          )}
+
+          {mensajeError && (
+            <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-6 text-sm text-center">
+              {mensajeError}
+            </div>
+          )}
+
           {Object.entries(pacientesPorLetra).map(([letra, grupo]) => (
             <div key={letra} className="mb-8">
               <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">{letra}</h3>
               <div className="space-y-4">
                 {grupo.map((paciente) => (
-                  <div
-                    key={paciente.email}
-                    className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4"
-                  >
+                  <div key={paciente.email} className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="text-base font-semibold text-[#5f4b32]">{paciente.nombre}</p>
@@ -139,7 +169,7 @@ const PatientHistoryAdmin = () => {
                           <Pencil size={14} /> Editar
                         </button>
                         <button
-                          onClick={() => eliminarPaciente(paciente.email)}
+                          onClick={() => setPacienteAEliminar(paciente)}
                           className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
                         >
                           <Trash2 size={14} /> Eliminar
@@ -207,10 +237,7 @@ const PatientHistoryAdmin = () => {
                           {paciente.historial.length > 0 ? (
                             <ul className="space-y-2">
                               {paciente.historial.map((cita, index) => (
-                                <li
-                                  key={index}
-                                  className="bg-white p-3 border border-[#e0d6ca] rounded"
-                                >
+                                <li key={index} className="bg-white p-3 border border-[#e0d6ca] rounded">
                                   <p className="text-sm flex items-center gap-2">
                                     <CalendarDays size={14} className="text-[#5f4b32]" />
                                     {cita.fecha} a las {cita.hora}
@@ -293,9 +320,35 @@ const PatientHistoryAdmin = () => {
             soloEditarPaciente
           />
         )}
+
+        {pacienteAEliminar && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-xl shadow-xl border border-[#e0d6ca] max-w-md w-full text-center">
+              <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">Confirmar eliminación</h3>
+              <p className="text-sm text-gray-700 mb-6">
+                ¿Estás seguro de que quieres eliminar a <strong>{pacienteAEliminar.nombre}</strong> y todas sus citas? Esta acción no se puede deshacer.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={eliminarPacienteConfirmado}
+                  className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
+                >
+                  Eliminar
+                </button>
+                <button
+                  onClick={() => setPacienteAEliminar(null)}
+                  className="px-4 py-2 rounded bg-gray-300 text-gray-800 text-sm"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
 };
 
 export default PatientHistoryAdmin;
+

@@ -9,12 +9,15 @@ const UserCreatePage = () => {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [totalSesiones, setTotalSesiones] = useState(5);
   const [password, setPassword] = useState("");
+
+  const [mensajeExito, setMensajeExito] = useState("");
+  const [mensajeError, setMensajeError] = useState("");
 
   const crearUsuario = async () => {
     if (!nombre || !email || !telefono || !password) {
-      alert("Todos los campos son obligatorios.");
+      setMensajeError("Todos los campos son obligatorios.");
+      setTimeout(() => setMensajeError(""), 4000);
       return;
     }
 
@@ -27,22 +30,31 @@ const UserCreatePage = () => {
         nombre,
         email,
         telefono,
-        bono: {
-          total: totalSesiones,
-          usadas: 0,
-          pendientes: totalSesiones,
-        },
       });
 
-      alert("Usuario creado correctamente.");
+      await setDoc(doc(db, "pacientes", email), {
+        nombre,
+        email,
+        telefono,
+        historial: [],
+      });
+
+      setMensajeExito("✅ Usuario y paciente creados correctamente.");
+      setTimeout(() => setMensajeExito(""), 4000);
+
+      // Resetear formulario
       setNombre("");
       setEmail("");
       setTelefono("");
       setPassword("");
-      setTotalSesiones(5);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al crear usuario:", error);
-      alert("Hubo un error al crear el usuario.");
+      if (error.code === "auth/email-already-in-use") {
+        setMensajeError("❗ Ya existe un usuario con ese correo.");
+      } else {
+        setMensajeError("❌ Hubo un error al crear el usuario.");
+      }
+      setTimeout(() => setMensajeError(""), 4000);
     }
   };
 
@@ -51,8 +63,20 @@ const UserCreatePage = () => {
       <div className="w-full max-w-xl mx-auto mt-10 px-4">
         <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
           <h2 className="text-xl md:text-2xl font-semibold mb-6 text-[#5f4b32] flex items-center gap-2">
-             Crear nuevo usuario
+            <User className="w-6 h-6" /> Crear nuevo usuario
           </h2>
+
+          {mensajeExito && (
+            <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-2 rounded mb-4 text-sm text-center">
+              {mensajeExito}
+            </div>
+          )}
+
+          {mensajeError && (
+            <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm text-center">
+              {mensajeError}
+            </div>
+          )}
 
           <div className="space-y-4">
             <input
@@ -87,18 +111,9 @@ const UserCreatePage = () => {
               className="w-full p-3 border border-gray-300 rounded text-sm"
             />
 
-            <input
-              type="number"
-              placeholder="Número de sesiones (bono)"
-              value={totalSesiones}
-              onChange={(e) => setTotalSesiones(parseInt(e.target.value))}
-              min={1}
-              className="w-full p-3 border border-gray-300 rounded text-sm"
-            />
-
             <button
               onClick={crearUsuario}
-              className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 text-sm font-medium"
+              className="w-full bg-[#b89b71] text-white py-3 rounded hover:bg-[#9e855c] text-sm font-medium"
             >
               Crear usuario
             </button>
@@ -110,6 +125,9 @@ const UserCreatePage = () => {
 };
 
 export default UserCreatePage;
+
+
+
 
 
 

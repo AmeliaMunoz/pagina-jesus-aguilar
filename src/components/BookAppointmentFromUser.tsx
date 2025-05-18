@@ -3,6 +3,33 @@ import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
 registerLocale("es", es);
+import emailjs from "@emailjs/browser";
+
+
+const sendConfirmationEmail = async ({
+  nombre,
+  email,
+  fecha,
+  hora,
+}: {
+  nombre: string;
+  email: string;
+  fecha: string;
+  hora: string;
+}) => {
+  try {
+    await emailjs.send(
+      "service_0u8915d",
+      "template_plgpe5m",
+      { nombre, email, fecha, hora },
+      "7tsLKu2YpfAADoYYx"
+    );
+    console.log("📧 Email de confirmación enviado (usuario)");
+  } catch (error) {
+    console.error("❌ Error al enviar email:", error);
+  }
+};
+
 
 import {
   addDoc,
@@ -19,6 +46,7 @@ import {
 import { db } from "../firebase";
 import { holidays2025 } from "../data/holidays";
 import { CalendarClock } from "lucide-react";
+import { checkAppointmentExists } from "../utils/checkAppointmentExists";
 
 interface Props {
   uid: string;
@@ -45,6 +73,7 @@ const BookAppointmentFromUser = ({
   const [selectedHour, setSelectedHour] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMensaje, setErrorMensaje] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const formatDate = (date: Date) => {
@@ -226,6 +255,12 @@ const BookAppointmentFromUser = ({
     setLoading(true);
 
     const dateStr = formatDate(selectedDate);
+    const yaExiste = await checkAppointmentExists(userEmail, dateStr, selectedHour);
+    if (yaExiste) {
+      setErrorMensaje("❗ Ya tienes una cita registrada en esa fecha y hora.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const cita = {
@@ -240,6 +275,13 @@ const BookAppointmentFromUser = ({
       };
 
       await addDoc(collection(db, "citas"), cita);
+      await sendConfirmationEmail({
+        nombre: userName,
+        email: userEmail,
+        fecha: dateStr,
+        hora: selectedHour,
+      });
+      
 
       const disponibilidadRef = doc(db, "disponibilidad", dateStr);
       const disponibilidadSnap = await getDoc(disponibilidadRef);
@@ -272,6 +314,7 @@ const BookAppointmentFromUser = ({
       setLoading(false);
       setSuccess(true);
       setRefreshKey((prev) => prev + 1);
+      setErrorMensaje("");
       onBooked();
     } catch (error) {
       console.error("Error al reservar cita:", error);
@@ -284,7 +327,11 @@ const BookAppointmentFromUser = ({
       <h2 className="text-2xl font-bold text-[#5f4b32] mb-6 text-center">
         Reservar nueva cita
       </h2>
-  
+      {errorMensaje && (
+      <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-4 text-sm text-center">
+        {errorMensaje}
+      </div>
+        )}
       {success ? (
         <p className="text-green-600 font-medium text-center">
           Cita reservada correctamente.

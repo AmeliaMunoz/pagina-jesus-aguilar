@@ -22,6 +22,7 @@ import PatientMessagesPage from "../pages/PatientMessagePage";
 import AdminMessagesPage from "../pages/AdminMessageChatPage";
 import AdminLoginPage from "../pages/AdminLoginPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import FormMessagesPage from "../pages/FormMessagePage";
 
 
 
@@ -40,7 +41,7 @@ const RouteMain = () => {
       <Route path="/admin/configuracion" element={<Configuration />} />
       <Route path="/admin/estadisticas" element={<AppointmentStatsPage />} />
       <Route path="/admin/citas" element={<AdminAppointmentsPage />} />
-      <Route path="/admin/mensajes"element={<MessagePage />} />
+      <Route path="/admin/mensajes"element={<FormMessagesPage />} />
       <Route path="/admin/crear-usuario" element={<UserCreatePage/>} />
       <Route path="/usuario" element={<User/>} />
       <Route path="/login" element={<LoginPage />} /> 

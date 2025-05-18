@@ -48,7 +48,7 @@ const ForgotPasswordPage = () => {
 
           <button
             type="submit"
-            className="w-full bg-[#5f4b32] text-white py-2 rounded-md hover:bg-[#b89b71] transition"
+            className="w-full bg-[#b89b71] text-white py-2 rounded hover:bg-[#9e855c]"
           >
             Enviar enlace
           </button>
