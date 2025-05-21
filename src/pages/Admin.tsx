@@ -120,7 +120,7 @@ const Admin = () => {
 
   return (
     <AdminLayout>
-      <div className="bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-16 mt-10 w-full">
+      <div className="bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-16 mt-10">
         <h1 className="text-2xl md:text-3xl font-bold text-[#5f4b32] mb-10 text-center">
           Panel de control — Resumen del día
         </h1>

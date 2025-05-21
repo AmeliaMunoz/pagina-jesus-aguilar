@@ -55,12 +55,6 @@ interface Props {
   onBooked: () => void;
 }
 
-const HOURS = [
-  "08:00", "09:00", "10:00", "11:00", "12:00",
-  "13:00", "16:00", "17:00", "18:00", "19:00",
-  "20:00", "21:00"
-];
-
 const BookAppointmentFromUser = ({
   uid,
   userEmail,
@@ -143,10 +137,23 @@ const BookAppointmentFromUser = ({
         );
   
         const horasBloqueadasPorCitas = citasSnap.docs
-          .filter((doc) =>
-            ["aprobada", "ausente", "pendiente"].includes(doc.data().estado)
-          )
-          .map((doc) => doc.data().hora);
+        .map((doc) => doc.data())
+        .filter((cita) => {
+          let fechaCita = "";
+      
+          if (typeof cita.fecha === "string") {
+            fechaCita = cita.fecha;
+          } else if (cita.fecha?.toDate) {
+            fechaCita = cita.fecha.toDate().toISOString().split("T")[0];
+          }
+      
+          return (
+            fechaCita === dateStr &&
+            ["aprobada", "ausente", "pendiente"].includes(cita.estado)
+          );
+        })
+        .map((cita) => cita.hora);
+      
   
         // 5. Aplicar filtros
         const horasFinales = horasDisponibles.filter(

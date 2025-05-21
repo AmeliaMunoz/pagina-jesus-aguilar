@@ -13,32 +13,43 @@ const UserLoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
     if (!emailRegex.test(email)) {
       setError("Por favor, ingresa un correo electrónico válido.");
       return;
     }
-
+  
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;
-
-      // Verificar rol del usuario en Firestore
+  
+      // Verificar rol y estado del usuario
       const userDoc = await getDoc(doc(db, "usuarios", uid));
       const data = userDoc.data();
-
-      if (data?.rol === "admin") {
+  
+      if (!data) {
+        setError("Usuario no encontrado.");
+        return;
+      }
+  
+      if (data.rol === "admin") {
         setError("Este usuario es administrador. Usa el acceso para admin.");
         return;
       }
-
+  
+      if (data.activo === false) {
+        setError("Tu cuenta ha sido desactivada. Contacta con el administrador.");
+        return;
+      }
+  
       localStorage.setItem("user-autenticado", "true");
       navigate("/panel/paciente/user");
     } catch (err: any) {
       setError("Correo o contraseña incorrectos.");
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-[#fdf8f4] flex flex-col justify-center items-center px-4">
@@ -99,11 +110,12 @@ const UserLoginPage = () => {
         </form>
 
         <div className="mt-4 text-center">
-            <Link
-              to="/forgot-password"
-              className="text-sm text-[#5f4b32] hover:underline">
-              ¿Olvidaste tu contraseña?
-            </Link>
+          <Link
+            to="/forgot-password"
+            className="text-sm text-[#5f4b32] hover:underline"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
       </div>
     </div>
@@ -111,7 +123,3 @@ const UserLoginPage = () => {
 };
 
 export default UserLoginPage;
-
-
-
-

@@ -20,6 +20,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import ManualAppointmentModal from "../components/ManualAppointmentModal";
+import { formatearFecha } from "../utils/formatDate";
 
 interface CitaHistorial {
   fecha: string;
@@ -150,43 +151,47 @@ const PatientHistoryAdmin = () => {
               <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">{letra}</h3>
               <div className="space-y-4">
                 {grupo.map((paciente) => (
-                  <div key={paciente.email} className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-base font-semibold text-[#5f4b32]">{paciente.nombre}</p>
-                        <p className="text-sm text-gray-700 flex items-center gap-1">
-                          <Mail size={14} /> {paciente.email}
-                        </p>
-                        <p className="text-sm text-gray-700 flex items-center gap-1">
-                          <Phone size={14} /> {paciente.telefono}
-                        </p>
-                      </div>
-                      <div className="flex gap-3 items-start">
-                        <button
-                          onClick={() => setPacienteEditando(paciente)}
-                          className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                        >
-                          <Pencil size={14} /> Editar
-                        </button>
-                        <button
-                          onClick={() => setPacienteAEliminar(paciente)}
-                          className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
-                        >
-                          <Trash2 size={14} /> Eliminar
-                        </button>
-                        <button
-                          onClick={() =>
-                            setPacienteExpandido(
-                              pacienteExpandido === paciente.email ? null : paciente.email
-                            )
-                          }
-                          className="text-xs text-[#5f4b32]"
-                        >
-                          {pacienteExpandido === paciente.email ? <ChevronUp /> : <ChevronDown />}
-                        </button>
-                      </div>
-                    </div>
-
+                 <div key={paciente.email} className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4">
+                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                   {/* Información del paciente */}
+                   <div>
+                     <p className="text-base font-semibold text-[#5f4b32]">{paciente.nombre}</p>
+                     <p className="text-sm text-gray-700 flex items-center gap-1 break-words">
+                       <Mail size={14} /> {paciente.email}
+                     </p>
+                     <p className="text-sm text-gray-700 flex items-center gap-1">
+                       <Phone size={14} /> {paciente.telefono}
+                     </p>
+                   </div>
+               
+                   {/* Botones de acción */}
+                   <div className="flex flex-wrap gap-2 sm:gap-3 ml-auto">
+                     <button
+                       onClick={() => setPacienteEditando(paciente)}
+                       className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                     >
+                       <Pencil size={14} /> Editar
+                     </button>
+               
+                     <button
+                       onClick={() => setPacienteAEliminar(paciente)}
+                       className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
+                     >
+                       <Trash2 size={14} /> Eliminar
+                     </button>
+               
+                     <button
+                       onClick={() =>
+                         setPacienteExpandido(
+                           pacienteExpandido === paciente.email ? null : paciente.email
+                         )
+                       }
+                       className="text-xs text-[#5f4b32]"
+                     >
+                       {pacienteExpandido === paciente.email ? <ChevronUp /> : <ChevronDown />}
+                     </button>
+                   </div>
+                 </div>
                     {pacienteExpandido === paciente.email && (
                       <div className="mt-4 space-y-3 text-sm">
                         <div>
@@ -240,7 +245,7 @@ const PatientHistoryAdmin = () => {
                                 <li key={index} className="bg-white p-3 border border-[#e0d6ca] rounded">
                                   <p className="text-sm flex items-center gap-2">
                                     <CalendarDays size={14} className="text-[#5f4b32]" />
-                                    {cita.fecha} a las {cita.hora}
+                                    {formatearFecha(cita.fecha)} a las {cita.hora}
                                   </p>
                                   <p className="text-sm flex items-center gap-2">
                                     <Activity size={14} className="text-green-700" /> Estado: {cita.estado}

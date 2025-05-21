@@ -11,7 +11,6 @@ import Configuration from "../pages/Configuration";
 import ScrollToTop from "../components/ScrollToTop";
 import AppointmentStatsPage from "../pages/AppointmentStatePage";
 import AdminAppointmentsPage from "../pages/AdminAppointmentsPage";
-import MessagePage from "../pages/FormMessagePage";
 import UserCreatePage from "../pages/UserCreatePage";
 import User from "../pages/User";
 import LoginPage from "../pages/UserLoginPage";
@@ -23,6 +22,7 @@ import AdminMessagesPage from "../pages/AdminMessageChatPage";
 import AdminLoginPage from "../pages/AdminLoginPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import FormMessagesPage from "../pages/FormMessagePage";
+import AdminDeleteUsersPage from "../pages/AdminDeleteUsersPage";
 
 
 
@@ -55,6 +55,8 @@ const RouteMain = () => {
       <Route path="/panel/paciente/user" element={<User />} />
       <Route path="/admin-login" element={<AdminLoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/admin/eliminar-usuarios" element={<AdminDeleteUsersPage />} />
+
 
     </Routes>
     </BrowserRouter>

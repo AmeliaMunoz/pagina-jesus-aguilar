@@ -7,6 +7,7 @@ import {
 } from "recharts";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
+import { HelpCircle } from "lucide-react";
 
 const diasSemanaOrdenados = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const coloresEstados = ["#5f4b32", "#a1512d", "#b89b71", "#d8c4aa"];
@@ -31,7 +32,7 @@ const AppointmentStats = () => {
 
     const dias: Record<string, number> = {};
     const horas: Record<string, number> = {};
-    const meses: Record<string, number> = {};
+    const meses: Record<string, { label: string; date: Date; total: number }> = {};
     const estados: Record<string, number> = {};
     let total = 0;
     let ausentes = 0;
@@ -44,9 +45,18 @@ const AppointmentStats = () => {
 
       if (!fecha || !hora) return;
 
-      const mes = fecha.toLocaleDateString("es-ES", { year: "numeric", month: "short" });
-      meses[mes] = (meses[mes] || 0) + 1;
+      const mesClave = `${fecha.getFullYear()}-${(fecha.getMonth() + 1).toString().padStart(2, "0")}`;
+      const mesLabel = fecha.toLocaleDateString("es-ES", { year: "numeric", month: "short" });
 
+      if (!meses[mesClave]) {
+        meses[mesClave] = {
+          label: mesLabel,
+          date: new Date(fecha.getFullYear(), fecha.getMonth(), 1),
+          total: 0,
+        };
+      }
+
+      meses[mesClave].total += 1;
       estados[estado] = (estados[estado] || 0) + 1;
 
       if (estado === "aprobada") {
@@ -63,21 +73,10 @@ const AppointmentStats = () => {
       if (estado === "ausente") ausentes += 1;
     });
 
-    const datosDias = diasSemanaOrdenados.map(dia => ({
-      dia,
-      total: dias[dia] || 0
-    }));
-
-    const datosHoras = Object.entries(horas)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([hora, total]) => ({ hora, total }));
-
-    const datosMeses = Object.entries(meses)
-      .sort((a, b) => new Date(a[0]) > new Date(b[0]) ? 1 : -1)
-      .map(([mes, total]) => ({ mes, total }));
-
-    const datosEstados = Object.entries(estados)
-      .map(([estado, total]) => ({ name: estado, value: total }));
+    const datosDias = diasSemanaOrdenados.map(dia => ({ dia, total: dias[dia] || 0 }));
+    const datosHoras = Object.entries(horas).sort(([a], [b]) => a.localeCompare(b)).map(([hora, total]) => ({ hora, total }));
+    const datosMeses = Object.values(meses).sort((a, b) => a.date.getTime() - b.date.getTime()).map(({ label, total }) => ({ mes: label, total }));
+    const datosEstados = Object.entries(estados).map(([estado, total]) => ({ name: estado, value: total }));
 
     setPorDia(datosDias);
     setPorHora(datosHoras);
@@ -86,12 +85,10 @@ const AppointmentStats = () => {
     setTotalCitas(total);
     setAusencias(ausentes);
 
-    // Altas
     const pacientes = pacientesSnap.docs.map(doc => doc.data());
     const pacientesConAlta = pacientes.filter(p => p.estado === "alta");
     setAltas(pacientesConAlta.length);
 
-    // Pacientes inactivos (sin citas en 60 días)
     const hoy = new Date();
     const inactivos = pacientes.filter(p => {
       const ultima = p.ultima_cita?.toDate?.() || new Date(0);
@@ -100,7 +97,6 @@ const AppointmentStats = () => {
     });
     setPacientesInactivos(inactivos.length);
 
-    // Abandonos (menos de 2 citas y sin actividad 90 días)
     const abandonos = pacientes.filter(p => {
       const total = p.historial?.length || 0;
       const ultima = p.ultima_cita?.toDate?.() || new Date(0);
@@ -109,7 +105,6 @@ const AppointmentStats = () => {
     });
     setAbandono(abandonos.length);
 
-    // Frecuencia media entre sesiones
     const frecuencias: number[] = [];
     pacientes.forEach(p => {
       const citas = p.historial || [];
@@ -122,7 +117,6 @@ const AppointmentStats = () => {
     });
     setFrecuenciaMedia(frecuencias.length ? Math.round(frecuencias.reduce((a, b) => a + b, 0) / frecuencias.length) : 0);
 
-    // Número medio de sesiones hasta el alta
     const sesionesAlta = pacientesConAlta.map(p => p.historial?.length || 0);
     setMediaSesionesAlta(sesionesAlta.length ? Math.round(sesionesAlta.reduce((a, b) => a + b, 0) / sesionesAlta.length) : 0);
   };
@@ -135,32 +129,27 @@ const AppointmentStats = () => {
 
   return (
     <section className="max-w-6xl w-full mx-auto px-4 py-10 space-y-16">
-      <h2 className="text-3xl font-bold text-[#5f4b32] text-center">
-        Estadísticas de Citas
-      </h2>
+      <h1 className="text-xl md:text-2xl font-semibold text-[#5f4b32] mb-8">Estadísticas de citas</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[
-          { label: "Total de citas", value: totalCitas, color: "#5f4b32" },
+        {[{ label: "Total de citas", value: totalCitas, color: "#5f4b32" },
           { label: "Citas ausentes", value: ausencias, color: "#a1512d" },
           { label: "Tasa de ausencias", value: `${tasaAusencias}%`, color: "#b89b71" },
           { label: "Pacientes dados de alta", value: altas, color: "#4b8063" },
           { label: "Pacientes inactivos", value: pacientesInactivos, color: "#856f56" },
           { label: "Abandonos de sesión", value: abandono, color: "#9c3d3d" },
           { label: "Frecuencia media (días)", value: frecuenciaMedia, color: "#7c6244" },
-          { label: "Media de sesiones hasta alta", value: mediaSesionesAlta, color: "#c89b6e" }
-        ].map(({ label, value, color }) => (
-
-          <div key={label} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center">
-            <h4 className="text-sm text-gray-600 mb-2 text-center">{label}</h4>
-            <p className="text-3xl font-extrabold" style={{ color }}>{value}</p>
-          </div>
+          { label: "Media de sesiones hasta alta", value: mediaSesionesAlta, color: "#c89b6e" }].map(({ label, value, color }) => (
+            <div key={label} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center">
+              <h4 className="text-sm text-gray-600 mb-2 text-center">{label}</h4>
+              <p className="text-3xl font-extrabold" style={{ color }}>{value}</p>
+            </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <div className="bg-white rounded-xl shadow p-4">
-          <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">Proporción por estado</h3>
+        <div className="bg-white rounded-xl shadow p-4 min-w-0">
+          <h3 className="text-base md:text-lg font-semibold text-[#5f4b32] mb-4">Proporción por estado</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie data={porEstado} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
@@ -174,7 +163,7 @@ const AppointmentStats = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-xl shadow p-4">
+        <div className="bg-white rounded-xl shadow p-4 min-w-0">
           <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">Citas por mes</h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={porMes}>
@@ -189,7 +178,7 @@ const AppointmentStats = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-white rounded-xl shadow p-4 min-w-0">
         <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">Distribución por día de la semana</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={porDia}>
@@ -203,7 +192,7 @@ const AppointmentStats = () => {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-white rounded-xl shadow p-4 min-w-0">
         <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">Distribución por hora del día</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={porHora}>
@@ -216,10 +205,21 @@ const AppointmentStats = () => {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      <div className="bg-white rounded-xl shadow p-4 md:p-6 border border-[#e0d6ca]">
+        <h3 className="text-lg font-semibold text-[#5f4b32] mb-3 flex items-center gap-2">
+          <HelpCircle className="w-5 h-5" /> ¿Cómo interpretar las gráficas?
+        </h3>
+        <ul className="text-sm text-gray-700 space-y-2 list-disc list-inside">
+          <li><strong>Proporción por estado:</strong> Citas agrupadas según su estado (aprobada, ausente, rechazada...)</li>
+          <li><strong>Citas por mes:</strong> Evolución mensual de citas programadas</li>
+          <li><strong>Día de la semana:</strong> Días con más actividad confirmada</li>
+          <li><strong>Hora del día:</strong> Rangos horarios con más sesiones</li>
+          <li><strong>Tarjetas resumen:</strong> Indicadores clave como ausencias, frecuencia, altas e inactividad</li>
+        </ul>
+      </div>
     </section>
   );
 };
 
 export default AppointmentStats;
-
-

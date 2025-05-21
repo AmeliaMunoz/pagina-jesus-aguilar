@@ -18,8 +18,6 @@ import {
   updateDoc,
   doc,
   getDoc,
-  arrayUnion,
-  setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { holidays2025 } from "../data/holidays";
@@ -77,27 +75,6 @@ interface CalendarEvent extends Event {
     estado?: string;
   };
 }
-
-const liberarHoraEnDisponibilidad = async (fecha: string, hora: string) => {
-  const ref = doc(db, "disponibilidad", fecha);
-  const snap = await getDoc(ref);
-
-  if (snap.exists()) {
-    const data = snap.data();
-    const horas = Array.isArray(data.horas) ? data.horas : [];
-    if (!horas.includes(hora)) {
-      await updateDoc(ref, {
-        horas: [...horas, hora],
-        fecha: fecha,
-      });
-    }
-  } else {
-    await setDoc(ref, {
-      horas: [hora],
-      fecha: fecha,
-    });
-  }
-};
 
 const AppointmentCalendar = () => {
   const [date, setDate] = useState(new Date());

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { UserCircle2 } from "lucide-react";
 
 const UserHeader = () => {
   const [nombre, setNombre] = useState("");

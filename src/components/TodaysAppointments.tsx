@@ -46,8 +46,6 @@ const TodaysAppointments = () => {
     return () => unsub();
   }, []);
 
-  const hoyTexto = format(new Date(), "d 'de' MMMM", { locale: undefined });
-
   return (
     <div className="bg-white p-6 rounded-xl shadow-md border border-[#e8d4c3]">
       <h2 className="text-xl font-semibold mb-4">

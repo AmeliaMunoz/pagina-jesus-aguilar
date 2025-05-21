@@ -116,12 +116,22 @@ const ContactSection = () => {
       const citasSnap = await getDocs(collection(db, "citas"));
       const horasOcupadas = citasSnap.docs
         .map((doc) => doc.data())
-        .filter(
-          (cita) =>
-            cita.fecha === fechaSeleccionada &&
-            ["aprobada", "ausente", "pendiente"].includes(cita.estado)
-        )
-        .map((cita) => cita.hora);
+        .filter((cita) => {
+          let fechaCita = "";
+
+          if (typeof cita.fecha === "string") {
+            fechaCita = cita.fecha;
+          } else if (cita.fecha?.toDate) {
+            fechaCita = cita.fecha.toDate().toISOString().split("T")[0];
+          }
+
+    return (
+      fechaCita === fechaSeleccionada &&
+      ["aprobada", "ausente", "pendiente"].includes(cita.estado)
+    );
+  })
+  .map((cita) => cita.hora);
+
 
       const filtradas = horas.filter((hora) => {
         const [h] = hora.split(":");

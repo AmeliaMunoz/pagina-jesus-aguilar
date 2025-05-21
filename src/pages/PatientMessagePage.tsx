@@ -5,19 +5,23 @@ import {
   addDoc,
   query,
   where,
-  orderBy,
-  Timestamp,
   onSnapshot,
+  Timestamp,
   getDocs,
 } from "firebase/firestore";
-import {
-  Mail,
-  SendHorizontal,
-} from "lucide-react";
+import { Mail, SendHorizontal } from "lucide-react";
 import UserLayout from "../layouts/UserLayout";
 
+// ✅ Interfaz segura para cada mensaje
+interface Mensaje {
+  id: string;
+  texto: string;
+  fecha: Timestamp | string;
+  enviadoPorPaciente: boolean;
+}
+
 const PatientMessagesPage = () => {
-  const [mensajes, setMensajes] = useState<any[]>([]);
+  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [nombre, setNombre] = useState("");
@@ -37,14 +41,26 @@ const PatientMessagesPage = () => {
 
     const q = query(
       collection(db, "mensajes"),
-      where("uid", "==", user.uid),
-      orderBy("fecha", "asc")
+      where("uid", "==", user.uid)
     );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const datos = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const datos: Mensaje[] = snapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            texto: data.texto,
+            fecha: data.fecha,
+            enviadoPorPaciente: data.enviadoPorPaciente,
+          };
+        })
+        .sort((a, b) => {
+          const aFecha = a.fecha instanceof Timestamp ? a.fecha.toDate() : new Date(a.fecha);
+          const bFecha = b.fecha instanceof Timestamp ? b.fecha.toDate() : new Date(b.fecha);
+          return aFecha.getTime() - bFecha.getTime();
+        });
+
       setMensajes(datos);
     });
 
@@ -69,7 +85,7 @@ const PatientMessagesPage = () => {
         nombre: nombre || user.displayName || "Paciente",
         email: user.email,
         texto: nuevoMensaje.trim(),
-        fecha: Timestamp.now(),
+        fecha: Timestamp.now(), // ✅ fecha correcta
         enviadoPorPaciente: true,
       });
       setNuevoMensaje("");
@@ -84,9 +100,6 @@ const PatientMessagesPage = () => {
   return (
     <UserLayout>
       <div className="w-full max-w-4xl mx-auto mt-10 px-4 space-y-10">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#5f4b32] text-center md:text-left">
-        </h1>
-
         <div className="w-full max-w-5xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-xl border border-[#e0d6ca] p-6 md:p-10">
             <div className="bg-white border border-[#e0d6ca] rounded-xl p-6 flex flex-col space-y-6">
@@ -116,7 +129,9 @@ const PatientMessagesPage = () => {
                     >
                       <p>{msg.texto}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {msg.fecha?.toDate().toLocaleString("es-ES")}
+                        {msg.fecha instanceof Timestamp
+                          ? msg.fecha.toDate().toLocaleString("es-ES")
+                          : new Date(msg.fecha).toLocaleString("es-ES")}
                       </p>
                     </div>
                   ))
@@ -132,6 +147,12 @@ const PatientMessagesPage = () => {
                   value={nuevoMensaje}
                   onChange={(e) => setNuevoMensaje(e.target.value)}
                   placeholder="Escribe tu mensaje para el terapeuta..."
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleEnviar();
+                    }
+                  }}
                 />
                 <button
                   onClick={handleEnviar}
@@ -150,6 +171,8 @@ const PatientMessagesPage = () => {
 };
 
 export default PatientMessagesPage;
+
+
 
 
 

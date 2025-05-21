@@ -70,7 +70,6 @@
     email: emailInicial = "",
     telefono: telefonoInicial = "",
     nota: notaInicial = "",
-    modoEdicion = false,
     soloEditarPaciente = false,
   }: Props) => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -83,7 +82,7 @@
     const [availableHours, setAvailableHours] = useState<string[]>([]);
     const [selectedHour, setSelectedHour] = useState(hora);
     const [customHour, setCustomHour] = useState("");
-    const [errorMensaje, setErrorMensaje] = useState("");
+    const [, setErrorMensaje] = useState("");
 
     useEffect(() => {
       setNombre(nombreInicial);
@@ -180,10 +179,23 @@
 
         const citasSnap = await getDocs(collection(db, "citas"));
         const ocupadas = citasSnap.docs
-          .map((doc) => doc.data())
-          .filter((cita) => cita.fecha === dateStr && ["aprobada", "ausente"].includes(cita.estado))
-          .map((cita) => cita.hora?.trim())
-          .filter((hora): hora is string => !!hora);
+        .map((doc) => doc.data())
+        .filter((cita) => {
+          let fechaCita = "";
+      
+          if (typeof cita.fecha === "string") {
+            fechaCita = cita.fecha;
+          } else if (cita.fecha?.toDate) {
+            fechaCita = cita.fecha.toDate().toISOString().split("T")[0];
+          }
+      
+          return (
+            fechaCita === dateStr &&
+            ["aprobada", "ausente", "pendiente"].includes(cita.estado)
+          );
+        })
+        .map((cita) => cita.hora?.trim())
+        .filter((hora): hora is string => !!hora);      
 
         const disponiblesFinal = horasDisponibles.filter((h) => !ocupadas.includes(h));
         setAvailableHours(disponiblesFinal);

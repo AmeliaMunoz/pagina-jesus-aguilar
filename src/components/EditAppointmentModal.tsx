@@ -42,7 +42,6 @@ const EditAppointmentModal = ({
   hora,
   nota,
   mensajeDelPaciente,
-  email,
   onClose,
   onUpdate,
   onDeleteFromHistory,

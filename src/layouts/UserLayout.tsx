@@ -5,7 +5,6 @@ import HamburgerButton from "../components/HamburgerButton";
 import UserHeader from "../components/UserHeader"; // 👈 Importamos el header
 import {
   CalendarClock,
-  Ticket,
   BarChartHorizontal,
   Plus,
   Mail,
@@ -55,7 +54,8 @@ const UserLayout = ({ children }: Props) => {
         <UserHeader />
 
         <main className="flex-1 px-4 sm:px-6 py-12 overflow-y-auto">
-          <div className="w-full max-w-5xl mx-auto">{children}</div>
+        <div className="w-full max-w-[2560px] mx-auto px-6 2xl:px-12">{children}</div>
+
         </main>
       </div>
     </div>

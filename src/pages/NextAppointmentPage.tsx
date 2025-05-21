@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -11,7 +11,6 @@ import {
   updateDoc,
   where,
   setDoc,
-  arrayUnion,
 } from "firebase/firestore";
 import UserLayout from "../layouts/UserLayout";
 import {
@@ -28,14 +27,13 @@ interface Cita {
 }
 
 const NextAppointmentPage = () => {
-  const [nombre, setNombre] = useState("");
+  const [, setNombre] = useState("");
   const [proximaCita, setProximaCita] = useState<Cita | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [mensajeEnviado, setMensajeEnviado] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const fetchData = async () => {

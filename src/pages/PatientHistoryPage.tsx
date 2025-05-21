@@ -25,7 +25,7 @@ interface Cita {
 
 const PatientHistoryPage = () => {
   const [historial, setHistorial] = useState<Cita[]>([]);
-  const [nombre, setNombre] = useState("");
+  const [, setNombre] = useState("");
   const location = useLocation();
 
   useEffect(() => {

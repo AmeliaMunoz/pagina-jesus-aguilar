@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   collection,
   query,
@@ -6,6 +6,10 @@ import {
   onSnapshot,
   addDoc,
   Timestamp,
+  getDocs,
+  where,
+  deleteDoc,
+  doc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import {
@@ -13,6 +17,7 @@ import {
   CalendarClock,
   SendHorizontal,
   Mail,
+  Trash2,
 } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout";
 
@@ -30,6 +35,8 @@ export default function AdminMessagesPage() {
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [respuestas, setRespuestas] = useState<Record<string, string>>({});
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState<{ uid: string; nombre: string } | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "mensajes"), orderBy("fecha", "asc"));
@@ -51,6 +58,10 @@ export default function AdminMessagesPage() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [mensajes, selectedUid]);
 
   const pacientesUnicos = Array.from(
     new Map(
@@ -87,12 +98,24 @@ export default function AdminMessagesPage() {
     setRespuestas((prev) => ({ ...prev, [selectedUid]: "" }));
   };
 
+  const eliminarConversacion = async (uid: string) => {
+    const q = query(collection(db, "mensajes"), where("uid", "==", uid));
+    const snapshot = await getDocs(q);
+    for (const docu of snapshot.docs) {
+      await deleteDoc(doc(db, "mensajes", docu.id));
+    }
+    if (selectedUid === uid) {
+      setSelectedUid(null);
+    }
+    setMostrarConfirmacion(null);
+    alert(`🗑️ Conversación eliminada (${snapshot.docs.length} mensajes).`);
+  };
+
   return (
     <AdminLayout>
       <div className="w-full max-w-5xl mx-auto mt-10  px-4">
         <div className="bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-10">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Lista de pacientes */}
             <aside className="w-full lg:w-1/3 border-r border-[#e0d6ca] pr-0 lg:pr-6">
               <h2 className="text-2xl font-semibold mb-4 text-[#5f4b32]">Pacientes</h2>
 
@@ -113,6 +136,10 @@ export default function AdminMessagesPage() {
                     <li
                       key={p.uid}
                       onClick={() => setSelectedUid(p.uid)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setMostrarConfirmacion({ uid: p.uid, nombre: p.nombre });
+                      }}
                       className={`cursor-pointer p-3 rounded-md transition ${
                         selectedUid === p.uid
                           ? "bg-[#b89b71] text-white"
@@ -136,7 +163,6 @@ export default function AdminMessagesPage() {
               </ul>
             </aside>
 
-            {/* Chat */}
             <section className="w-full lg:w-2/3 flex flex-col justify-between min-h-[500px]">
               {selectedUid ? (
                 <>
@@ -157,9 +183,9 @@ export default function AdminMessagesPage() {
                         </span>
                       </div>
                     ))}
+                    <div ref={endRef} />
                   </div>
 
-                  {/* Input de respuesta */}
                   <div className="mt-2 flex flex-col sm:flex-row gap-3 items-start">
                     <textarea
                       rows={2}
@@ -171,6 +197,12 @@ export default function AdminMessagesPage() {
                           [selectedUid]: e.target.value,
                         }))
                       }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          responder();
+                        }
+                      }}
                       className="flex-1 border p-3 rounded text-sm"
                     />
                     <button
@@ -189,11 +221,33 @@ export default function AdminMessagesPage() {
             </section>
           </div>
         </div>
+
+        {mostrarConfirmacion && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white border border-[#e0d6ca] rounded-xl p-6 w-full max-w-sm text-center shadow-xl">
+              <Trash2 className="mx-auto mb-4 text-red-600" size={32} />
+              <h3 className="text-lg font-semibold text-[#5f4b32] mb-2">Eliminar conversación</h3>
+              <p className="text-sm text-gray-700 mb-6">
+                ¿Estás seguro de que deseas eliminar todos los mensajes de <strong>{mostrarConfirmacion.nombre}</strong>?
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => eliminarConversacion(mostrarConfirmacion.uid)}
+                  className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Eliminar
+                </button>
+                <button
+                  onClick={() => setMostrarConfirmacion(null)}
+                  className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
 }
-
-
-
-
