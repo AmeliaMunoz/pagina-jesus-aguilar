@@ -20,16 +20,21 @@ const Home = () => {
   }, [location]);
 
   return (
-    <main className="space-y-32 bg-[#fdf8f4] px-6 pt-8">
-
-      <Header />
-      <Hero />
-      <AboutMe />
-      <TherapyTypes />
-      <ContactSection />
+    <>
+      <main className="w-full bg-[#fdf8f4] px-4 sm:px-6 2xl:px-20 3xl:px-32 pt-8 space-y-32">
+        <Header />
+        <Hero />
+        <AboutMe />
+        <TherapyTypes />
+        <ContactSection />
+      </main>
+      
       <Footer />
-    </main>
+    </>
   );
 };
 
 export default Home;
+
+
+

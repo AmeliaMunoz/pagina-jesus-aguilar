@@ -100,14 +100,14 @@ const AdminDeleteUsersPage = () => {
                   {grupo.map((usuario) => (
                     <div
                       key={usuario.uid}
-                      className="border border-[#e0d6ca] rounded-xl p-6 bg-[#fdf8f4] shadow flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4"
+                      className="border border-[#e0d6ca] rounded-xl p-6 bg-[#fdf8f4] shadow flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 break-words"
                     >
                       <div>
                         <p className="font-medium text-[#5f4b32] text-base">
                           {usuario.nombre} {usuario.activo === false && <span className="text-red-500 text-sm">(desactivado)</span>}
                         </p>
-                        <p className="text-sm text-gray-700 flex items-center gap-1">
-                          <Mail size={14} /> {usuario.email}
+                        <p className="text-sm text-gray-700 flex items-start gap-1 break-all">
+                            <Mail size={14} /> <span className="break-all">{usuario.email}</span>
                         </p>
                         {usuario.telefono && (
                           <p className="text-sm text-gray-700">{usuario.telefono}</p>

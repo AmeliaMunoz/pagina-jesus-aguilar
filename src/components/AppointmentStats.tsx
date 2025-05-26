@@ -129,7 +129,7 @@ const AppointmentStats = () => {
 
   return (
     <section className="max-w-6xl w-full mx-auto px-4 py-10 space-y-16">
-      <h1 className="text-xl md:text-2xl font-semibold text-[#5f4b32] mb-8">Estadísticas de citas</h1>
+      <h1 className="text-xl md:text-2xl font-semibold text-[#5f4b32] mb-10">Estadísticas de citas</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {[{ label: "Total de citas", value: totalCitas, color: "#5f4b32" },

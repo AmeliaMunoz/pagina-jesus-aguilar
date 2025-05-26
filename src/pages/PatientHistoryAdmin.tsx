@@ -151,13 +151,13 @@ const PatientHistoryAdmin = () => {
               <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">{letra}</h3>
               <div className="space-y-4">
                 {grupo.map((paciente) => (
-                 <div key={paciente.email} className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4">
+                 <div key={paciente.email} className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4 break-words overflow-hidden">
                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                    {/* Información del paciente */}
                    <div>
                      <p className="text-base font-semibold text-[#5f4b32]">{paciente.nombre}</p>
                      <p className="text-sm text-gray-700 flex items-center gap-1 break-words">
-                       <Mail size={14} /> {paciente.email}
+                         <Mail size={14} /> {paciente.email}
                      </p>
                      <p className="text-sm text-gray-700 flex items-center gap-1">
                        <Phone size={14} /> {paciente.telefono}
@@ -165,7 +165,7 @@ const PatientHistoryAdmin = () => {
                    </div>
                
                    {/* Botones de acción */}
-                   <div className="flex flex-wrap gap-2 sm:gap-3 ml-auto">
+                   <div className="flex flex-wrap gap-2 sm:gap-3 justify-start sm:justify-end">
                      <button
                        onClick={() => setPacienteEditando(paciente)}
                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"

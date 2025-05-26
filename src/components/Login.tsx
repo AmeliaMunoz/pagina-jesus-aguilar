@@ -29,12 +29,12 @@ const Login = ({ redirectTo, authKey, title }: Props) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdf8f4] flex flex-col justify-center items-center">
-      <div className="w-full max-w-sm bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-semibold text-center text-[#5f4b32] mb-8">
+    <div className="min-h-screen bg-[#fdf8f4] flex flex-col justify-center items-center px-4">
+      <div className="w-full max-w-sm 3xl:max-w-md bg-white p-8 3xl:p-12 rounded-lg shadow-lg">
+        <h1 className="text-3xl 3xl:text-4xl font-semibold text-center text-[#5f4b32] mb-8">
           {title}
         </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 text-sm 3xl:text-base">
           <input
             type="email"
             placeholder="Correo electrónico"
@@ -51,7 +51,7 @@ const Login = ({ redirectTo, authKey, title }: Props) => {
           />
           <button
             type="submit"
-            className="w-full bg-[#b89b71] text-white py-2 rounded hover:bg-[#9e855c]"
+            className="w-full bg-[#b89b71] text-white py-2 rounded hover:bg-[#9e855c] transition"
           >
             Iniciar sesión
           </button>

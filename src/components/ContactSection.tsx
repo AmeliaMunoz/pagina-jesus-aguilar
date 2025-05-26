@@ -16,7 +16,7 @@ import { addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import Button from "./Button";
 import { holidays2025 } from "../data/holidays";
-import { CheckCircle, Mail, Phone, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Mail, Phone } from "lucide-react";
 
 const ContactSection = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -220,136 +220,143 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contacto" className="bg-[#fdf8f4] py-16 px-4 sm:px-6 scroll-mt-24">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-        <div className="self-center">
-          <h2 className="text-2xl md:text-3xl text-gray-700 tracking-widest uppercase mb-16 font-semibold">
-            Contacto
-          </h2>
-          <p className="text-gray-700 mb-6 text-base sm:text-lg">
-            No dudes en comunicarte para obtener más información o agendar una cita.{" "}
-            <strong>¡Estaré encantado de ayudarte!</strong>
-          </p>
-          <div className="space-y-4 text-gray-700 text-base">
-            <div className="flex items-center gap-3">
-              <span className="text-xl"><Mail /></span>
-              <a href="mailto:jesusaguilarpsicologia@gmail.com" className="hover:underline break-all">
-                jesusaguilarpsicologia@gmail.com
-              </a>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xl"><Phone /></span>
-              <a href="tel:+34123456789" className="hover:underline">
-                +34 123 456 789
-              </a>
-            </div>
+    <section id="contacto" className="bg-[#fdf8f4] py-16 px-4 sm:px-6 2xl:px-20 3xl:px-32 scroll-mt-24">
+    <div className="max-w-6xl 3xl:max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+      
+      {/* Columna izquierda */}
+      <div className="self-center">
+        <h2 className="text-2xl md:text-3xl 3xl:text-4xl text-gray-700 tracking-widest uppercase mb-16 font-semibold">
+          Contacto
+        </h2>
+        <p className="text-gray-700 mb-6 text-base sm:text-lg 3xl:text-xl">
+          No dudes en comunicarte para obtener más información o agendar una cita. <strong>¡Estaré encantado de ayudarte!</strong>
+        </p>
+        <div className="space-y-4 text-gray-700 text-base 3xl:text-lg">
+          <div className="flex items-center gap-3">
+            <span className="text-xl"><Mail /></span>
+            <a href="mailto:jesusaguilarpsicologia@gmail.com" className="hover:underline break-all">
+              jesusaguilarpsicologia@gmail.com
+            </a>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xl"><Phone /></span>
+            <a href="tel:+34123456789" className="hover:underline">
+              +34 123 456 789
+            </a>
           </div>
         </div>
-
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-md">
-          <h3 className="text-xl md:text-2xl text-gray-700 tracking-widest uppercase mb-10 font-semibold">
-            Envíame un mensaje
-          </h3>
-
-          {enviado && (
-            <div className="bg-[#f5ede6] text-[#5f4b32] border border-[#c8b29d] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm flex items-center gap-2">
-              <CheckCircle size={18} className="text-green-600" />
-              Tu mensaje ha sido enviado con éxito. Te responderé lo antes posible.
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-[#fceeee] text-[#803e3e] border border-[#e2b8b8] px-4 py-3 rounded-xl text-sm mb-6 font-medium shadow-sm flex items-center gap-2">
-              <XCircle size={18} className="text-red-500" />
-              Ha ocurrido un error. Por favor, intenta de nuevo más tarde.
-            </div>
-          )}
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="nombre" className="text-gray-700 font-medium">Nombre</label>
-                <input
-                  id="nombre"
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  required
-                  className="border border-gray-300 rounded px-4 py-2 text-sm"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-gray-700 font-medium">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="border border-gray-300 rounded px-4 py-2 text-sm"
-                />
-              </div>
-              <div className="flex flex-col gap-2 sm:col-span-2">
-                <label htmlFor="telefono" className="text-gray-700 font-medium">Teléfono</label>
-                <input
-                  id="telefono"
-                  type="tel"
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  required
-                  className="border border-gray-300 rounded px-4 py-2 text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-gray-700 font-medium">Selecciona una fecha</label>
-              <DatePicker
-                selected={startDate}
-                onChange={(date) => setStartDate(date)}
-                dateFormat="yyyy-MM-dd"
-                placeholderText="Selecciona una fecha"
-                includeDates={fechasDisponibles}
-                className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
-                locale={es}
-              />
-            </div>
-
-            {horasDisponibles.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <label className="text-gray-700 font-medium">Selecciona una hora</label>
-                <select
-                  value={horaSeleccionada}
-                  onChange={(e) => setHoraSeleccionada(e.target.value)}
-                  className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
-                  required
-                >
-                  <option value="">Selecciona una hora</option>
-                  {horasDisponibles.map((hora, index) => (
-                    <option key={index} value={hora}>{hora}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-2">
-              <label htmlFor="mensaje" className="text-gray-700 font-medium">Dime en qué te puedo ayudar</label>
-              <textarea
-                id="mensaje"
-                rows={4}
-                value={mensaje}
-                onChange={(e) => setMensaje(e.target.value)}
-                className="border border-gray-300 rounded px-4 py-2 text-sm"
-              />
-            </div>
-
-            <div className="pt-2">
-              <Button type="submit">Enviar</Button>
-            </div>
-          </form>
-        </div>
       </div>
-    </section>
+  
+      {/* Columna derecha - formulario */}
+      <div className="bg-white p-6 sm:p-8 3xl:p-10 rounded-xl shadow-md">
+        <h3 className="text-xl md:text-2xl 3xl:text-3xl text-gray-700 tracking-widest uppercase mb-10 font-semibold">
+          Envíame un mensaje
+        </h3>
+  
+        {/* mensajes de éxito o error se quedan igual */}
+       
+        {enviado && (
+          <div className="flex items-center gap-3 bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-md mb-4">
+            <span className="text-xl"><CheckCircle /></span>
+            <p className="text-sm 3xl:text-base">
+              ¡Tu mensaje ha sido enviado con éxito! Pronto recibirás una respuesta.
+            </p>
+          </div>
+        )}
+        {error && (
+        <div className="flex items-center gap-3 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-md mb-4">
+          <span className="text-xl"><AlertTriangle /></span>
+          <p className="text-sm 3xl:text-base">
+            Ups... algo salió mal. Revisa los campos o inténtalo de nuevo más tarde.
+          </p>
+        </div>
+      )}
+
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="nombre" className="text-gray-700 font-medium 3xl:text-lg">Nombre</label>
+              <input
+                id="nombre"
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+                className="border border-gray-300 rounded px-4 py-2 text-sm 3xl:text-base"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="email" className="text-gray-700 font-medium 3xl:text-lg">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="border border-gray-300 rounded px-4 py-2 text-sm 3xl:text-base"
+              />
+            </div>
+            <div className="flex flex-col gap-2 sm:col-span-2">
+              <label htmlFor="telefono" className="text-gray-700 font-medium 3xl:text-lg">Teléfono</label>
+              <input
+                id="telefono"
+                type="tel"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                required
+                className="border border-gray-300 rounded px-4 py-2 text-sm 3xl:text-base"
+              />
+            </div>
+          </div>
+  
+          <div className="flex flex-col gap-2">
+            <label className="text-gray-700 font-medium 3xl:text-lg">Selecciona una fecha</label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              dateFormat="yyyy-MM-dd"
+              placeholderText="Selecciona una fecha"
+              includeDates={fechasDisponibles}
+              className="w-full border border-gray-300 px-4 py-2 rounded text-sm 3xl:text-base"
+              locale={es}
+            />
+          </div>
+  
+          {horasDisponibles.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <label className="text-gray-700 font-medium 3xl:text-lg">Selecciona una hora</label>
+              <select
+                value={horaSeleccionada}
+                onChange={(e) => setHoraSeleccionada(e.target.value)}
+                className="w-full border border-gray-300 px-4 py-2 rounded text-sm 3xl:text-base"
+                required
+              >
+                <option value="">Selecciona una hora</option>
+                {horasDisponibles.map((hora, index) => (
+                  <option key={index} value={hora}>{hora}</option>
+                ))}
+              </select>
+            </div>
+          )}
+  
+          <div className="flex flex-col gap-2">
+            <label htmlFor="mensaje" className="text-gray-700 font-medium 3xl:text-lg">Dime en qué te puedo ayudar</label>
+            <textarea
+              id="mensaje"
+              rows={4}
+              value={mensaje}
+              onChange={(e) => setMensaje(e.target.value)}
+              className="border border-gray-300 rounded px-4 py-2 text-sm 3xl:text-base"
+            />
+          </div>
+  
+          <div className="pt-2">
+            <Button type="submit">Enviar</Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>  
   );
 };
 

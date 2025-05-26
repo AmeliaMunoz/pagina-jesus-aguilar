@@ -35,52 +35,63 @@ const AdminLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdf8f4] flex flex-col justify-center items-center">
-      <div className="w-32 h-32 mb-6">
+    <div className="min-h-screen bg-[#fdf8f4] flex flex-col justify-center items-center px-4">
+      {/* Logo */}
+      <div className="w-32 h-32 3xl:w-40 3xl:h-40 mb-6">
         <IconoLogo className="w-full h-full" />
       </div>
 
-      <div className="w-full max-w-sm bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-semibold text-center text-[#5f4b32] mb-8">
+      {/* Formulario */}
+      <div className="w-full max-w-sm 3xl:max-w-4xl bg-white p-8 3xl:p-20 rounded-lg shadow-lg border border-[#e0d6ca]">
+        <h1 className="text-3xl 3xl:text-5xl font-semibold text-center text-[#5f4b32] mb-8">
           Acceso Administrador
         </h1>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Correo</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm 3xl:text-base font-medium text-gray-700 mb-2">
+              Correo electrónico
+            </label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#b89b71]"
+              className="w-full px-4 py-2 3xl:py-3 border border-gray-300 rounded-lg text-sm 3xl:text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#b89b71]"
               placeholder="admin@tucentro.com"
             />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+          <div>
+            <label htmlFor="password" className="block text-sm 3xl:text-base font-medium text-gray-700 mb-2">
+              Contraseña
+            </label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#b89b71]"
+              className="w-full px-4 py-2 3xl:py-3 border border-gray-300 rounded-lg text-sm 3xl:text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#b89b71]"
               placeholder="********"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2 bg-[#b89b71] text-white text-lg font-semibold rounded-lg hover:bg-[#9e855c]"
+            className="w-full py-2 3xl:py-4 bg-[#b89b71] text-white text-lg 3xl:text-xl font-semibold rounded-lg hover:bg-[#9e855c] transition"
           >
             Iniciar sesión
           </button>
-        </form>
 
-        {error && <p className="text-red-500 text-sm mt-3 text-center">{error}</p>}
+          {error && (
+            <p className="text-red-600 text-sm 3xl:text-base text-center mt-2">{error}</p>
+          )}
+        </form>
       </div>
     </div>
   );
 };
 
 export default AdminLoginPage;
+
 

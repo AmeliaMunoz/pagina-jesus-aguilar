@@ -113,10 +113,10 @@ export default function AdminMessagesPage() {
 
   return (
     <AdminLayout>
-      <div className="w-full max-w-5xl mx-auto mt-10  px-4">
+      <div className="w-full max-w-5xl mx-auto mt-10 px-4 overflow-x-hidden">
         <div className="bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-10">
           <div className="flex flex-col lg:flex-row gap-6">
-            <aside className="w-full lg:w-1/3 border-r border-[#e0d6ca] pr-0 lg:pr-6">
+          <aside className="w-full lg:w-1/3 lg:border-r border-[#e0d6ca] pr-0 lg:pr-6 break-words">
               <h2 className="text-2xl font-semibold mb-4 text-[#5f4b32]">Pacientes</h2>
 
               {mensajesSinResponder.length > 0 && (
@@ -154,8 +154,8 @@ export default function AdminMessagesPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                        <Mail size={12} /> {p.email}
+                      <div className="text-xs text-gray-600 flex items-start gap-1 mt-1 break-all">
+                        <Mail size={12} /> <span className="break-all">{p.email}</span>
                       </div>
                     </li>
                   );
@@ -170,7 +170,7 @@ export default function AdminMessagesPage() {
                     {mensajesPaciente.map((msg) => (
                       <div
                         key={msg.id}
-                        className={`max-w-[80%] px-4 py-2 rounded-xl text-sm ${
+                        className={`max-w-full sm:max-w-[80%] px-4 py-2 rounded-xl text-sm break-words ${
                           msg.enviadoPorPaciente
                             ? "bg-green-100 self-end ml-auto text-right"
                             : "bg-blue-100 self-start text-left"

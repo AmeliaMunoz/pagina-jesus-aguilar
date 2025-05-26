@@ -86,8 +86,6 @@ const EditAppointmentModal = ({
         const fueForzada = citaData.forzada === true;
         const sePuedeLiberar = !fueForzada || typeof citaData.forzada === "undefined";
 
-        console.log("🔍 ¿Cita forzada?:", fueForzada, "| ¿Se puede liberar?:", sePuedeLiberar);
-
         if (sePuedeLiberar) {
           await liberarHoraEnDisponibilidad(
             fecha.toISOString().split("T")[0],
@@ -145,24 +143,25 @@ const EditAppointmentModal = ({
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-4">
+        {/* ✅ Botones responsive corregidos */}
+        <div className="flex flex-col sm:flex-row flex-wrap justify-center sm:justify-end gap-2 pt-4 w-full">
           <button
             onClick={onClose}
-            className="bg-gray-200 px-4 py-2 rounded text-sm"
+            className="bg-gray-200 px-4 py-2 rounded text-sm w-full sm:w-auto"
           >
             Cancelar
           </button>
           <button
             onClick={handleGuardar}
             disabled={guardando}
-            className="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+            className="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full sm:w-auto"
           >
             {guardando ? "Guardando..." : "Guardar"}
           </button>
           <button
             onClick={handleEliminar}
             disabled={eliminando}
-            className="bg-red-600 text-white px-4 py-2 rounded text-sm"
+            className="bg-red-600 text-white px-4 py-2 rounded text-sm w-full sm:w-auto"
           >
             {eliminando ? "Eliminando..." : "Eliminar"}
           </button>
@@ -173,3 +172,4 @@ const EditAppointmentModal = ({
 };
 
 export default EditAppointmentModal;
+

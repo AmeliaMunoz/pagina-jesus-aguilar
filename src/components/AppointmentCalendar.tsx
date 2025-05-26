@@ -42,19 +42,39 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: ToolbarProps<any>) =
         <button onClick={() => onNavigate("NEXT")} className="text-xl text-[#5f4b32] hover:text-[#b89b71] px-4">→</button>
       </div>
       <div className="flex flex-wrap justify-center gap-3">
-        {["month", "week", "day"].map((value) => (
-          <button
-            key={value}
-            onClick={() => onView(value as View)}
-            className={`px-4 py-1 rounded-full text-sm font-medium border transition ${
-              view === value
-                ? "bg-[#b89b71] text-white border-[#b89b71]"
-                : "bg-white text-[#5f4b32] border-[#c8b29d] hover:text-[#b89b71]"
-            }`}
-          >
-            {value === "month" ? "Mes" : value === "week" ? "Semana" : "Día"}
-          </button>
-        ))}
+      
+        {/* Mes (solo escritorio) */}
+        <button
+          onClick={() => onView("month")}
+          className={`px-4 py-1 rounded-full text-sm font-medium border transition ${
+            view === "month"
+              ? "bg-[#b89b71] text-white border-[#b89b71]"
+              : "bg-white text-[#5f4b32] border-[#c8b29d] hover:text-[#b89b71]"
+          }`}
+        >
+          Mes
+        </button>
+        {/* Semana y Día (solo escritorio) */}
+        <button
+          onClick={() => onView("week")}
+          className={`hidden sm:inline-block px-4 py-1 rounded-full text-sm font-medium border transition ${
+            view === "week"
+              ? "bg-[#b89b71] text-white border-[#b89b71]"
+              : "bg-white text-[#5f4b32] border-[#c8b29d] hover:text-[#b89b71]"
+          }`}
+        >
+          Semana
+        </button>
+        <button
+          onClick={() => onView("day")}
+          className={`hidden sm:inline-block px-4 py-1 rounded-full text-sm font-medium border transition ${
+            view === "day"
+              ? "bg-[#b89b71] text-white border-[#b89b71]"
+              : "bg-white text-[#5f4b32] border-[#c8b29d] hover:text-[#b89b71]"
+          }`}
+        >
+          Día
+        </button>
       </div>
     </div>
   );
@@ -88,49 +108,47 @@ const AppointmentCalendar = () => {
   const cargarEventos = async () => {
     const q = query(
       collection(db, "citas"),
-      where("estado", "in", ["aprobada", "ausente"])
+      where("estado", "in", ["aprobada", "ausente", "pendiente"])
     );
     const snapshot = await getDocs(q);
-  
+
     const citas = snapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        const fecha = data.fechaPropuesta?.toDate?.() || new Date(data.fecha);
-        const hora = data.horaPropuesta || data.hora || "00:00";
-  
-        if (!fecha || !hora) return null;
-  
-        const [h, m] = hora.split(":" ).map(Number);
-  
-        const start = new Date(
-          fecha.getFullYear(),
-          fecha.getMonth(),
-          fecha.getDate(),
-          h,
-          m
-        );
-  
-        const end = new Date(start);
-        end.setMinutes(end.getMinutes() + (data.duracionMinutos || 60));
-  
-        return {
-          id: doc.id,
-          title: data.nombre,
-          start,
-          end,
-          resource: {
-            id: doc.id,
-            nombre: data.nombre,
-            email: data.email,
-            telefono: data.telefono || "",
-            nota: data.nota || "",
-            mensajeDelPaciente: data.mensajeDelPaciente || "",
-            estado: data.estado,
-          },
-        } as CalendarEvent;
-      })
-      .filter((e): e is CalendarEvent => e !== null);
-  
+  .map((doc) => {
+    const data = doc.data();
+    const fecha = data.fechaPropuesta?.toDate?.() || new Date(data.fecha);
+    const hora = data.horaPropuesta || data.hora || "00:00";
+    if (!fecha || !hora) return null;
+
+    const [h, m] = hora.split(":").map(Number);
+
+    const start = new Date(fecha);
+    start.setHours(h);
+    start.setMinutes(m);
+    start.setSeconds(0);
+    start.setMilliseconds(0);
+
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + (data.duracionMinutos || 60));
+
+    return {
+      id: doc.id,
+      title: data.nombre,
+      start,
+      end,
+      resource: {
+        id: doc.id,
+        nombre: data.nombre,
+        email: data.email,
+        telefono: data.telefono || "",
+        nota: data.nota || "",
+        mensajeDelPaciente: data.mensajeDelPaciente || "",
+        estado: data.estado,
+      },
+    } as CalendarEvent;
+  })
+  .filter((e): e is CalendarEvent => e !== null);
+
+
     const festivosEventos: CalendarEvent[] = holidays2025.map((fecha) => {
       const [year, month, day] = fecha.split("-").map(Number);
       const start = new Date(year, month - 1, day, 0, 0, 0);
@@ -142,11 +160,10 @@ const AppointmentCalendar = () => {
         end,
       };
     });
-  
+
     setEventos(citas);
     setFestivos(festivosEventos);
   };
-  
 
   useEffect(() => {
     cargarEventos();
@@ -154,16 +171,13 @@ const AppointmentCalendar = () => {
 
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     const day = slotInfo.start.getDay();
-    if (day === 0 || day === 6) return;
-
-    if (view === "day") {
-      setSelectedSlot(slotInfo);
-      setModalOpen(true);
-    } else {
-      setDate(slotInfo.start);
-      setView("day");
-    }
+    if (day === 0 || day === 6) return; 
+    
+    setSelectedSlot(slotInfo);
+    setModalOpen(true);
   };
+  
+  
 
   const slotPropGetter = (date: Date) => {
     const day = date.getDay();
@@ -183,12 +197,10 @@ const AppointmentCalendar = () => {
     const ref = doc(db, "pacientes", email);
     const snap = await getDoc(ref);
     if (!snap.exists()) return;
-
     const data = snap.data();
     const historialActualizado = (data.historial || []).filter(
       (cita: any) => cita.fecha !== fecha || cita.hora !== hora
     );
-
     await updateDoc(ref, { historial: historialActualizado });
   };
 
@@ -222,7 +234,7 @@ const AppointmentCalendar = () => {
         startAccessor="start"
         endAccessor="end"
         style={{ height: "500px" }}
-        views={["month", "week", "day"]}
+        views={{ month: true, week: true, day: true }}
         defaultView="month"
         messages={{
           previous: "Anterior",
@@ -231,7 +243,6 @@ const AppointmentCalendar = () => {
           month: "Mes",
           week: "Semana",
           day: "Día",
-          agenda: "Agenda",
           date: "Fecha",
           time: "Hora",
           event: "Cita",
@@ -295,11 +306,8 @@ const AppointmentCalendar = () => {
             const fechaStr = format(editEvent.start, "yyyy-MM-dd");
             const horaStr = format(editEvent.start, "HH:mm");
             const { email } = editEvent.resource;
-          
             await eliminarCitaDeHistorial(email, fechaStr, horaStr);
-          
           }}
-          
         />
       )}
     </div>

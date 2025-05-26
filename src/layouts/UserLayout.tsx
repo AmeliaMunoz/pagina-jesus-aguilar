@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from "../components/UserSidebar";
 import HamburgerButton from "../components/HamburgerButton";
-import UserHeader from "../components/UserHeader"; // 👈 Importamos el header
+import UserHeader from "../components/UserHeader";
 import {
   CalendarClock,
   BarChartHorizontal,
@@ -26,7 +26,7 @@ const UserLayout = ({ children }: Props) => {
   const location = useLocation();
 
   useEffect(() => {
-    setSidebarVisible(false); // Cierra al cambiar ruta
+    setSidebarVisible(false);
   }, [location.pathname]);
 
   return (
@@ -38,7 +38,7 @@ const UserLayout = ({ children }: Props) => {
         isOpen={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
         onLogout={() => {
-          localStorage.removeItem("admin-autenticado");
+          localStorage.removeItem("user-autenticado");
           window.location.href = "/login";
         }}
       />
@@ -50,12 +50,14 @@ const UserLayout = ({ children }: Props) => {
           onToggle={() => setSidebarVisible(!sidebarVisible)}
         />
 
-        {/* Header del usuario 👇 */}
+        {/* Header del usuario */}
         <UserHeader />
 
-        <main className="flex-1 px-4 sm:px-6 py-12 overflow-y-auto">
-        <div className="w-full max-w-[2560px] mx-auto px-6 2xl:px-12">{children}</div>
-
+        {/* Contenido principal */}
+        <main className="flex-1 py-12 overflow-y-auto">
+          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 3xl:px-12">
+            {children}
+          </div>
         </main>
       </div>
     </div>
@@ -63,4 +65,5 @@ const UserLayout = ({ children }: Props) => {
 };
 
 export default UserLayout;
+
 

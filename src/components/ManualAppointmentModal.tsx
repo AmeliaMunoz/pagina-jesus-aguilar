@@ -155,7 +155,7 @@
 
     useEffect(() => {
       const fetchAvailableHours = async () => {
-        const dateStr = fecha.toISOString().split("T")[0];
+        const dateStr = fecha.toLocaleDateString("sv-SE");
         const dayOfWeek = fecha
           .toLocaleDateString("es-ES", { weekday: "long" })
           .toLowerCase()
@@ -178,24 +178,26 @@
         }
 
         const citasSnap = await getDocs(collection(db, "citas"));
-        const ocupadas = citasSnap.docs
-        .map((doc) => doc.data())
-        .filter((cita) => {
-          let fechaCita = "";
+          const ocupadas = citasSnap.docs
+            .map((doc) => doc.data())
+            .filter((cita) => {
+              const fechaCita = cita.fechaPropuesta?.toDate?.()
+                ? cita.fechaPropuesta.toDate().toLocaleDateString("sv-SE")
+                : cita.fecha?.toDate?.()
+                  ? cita.fecha.toDate().toLocaleDateString("sv-SE")
+                  : typeof cita.fecha === "string"
+                    ? cita.fecha
+                    : "";
+
+
+              return (
+                fechaCita === dateStr &&
+                ["aprobada", "ausente", "pendiente"].includes(cita.estado)
+              );
+            })
+            .map((cita) => cita.horaPropuesta || cita.hora)
+            .filter((hora): hora is string => !!hora);
       
-          if (typeof cita.fecha === "string") {
-            fechaCita = cita.fecha;
-          } else if (cita.fecha?.toDate) {
-            fechaCita = cita.fecha.toDate().toISOString().split("T")[0];
-          }
-      
-          return (
-            fechaCita === dateStr &&
-            ["aprobada", "ausente", "pendiente"].includes(cita.estado)
-          );
-        })
-        .map((cita) => cita.hora?.trim())
-        .filter((hora): hora is string => !!hora);      
 
         const disponiblesFinal = horasDisponibles.filter((h) => !ocupadas.includes(h));
         setAvailableHours(disponiblesFinal);
@@ -228,10 +230,10 @@
 
         const dateStr = fecha.toLocaleDateString("sv-SE");
 
-        // ✅ Verificar si ya existe una cita con ese email + fecha + hora
-        const yaExiste = await checkAppointmentExists(email, dateStr, horaFinal);
+        // ✅ Verificar si ya existe una cita con ese email
+        const yaExiste = await checkAppointmentExists(email);
           if (yaExiste) {
-            setErrorMensaje("❗ Ya existe una cita para este paciente en esa fecha y hora.");
+            setErrorMensaje("❗ Ya existe una cita para este paciennte.");
             setLoading(false);
             return;
       }
@@ -316,14 +318,14 @@
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             {soloEditarPaciente ? "Editar paciente" : "Nueva cita manual"}
           </h3>
-
+  
           {!soloEditarPaciente && (
             <>
               <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
                 <CalendarDays />
                 {fecha.toLocaleDateString("es-ES")} a las {selectedHour || customHour}
               </p>
-
+  
               <div className="mb-4">
                 <input
                   type="text"
@@ -346,7 +348,7 @@
                   </ul>
                 )}
               </div>
-
+  
               <div className="mb-4 space-y-2">
                 <label className="text-sm font-medium text-[#5f4b32]">Selecciona hora disponible:</label>
                 <div className="flex flex-wrap gap-2">
@@ -384,7 +386,7 @@
               </div>
             </>
           )}
-
+  
           <div className="space-y-3">
             <input
               type="text"
@@ -415,8 +417,8 @@
               rows={3}
             />
           </div>
-
-          <div className="mt-6 flex flex-col sm:flex-row justify-end gap-4">
+  
+          <div className="mt-6 flex flex-col sm:flex-row flex-wrap justify-center sm:justify-end gap-2 w-full">
             <button
               onClick={onClose}
               className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm w-full sm:w-auto"
@@ -435,4 +437,4 @@
       </div>
     );
   };
-  export default ManualAppointmentModal;
+export default ManualAppointmentModal;

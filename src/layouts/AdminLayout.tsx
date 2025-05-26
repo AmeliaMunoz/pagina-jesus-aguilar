@@ -58,10 +58,12 @@ const AdminLayout = ({ children }: Props) => {
           isOpen={sidebarVisible}
           onToggle={() => setSidebarVisible(!sidebarVisible)}
         />
-        <AdminHeader/>
+        <AdminHeader />
 
-        <main className="flex-1 px-4 sm:px-6 py-12 overflow-y-auto">
-        <div className="w-full max-w-[2560px] mx-auto px-6 2xl:px-12">{children}</div>
+        <main className="flex-1 py-12 overflow-y-auto">
+          <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 3xl:px-12">
+            {children}
+          </div>
         </main>
       </div>
     </div>
@@ -69,10 +71,3 @@ const AdminLayout = ({ children }: Props) => {
 };
 
 export default AdminLayout;
-
-
-
-
-
-
-
