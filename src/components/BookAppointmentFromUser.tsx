@@ -262,9 +262,9 @@ const BookAppointmentFromUser = ({
     setLoading(true);
 
     const dateStr = formatDate(selectedDate);
-    const yaExiste = await checkAppointmentExists(userEmail, dateStr, selectedHour);
+    const yaExiste = await checkAppointmentExists(userEmail);
     if (yaExiste) {
-      setErrorMensaje("❗ Ya tienes una cita registrada en esa fecha y hora.");
+      setErrorMensaje("❗ Ya tienes una cita registrada.");
       setLoading(false);
       return;
     }
