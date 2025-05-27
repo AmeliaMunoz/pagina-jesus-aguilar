@@ -13,7 +13,7 @@
   import { db } from "../firebase";
   import { CalendarDays } from "lucide-react";
   import emailjs from "@emailjs/browser";
-  import { checkAppointmentExists } from "../utils/checkAppointmentExists";
+  import { checkExactAppointmentExists } from "../utils/checkExactAppointmentExists";
 
 
   const sendConfirmationEmail = async ({
@@ -82,7 +82,8 @@
     const [availableHours, setAvailableHours] = useState<string[]>([]);
     const [selectedHour, setSelectedHour] = useState(hora);
     const [customHour, setCustomHour] = useState("");
-    const [, setErrorMensaje] = useState("");
+    const [errorMensaje, setErrorMensaje] = useState("");
+
 
     useEffect(() => {
       setNombre(nombreInicial);
@@ -230,10 +231,9 @@
 
         const dateStr = fecha.toLocaleDateString("sv-SE");
 
-        // ✅ Verificar si ya existe una cita con ese email
-        const yaExiste = await checkAppointmentExists(email);
+        const yaExiste = await checkExactAppointmentExists(email, dateStr);
           if (yaExiste) {
-            setErrorMensaje("❗ Ya existe una cita para este paciennte.");
+            setErrorMensaje("❗ Ya existe una cita para este paciente.");
             setLoading(false);
             return;
       }
@@ -318,6 +318,12 @@
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             {soloEditarPaciente ? "Editar paciente" : "Nueva cita manual"}
           </h3>
+          {errorMensaje && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm">
+              {errorMensaje}
+            </div>
+          )}
+
   
           {!soloEditarPaciente && (
             <>

@@ -5,34 +5,39 @@ import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import IconoLogo from "../components/IconoLogo";
 
+import { setPersistence, browserSessionPersistence } from "firebase/auth";
+
 const AdminLoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-      const data = userDoc.data();
-
-      if (data?.rol === "admin") {
-        localStorage.setItem("admin-autenticado", "true");
-        navigate("/admin");
-      } else {
-        setError("No tienes permisos de administrador.");
-        await signOut(auth);
+      e.preventDefault();
+      setError("");
+    
+      try {
+        await setPersistence(auth, browserSessionPersistence); 
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+    
+        const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+        const data = userDoc.data();
+    
+        if (data?.rol === "admin") {
+          localStorage.setItem("admin-autenticado", "true");
+          navigate("/admin");
+        } else {
+          setError("No tienes permisos de administrador.");
+          await signOut(auth);
+        }
+      } catch (err: any) {
+        setError("Error al iniciar sesión: " + err.message);
       }
-    } catch (err: any) {
-      setError("Error al iniciar sesión: " + err.message);
-    }
-  };
+    };
+  
 
   return (
     <div className="min-h-screen bg-[#fdf8f4] flex flex-col justify-center items-center px-4">

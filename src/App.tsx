@@ -1,46 +1,52 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route,} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { auth } from "./firebase";
-import { onAuthStateChanged } from "firebase/auth"; 
+import { onAuthStateChanged } from "firebase/auth";
 import LoginPage from "./pages/UserLoginPage";
-import Admin from "./pages/Admin"; 
+import Admin from "./pages/Admin";
 import User from "./pages/User";
 
 function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true); 
 
-  // Comprobar el estado de autenticación del usuario
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);  // Si el usuario está autenticado, guardamos su información
-      } else {
-        setUser(null);  // Si no está autenticado, lo dejamos en null
-      }
+      setUser(currentUser);
+      setLoading(false); 
     });
 
     return () => unsubscribe();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-[#5f4b32]">
+        Cargando sesión...
+      </div>
+    );
+  }
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={user ? <User /> : <LoginPage />} /> 
-        <Route path="/login" element={<LoginPage />} />  
-        <Route path="/profile" element={user ? <User /> : <LoginPage />} />
-        <Route path="/admin" element={user ? <Admin /> : <LoginPage />} />
+        <Route
+          path="/"
+          element={user ? <Navigate to="/profile" /> : <LoginPage />}
+        />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/panel/paciente/user"
+          element={user ? <User /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/admin"
+          element={user ? <Admin /> : <Navigate to="/login" />}
+        />
       </Routes>
     </Router>
   );
 }
 
 export default App;
-
-
-
-
-
-
-
-
 

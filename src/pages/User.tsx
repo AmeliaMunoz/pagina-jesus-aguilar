@@ -30,34 +30,25 @@ const User = () => {
   const [nombre, setNombre] = useState<string>("");
   const [proximaCita, setProximaCita] = useState<Cita | null>(null);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      navigate("/login");
-      return;
-    }
-
     const fetchData = async () => {
-      const uid = auth.currentUser?.uid;
-      if (!uid) {
-        navigate("/login");
-        return;
-      }
-
-      const usuarioSnap = await getDoc(doc(db, "usuarios", uid));
+      const user = auth.currentUser;
+      if (!user) return;
+  
+      const usuarioSnap = await getDoc(doc(db, "usuarios", user.uid));
       if (usuarioSnap.exists()) {
-        const user = usuarioSnap.data();
-        setNombre(user.nombre ?? "");
+        const data = usuarioSnap.data();
+        setNombre(data.nombre ?? "");
       }
-
+  
       const q = query(
         collection(db, "citas"),
-        where("uid", "==", uid),
+        where("uid", "==", user.uid),
         where("estado", "==", "aprobada"),
         orderBy("fecha")
       );
-
+  
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
         const docSnap = snapshot.docs[0];
@@ -71,9 +62,10 @@ const User = () => {
         });
       }
     };
-
+  
     fetchData();
-  }, [navigate, location.pathname]);
+  }, []);  
+
   return (
     <UserLayout>
       <div className="w-full max-w-5xl mx-auto mt-10 md:mt-16 px-4 space-y-16">

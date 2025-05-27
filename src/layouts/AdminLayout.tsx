@@ -2,8 +2,9 @@ import { ReactNode, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import HamburgerButton from "../components/HamburgerButton";
-import { auth, signOut } from "../firebase";
 import AdminHeader from "../components/AdminHeader";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 
 interface Props {
   children: ReactNode;
@@ -14,45 +15,29 @@ const AdminLayout = ({ children }: Props) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Redirigir si no hay sesión admin
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem("admin-autenticado");
-    if (!isAuthenticated) {
-      navigate("/admin-login");
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate("/admin-login");
+      }
+    });
+  
+    return () => unsubscribe();
   }, [navigate]);
+  
 
-  // Cierra sidebar al cambiar de ruta
   useEffect(() => {
     setSidebarVisible(false);
   }, [location.pathname]);
 
-  // Cierre de sesión automático al cerrar pestaña o recargar
-  useEffect(() => {
-    const handleUnload = async () => {
-      try {
-        await signOut(auth);
-        localStorage.removeItem("admin-autenticado");
-      } catch (error) {
-        console.error("Error cerrando sesión al cerrar pestaña:", error);
-      }
-    };
-
-    window.addEventListener("beforeunload", handleUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleUnload);
-    };
-  }, []);
-
   return (
     <div className="flex h-screen bg-[#fdf8f4] overflow-hidden">
-      {/* Sidebar fijo */}
+     
       <AdminSidebar
         isOpen={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
       />
 
-      {/* Contenido del admin */}
       <div className="flex flex-col flex-1 overflow-y-auto">
         <HamburgerButton
           isOpen={sidebarVisible}

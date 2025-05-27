@@ -4,6 +4,7 @@ import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import IconoLogo from "../components/IconoLogo";
+import { setPersistence, browserSessionPersistence } from "firebase/auth";
 
 const UserLoginPage = () => {
   const [email, setEmail] = useState("");
@@ -11,8 +12,11 @@ const UserLoginPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
   
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
     if (!emailRegex.test(email)) {
@@ -21,10 +25,10 @@ const UserLoginPage = () => {
     }
   
     try {
+      await setPersistence(auth, browserSessionPersistence); 
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;
   
-      // Verificar rol y estado del usuario
       const userDoc = await getDoc(doc(db, "usuarios", uid));
       const data = userDoc.data();
   
@@ -49,6 +53,7 @@ const UserLoginPage = () => {
       setError("Correo o contraseña incorrectos.");
     }
   };
+  
   
 
   return (

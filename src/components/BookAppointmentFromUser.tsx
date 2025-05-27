@@ -46,7 +46,7 @@ import {
 import { db } from "../firebase";
 import { holidays2025 } from "../data/holidays";
 import { CalendarClock } from "lucide-react";
-import { checkAppointmentExists } from "../utils/checkAppointmentExists";
+import { checkAppointment } from "../utils/checkAppointment";
 
 interface Props {
   uid: string;
@@ -262,7 +262,7 @@ const BookAppointmentFromUser = ({
     setLoading(true);
 
     const dateStr = formatDate(selectedDate);
-    const yaExiste = await checkAppointmentExists(userEmail);
+    const yaExiste = await checkAppointment(userEmail);
     if (yaExiste) {
       setErrorMensaje("❗ Ya tienes una cita registrada.");
       setLoading(false);

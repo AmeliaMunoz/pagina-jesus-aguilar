@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { browserSessionPersistence, setPersistence, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
@@ -18,8 +18,9 @@ const Login = ({ redirectTo, authKey, title }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+  
     try {
+      await setPersistence(auth, browserSessionPersistence); 
       await signInWithEmailAndPassword(auth, email, password);
       localStorage.setItem(authKey, "true");
       navigate(redirectTo);
