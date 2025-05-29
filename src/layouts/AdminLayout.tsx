@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import AdminSidebar from "../components/AdminSidebar";
-import HamburgerButton from "../components/HamburgerButton";
-import AdminHeader from "../components/AdminHeader";
+import AdminSidebar from "../components/layout/AdminSidebar";
+import HamburgerButton from "../components/common/HamburgerButton";
+import AdminHeader from "../components/layout/AdminHeader";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import AvailabilityPanel from "../components/AvailabilityPanel";
-import WeeklySchedulePanel from "../components/WeeklySchedulePanel";
+import AvailabilityPanel from "../components/admin/AvailabilityPanel";
+import WeeklySchedulePanel from "../components/admin/WeeklySchedulePanel";
 import AdminLayout from "../layouts/AdminLayout";
 
 const Configuracion = () => {

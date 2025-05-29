@@ -8,7 +8,7 @@ import AdolescentTherapyPage from "../pages/AdolescentTherapyPage";
 import Admin from "../pages/Admin";
 import PatientHistory from "../pages/PatientHistoryAdmin";
 import Configuration from "../pages/Configuration";
-import ScrollToTop from "../components/ScrollToTop";
+import ScrollToTop from "../components/layout/ScrollToTop";
 import AppointmentStatsPage from "../pages/AppointmentStatePage";
 import AdminAppointmentsPage from "../pages/AdminAppointmentsPage";
 import UserCreatePage from "../pages/UserCreatePage";
@@ -47,7 +47,6 @@ const RouteMain = () => {
       <Route path="/login" element={<LoginPage />} /> 
       <Route path="/profile" element={User ? <User /> : <LoginPage />} />
       <Route path="/panel/paciente/reservar" element={<BookAppointmentPage />} />
-
       <Route path="/panel/paciente/proxima-cita" element={<NextAppointmentPage />} />
       <Route path="/panel/paciente/historial" element={<PatientHistoryPage />} />
       <Route path="/panel/paciente/mensajes" element={<PatientMessagesPage />} />
@@ -56,17 +55,10 @@ const RouteMain = () => {
       <Route path="/admin-login" element={<AdminLoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/admin/eliminar-usuarios" element={<AdminDeleteUsersPage />} />
-
-
     </Routes>
     </BrowserRouter>
   );
 };
-
-
-
-
-
 
 export default RouteMain;
 

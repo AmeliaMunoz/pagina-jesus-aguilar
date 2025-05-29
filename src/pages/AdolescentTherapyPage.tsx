@@ -1,12 +1,12 @@
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
 
-import ContactSection from "../components/ContactSection";
-import AdolescentTherapySection from "../components/AdolescentTherapySection";
+import ContactSection from "../components/sections/ContactSection";
+import AdolescentTherapySection from "../components/sections/AdolescentTherapySection";
 
 const AdolescentTherapyPage = () => {
   return (
-    <main className="bg-beige-100 min-h-screen">
+    <main className="w-full bg-[#fdf8f4] px-4 sm:px-6 2xl:px-20 3xl:px-32 pt-8 space-y-32">
       <Header />
 
       <AdolescentTherapySection />

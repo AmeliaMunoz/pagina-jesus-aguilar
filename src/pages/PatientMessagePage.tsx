@@ -9,9 +9,11 @@ import {
   Timestamp,
   getDocs,
 } from "firebase/firestore";
-import { Mail, SendHorizontal } from "lucide-react";
+import { Mail} from "lucide-react";
 import UserLayout from "../layouts/UserLayout";
 import { onAuthStateChanged } from "firebase/auth";
+import PatientMessageInput from "../components/user/PatientMessageInput";
+import PatientMessageBubble from "../components/user/PatientMessageBubble";
 
 interface Mensaje {
   id: string;
@@ -38,14 +40,12 @@ const PatientMessagesPage = () => {
       setUid(user.uid);
       setEmail(user.email || "");
 
-      // Obtener nombre
       const userDoc = await getDocs(
         query(collection(db, "usuarios"), where("uid", "==", user.uid))
       );
       const docData = userDoc.docs[0]?.data();
       setNombre(docData?.nombre || user.displayName || "");
 
-      // Suscribirse a los mensajes
       const q = query(collection(db, "mensajes"), where("uid", "==", user.uid));
       unsubscribeMensajes = onSnapshot(q, (snapshot) => {
         const datos: Mensaje[] = snapshot.docs
@@ -121,49 +121,24 @@ const PatientMessagesPage = () => {
                 </p>
               ) : (
                 mensajes.map((msg) => (
-                  <div
+                  <PatientMessageBubble
                     key={msg.id}
-                    className={`max-w-[80%] px-4 py-2 rounded-xl text-sm ${
-                      msg.enviadoPorPaciente
-                        ? "bg-blue-100 text-blue-800 self-end text-right"
-                        : "bg-green-100 text-green-800 self-start text-left"
-                    }`}
-                  >
-                    <p>{msg.texto}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {msg.fecha instanceof Timestamp
-                        ? msg.fecha.toDate().toLocaleString("es-ES")
-                        : new Date(msg.fecha).toLocaleString("es-ES")}
-                    </p>
-                  </div>
+                    texto={msg.texto}
+                    fecha={msg.fecha}
+                    enviadoPorPaciente={msg.enviadoPorPaciente}
+                  />
                 ))
               )}
               <div ref={endRef} />
             </div>
 
             {/* Input */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <textarea
-                className="flex-1 border rounded p-3 text-sm"
-                rows={2}
-                value={nuevoMensaje}
-                onChange={(e) => setNuevoMensaje(e.target.value)}
-                placeholder="Escribe tu mensaje para el terapeuta..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleEnviar();
-                  }
-                }}
-              />
-              <button
-                onClick={handleEnviar}
-                disabled={enviando || !nuevoMensaje.trim()}
-                className="bg-[#5f4b32] text-white px-4 py-2 rounded hover:bg-[#b89b71] disabled:opacity-50 flex items-center justify-center"
-              >
-                <SendHorizontal size={20} />
-              </button>
-            </div>
+            <PatientMessageInput
+              value={nuevoMensaje}
+              onChange={setNuevoMensaje}
+              onSend={handleEnviar}
+              loading={enviando}
+            />
           </div>
         </div>
       </div>

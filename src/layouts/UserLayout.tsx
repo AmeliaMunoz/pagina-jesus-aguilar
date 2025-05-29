@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Sidebar from "../components/UserSidebar";
-import HamburgerButton from "../components/HamburgerButton";
-import UserHeader from "../components/UserHeader";
+import Sidebar from "../components/layout/UserSidebar";
+import HamburgerButton from "../components/common/HamburgerButton";
+import UserHeader from "../components/layout/UserHeader";
 import {
   CalendarClock,
   BarChartHorizontal,

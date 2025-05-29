@@ -1,4 +1,4 @@
-import AppointmentCalendar from "../components/AppointmentCalendar";
+import AppointmentCalendar from "../components/admin/AppointmentCalendar";
 import AdminLayout from "../layouts/AdminLayout";
 
 const AdminAppointmentsPage = () => {

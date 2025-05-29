@@ -18,6 +18,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
+import NextAppointmentCard from "../components/user/NextAppointmentCard";
+import AppointmentMessageForm from "../components/user/AppointmentMessageForm";
 
 interface Cita {
   id: string;
@@ -30,11 +32,9 @@ interface Cita {
 const NextAppointmentPage = () => {
   const [, setNombre] = useState("");
   const [proximaCita, setProximaCita] = useState<Cita | null>(null);
-  const [mensaje, setMensaje] = useState("");
-  const [mensajeEnviado, setMensajeEnviado] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(true); // ← Nuevo estado
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const NextAppointmentPage = () => {
       } catch (err) {
         console.error("Error cargando cita:", err);
       } finally {
-        setLoading(false); // ← Aquí
+        setLoading(false);
       }
     });
 
@@ -121,15 +121,11 @@ const NextAppointmentPage = () => {
     setSuccess("Cita anulada correctamente.");
   };
 
-  const enviarMensaje = async () => {
-    if (!mensaje.trim() || !proximaCita) return;
-
-    await updateDoc(doc(db, "citas", proximaCita.id), {
-      mensajeDelPaciente: mensaje.trim(),
+  const enviarMensaje = (texto: string) => {
+    if (!proximaCita) return;
+    updateDoc(doc(db, "citas", proximaCita.id), {
+      mensajeDelPaciente: texto,
     });
-
-    setMensaje("");
-    setMensajeEnviado(true);
   };
 
   return (
@@ -146,56 +142,8 @@ const NextAppointmentPage = () => {
               <p className="text-sm text-gray-500">Cargando cita...</p>
             ) : proximaCita ? (
               <>
-                <div className="text-sm text-[#5f4b32] space-y-2">
-                  <p>
-                    <strong>Fecha:</strong>{" "}
-                    {(() => {
-                      const [year, month, day] = proximaCita.fecha.split("-");
-                      const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
-                      return fechaLocal.toLocaleDateString("es-ES", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      });
-                    })()}{" "}
-                    a las {proximaCita.hora}
-                  </p>
-                  <p>
-                    <strong>Estado:</strong> {proximaCita.estado}
-                  </p>
-                </div>
-
-                <button
-                  onClick={anularCita}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 mt-4"
-                >
-                  Anular cita
-                </button>
-
-                <div className="pt-6">
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
-                    ¿Quieres compartir algo antes de la sesión?
-                  </label>
-                  <textarea
-                    className="w-full border border-[#e0d6ca] rounded p-3 text-sm"
-                    rows={3}
-                    value={mensaje}
-                    onChange={(e) => setMensaje(e.target.value)}
-                    placeholder="Por ejemplo: me gustaría hablar sobre lo que pasó el fin de semana..."
-                  />
-                  <button
-                    onClick={enviarMensaje}
-                    className="mt-3 px-4 py-2 bg-[#5f4b32] text-white rounded hover:bg-[#b89b71]"
-                  >
-                    Enviar mensaje
-                  </button>
-                  {mensajeEnviado && (
-                    <p className="text-green-600 text-sm mt-2">
-                      Mensaje enviado correctamente.
-                    </p>
-                  )}
-                </div>
+                <NextAppointmentCard cita={proximaCita} onCancelar={anularCita} />
+                <AppointmentMessageForm onSend={enviarMensaje} />
               </>
             ) : (
               <div className="flex items-center gap-2 text-[#5f4b32] text-sm">

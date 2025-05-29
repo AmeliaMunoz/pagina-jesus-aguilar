@@ -1,4 +1,4 @@
-import AppointmentStats from "../components/AppointmentStats";
+import AppointmentStats from "../components/admin/AppointmentStats";
 import AdminLayout from "../layouts/AdminLayout";
 
 const AppointmentStatsPage = () => {

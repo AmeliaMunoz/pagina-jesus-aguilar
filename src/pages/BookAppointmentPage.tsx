@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import BookAppointmentFromUser from "../components/BookAppointmentFromUser";
+import BookAppointmentFromUser from "../components/user/BookAppointmentFromUser";
 import UserLayout from "../layouts/UserLayout";
 
 const BookAppointmentPage = () => {

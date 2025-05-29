@@ -8,19 +8,9 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import AdminLayout from "../layouts/AdminLayout";
-import {
-  Mail,
-  Phone,
-  CalendarDays,
-  FileText,
-  Pencil,
-  Trash2,
-  Activity,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import ManualAppointmentModal from "../components/ManualAppointmentModal";
-import { formatearFecha } from "../utils/formatDate";
+import ManualAppointmentModal from "../components/admin/ManualAppointmentModal";
+import ConfirmDeleteModal from "../components/admin/ConfirmDeleteModal";
+import PatientCard from "../components/admin/PatientCardAdmin";
 
 interface CitaHistorial {
   fecha: string;
@@ -68,8 +58,8 @@ const PatientHistoryAdmin = () => {
 
   const guardarNotaSesion = async (email: string, index: number, nota: string) => {
     const ref = doc(db, "pacientes", email);
-    const snap = await getDocs(collection(db, "pacientes"));
-    const docSnap = snap.docs.find((d) => d.id === email);
+    const snapshot = await getDocs(collection(db, "pacientes"));
+    const docSnap = snapshot.docs.find((d) => d.id === email);
     if (!docSnap) return;
     const data = docSnap.data() as Paciente;
     const historialActualizado = [...data.historial];
@@ -151,160 +141,24 @@ const PatientHistoryAdmin = () => {
               <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">{letra}</h3>
               <div className="space-y-4">
                 {grupo.map((paciente) => (
-                 <div key={paciente.email} className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl shadow p-4 break-words overflow-hidden">
-                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                   {/* Información del paciente */}
-                   <div>
-                     <p className="text-base font-semibold text-[#5f4b32]">{paciente.nombre}</p>
-                     <p className="text-sm text-gray-700 flex items-center gap-1 break-words">
-                         <Mail size={14} /> {paciente.email}
-                     </p>
-                     <p className="text-sm text-gray-700 flex items-center gap-1">
-                       <Phone size={14} /> {paciente.telefono}
-                     </p>
-                   </div>
-               
-                   {/* Botones de acción */}
-                   <div className="flex flex-wrap gap-2 sm:gap-3 justify-start sm:justify-end">
-                     <button
-                       onClick={() => setPacienteEditando(paciente)}
-                       className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                     >
-                       <Pencil size={14} /> Editar
-                     </button>
-               
-                     <button
-                       onClick={() => setPacienteAEliminar(paciente)}
-                       className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1"
-                     >
-                       <Trash2 size={14} /> Eliminar
-                     </button>
-               
-                     <button
-                       onClick={() =>
-                         setPacienteExpandido(
-                           pacienteExpandido === paciente.email ? null : paciente.email
-                         )
-                       }
-                       className="text-xs text-[#5f4b32]"
-                     >
-                       {pacienteExpandido === paciente.email ? <ChevronUp /> : <ChevronDown />}
-                     </button>
-                   </div>
-                 </div>
-                    {pacienteExpandido === paciente.email && (
-                      <div className="mt-4 space-y-3 text-sm">
-                        <div>
-                          <p className="font-medium text-[#5f4b32] mb-1">Nota general:</p>
-                          {editandoNota === paciente.email ? (
-                            <div className="space-y-2">
-                              <textarea
-                                className="w-full border border-gray-300 rounded p-2"
-                                rows={3}
-                                value={nuevaNota}
-                                onChange={(e) => setNuevaNota(e.target.value)}
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => guardarNotaGeneral(paciente.email, nuevaNota)}
-                                  className="text-sm px-4 py-2 rounded bg-[#5f4b32] text-white hover:bg-[#9e855c]"
-                                >
-                                  Guardar
-                                </button>
-                                <button
-                                  onClick={() => setEditandoNota(null)}
-                                  className="text-sm px-4 py-2 rounded bg-gray-200 text-gray-700"
-                                >
-                                  Cancelar
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex justify-between items-start">
-                              <p className="text-gray-700 italic">
-                                {paciente.notaGeneral || "Sin nota general"}
-                              </p>
-                              <button
-                                onClick={() => {
-                                  setEditandoNota(paciente.email);
-                                  setNuevaNota(paciente.notaGeneral || "");
-                                }}
-                                className="text-sm text-blue-600 hover:text-blue-800"
-                              >
-                                Editar nota
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          <p className="font-medium text-[#5f4b32] mb-1">Historial de sesiones:</p>
-                          {paciente.historial.length > 0 ? (
-                            <ul className="space-y-2">
-                              {paciente.historial.map((cita, index) => (
-                                <li key={index} className="bg-white p-3 border border-[#e0d6ca] rounded">
-                                  <p className="text-sm flex items-center gap-2">
-                                    <CalendarDays size={14} className="text-[#5f4b32]" />
-                                    {formatearFecha(cita.fecha)} a las {cita.hora}
-                                  </p>
-                                  <p className="text-sm flex items-center gap-2">
-                                    <Activity size={14} className="text-green-700" /> Estado: {cita.estado}
-                                  </p>
-                                  <div className="flex justify-between items-start">
-                                    {notaEditandoSesion?.email === paciente.email && notaEditandoSesion.index === index ? (
-                                      <div className="w-full space-y-2">
-                                        <textarea
-                                          className="w-full border border-gray-300 rounded p-2"
-                                          rows={2}
-                                          value={notaSesion}
-                                          onChange={(e) => setNotaSesion(e.target.value)}
-                                        />
-                                        <div className="flex gap-2">
-                                          <button
-                                            onClick={() => guardarNotaSesion(paciente.email, index, notaSesion)}
-                                            className="text-sm px-4 py-1 bg-[#5f4b32] text-white rounded"
-                                          >
-                                            Guardar
-                                          </button>
-                                          <button
-                                            onClick={() => setNotaEditandoSesion(null)}
-                                            className="text-sm px-4 py-1 bg-gray-300 text-gray-800 rounded"
-                                          >
-                                            Cancelar
-                                          </button>
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <div className="flex justify-between items-center w-full">
-                                        {cita.nota ? (
-                                          <p className="text-sm italic flex items-center gap-2">
-                                            <FileText size={14} className="text-[#b89b71]" /> {cita.nota}
-                                          </p>
-                                        ) : (
-                                          <p className="text-sm text-gray-400 italic">Sin nota</p>
-                                        )}
-                                        <button
-                                          onClick={() => {
-                                            setNotaEditandoSesion({ email: paciente.email, index });
-                                            setNotaSesion(cita.nota || "");
-                                          }}
-                                          className="text-sm text-blue-600 hover:text-blue-800"
-                                        >
-                                          Editar nota
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-gray-500">Este paciente no tiene citas aún.</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <PatientCard
+                    key={paciente.email}
+                    paciente={paciente}
+                    pacienteExpandido={pacienteExpandido}
+                    setPacienteExpandido={setPacienteExpandido}
+                    setPacienteEditando={setPacienteEditando}
+                    setPacienteAEliminar={setPacienteAEliminar}
+                    editandoNota={editandoNota}
+                    setEditandoNota={setEditandoNota}
+                    nuevaNota={nuevaNota}
+                    setNuevaNota={setNuevaNota}
+                    guardarNotaGeneral={guardarNotaGeneral}
+                    notaEditandoSesion={notaEditandoSesion}
+                    setNotaEditandoSesion={setNotaEditandoSesion}
+                    notaSesion={notaSesion}
+                    setNotaSesion={setNotaSesion}
+                    guardarNotaSesion={guardarNotaSesion}
+                  />
                 ))}
               </div>
             </div>
@@ -327,28 +181,11 @@ const PatientHistoryAdmin = () => {
         )}
 
         {pacienteAEliminar && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-xl shadow-xl border border-[#e0d6ca] max-w-md w-full text-center">
-              <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">Confirmar eliminación</h3>
-              <p className="text-sm text-gray-700 mb-6">
-                ¿Estás seguro de que quieres eliminar a <strong>{pacienteAEliminar.nombre}</strong> y todas sus citas? Esta acción no se puede deshacer.
-              </p>
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={eliminarPacienteConfirmado}
-                  className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
-                >
-                  Eliminar
-                </button>
-                <button
-                  onClick={() => setPacienteAEliminar(null)}
-                  className="px-4 py-2 rounded bg-gray-300 text-gray-800 text-sm"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
+          <ConfirmDeleteModal
+            nombre={pacienteAEliminar.nombre}
+            onConfirm={eliminarPacienteConfirmado}
+            onCancel={() => setPacienteAEliminar(null)}
+          />
         )}
       </div>
     </AdminLayout>

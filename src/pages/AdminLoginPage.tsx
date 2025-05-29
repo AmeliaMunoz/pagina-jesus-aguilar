@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import IconoLogo from "../components/IconoLogo";
+import IconoLogo from "../components/common/IconoLogo";
 
 import { setPersistence, browserSessionPersistence } from "firebase/auth";
 

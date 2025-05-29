@@ -12,11 +12,14 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import desbloquearHora from "../components/UnblockHour";
-import { CalendarDays, Phone, Mail } from "lucide-react";
+import desbloquearHora from "../components/common/UnblockHour";
 import AdminLayout from "../layouts/AdminLayout";
 import emailjs from "@emailjs/browser";
 import { checkAppointmentExists } from "../utils/checkAppointmentExists";
+import ActiveAppointmentAlert from "../components/sections/ActiveAppointmentAlert";
+import MessageListByLetter from "../components/sections/MessageListByLetter";
+import MessageSearchInput from "../components/sections/MessageSearchInput";
+import MessageFilterBar from "../components/sections/MessageFilterBar";
 
 const sendConfirmationEmail = async ({
   nombre,
@@ -46,12 +49,11 @@ const FormMessagesPage = () => {
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("pendiente");
-  const location = useLocation();
-  const [errorMensaje, setErrorMensaje] = useState("");
-  const [mensajeExito, setMensajeExito] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [alertaCitaActiva, setAlertaCitaActiva] = useState(false);
-
+  const [errorMensaje, setErrorMensaje] = useState("");
+  const [mensajeExito, setMensajeExito] = useState("");
+  const location = useLocation();
 
   useEffect(() => {
     obtenerMensajes();
@@ -64,7 +66,7 @@ const FormMessagesPage = () => {
     setMensajes(datos);
     setCargando(false);
   };
-  
+
   const cambiarEstado = async (
     id: string,
     nuevoEstado: string,
@@ -80,10 +82,7 @@ const FormMessagesPage = () => {
     const fechaStr = fecha;
     const horaStr = hora;
 
-
-
     if (nuevoEstado === "rechazada" && fechaStr && horaStr && email) {
-      // Buscar cita existente y marcarla como rechazada
       const citasSnap = await getDocs(collection(db, "citas"));
       const citaDoc = citasSnap.docs.find((doc) => {
         const data = doc.data();
@@ -93,33 +92,37 @@ const FormMessagesPage = () => {
           data.hora === horaStr
         );
       });
+    
       await updateDoc(doc(db, "mensajes", id), {
         estado: nuevoEstado,
         actualizado: Timestamp.now(),
       });
-
+    
       if (citaDoc) {
+        const data = citaDoc.data();
+        const fueForzada = data?.forzada === true;
+    
         await updateDoc(doc(db, "citas", citaDoc.id), {
           estado: "rechazada",
         });
         console.log("🗑️ Cita marcada como rechazada");
-      } else {
-        console.warn("⚠️ No se encontró cita para rechazar");
+    
+        // ✅ Solo liberar si no fue forzada
+        if (!fueForzada) {
+          await desbloquearHora(fechaStr, horaStr);
+        }
       }
-
-      await desbloquearHora(fechaStr, horaStr);
-      console.log("✅ Hora liberada:", fechaStr, horaStr);
     }
+    
 
     if (nuevoEstado === "aprobada" && msgData && fechaStr && horaStr && email) {
       const yaExiste = await checkAppointmentExists(email);
-    
+
       if (yaExiste) {
         setAlertaCitaActiva(true);
         return;
       }
-      
-    
+
       const cita = {
         uid: msgData.uid || "",
         email,
@@ -133,23 +136,15 @@ const FormMessagesPage = () => {
         descontadaDelBono: false,
         creadoEl: new Date().toISOString(),
       };
-    
+
       await addDoc(collection(db, "citas"), cita);
-      console.log("✅ Cita guardada en 'citas'");
-    
-      await sendConfirmationEmail({
-        nombre,
-        email,
-        fecha: fechaStr,
-        hora: horaStr,
-      });
-    
-      // ✅ ACTUALIZAR EL MENSAJE A "aprobada"
+      await sendConfirmationEmail({ nombre, email, fecha: fechaStr, hora: horaStr });
+
       await updateDoc(doc(db, "mensajes", id), {
         estado: "aprobada",
         actualizado: Timestamp.now(),
       });
-    
+
       const pacienteRef = doc(db, "pacientes", email);
       const pacienteSnap = await getDoc(pacienteRef);
       const entradaHistorial = {
@@ -158,7 +153,7 @@ const FormMessagesPage = () => {
         estado: "aprobada",
         nota,
       };
-    
+
       if (!pacienteSnap.exists()) {
         await setDoc(pacienteRef, {
           nombre,
@@ -173,18 +168,22 @@ const FormMessagesPage = () => {
         await updateDoc(pacienteRef, { historial });
       }
     }
-    
 
     await obtenerMensajes();
   };
 
-  const mensajesFiltrados = (filtroEstado === "todos" ? mensajes : mensajes.filter((m) => m.estado === filtroEstado))
-  .filter((m) =>
-    m.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    m.email?.toLowerCase().includes(busqueda.toLowerCase())
-  )
-  .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const eliminarMensaje = async (id: string) => {
+    await deleteDoc(doc(db, "mensajes", id));
+    setMensajeExito("🗑️ Mensaje eliminado correctamente");
+    await obtenerMensajes();
+  };
 
+  const mensajesFiltrados = (filtroEstado === "todos" ? mensajes : mensajes.filter((m) => m.estado === filtroEstado))
+    .filter((m) =>
+      m.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      m.email?.toLowerCase().includes(busqueda.toLowerCase())
+    )
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   return (
     <AdminLayout>
@@ -193,188 +192,42 @@ const FormMessagesPage = () => {
           <h2 className="text-xl md:text-2xl font-semibold text-[#5f4b32] mb-8 text-center md:text-left">
             Gestión de mensajes
           </h2>
-  
-          <div className="flex flex-wrap gap-3 justify-center mb-8">
-            {["pendiente", "rechazada", "aprobada", "todos"].map((estado) => (
-              <button
-                key={estado}
-                onClick={() => setFiltroEstado(estado)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  filtroEstado === estado
-                    ? "bg-[#b89b71] text-white"
-                    : "bg-white border border-[#c8b29d] text-[#5f4b32]"
-                }`}
-              >
-                {estado === "todos"
-                  ? "Todos"
-                  : estado.charAt(0).toUpperCase() + estado.slice(1)}
-              </button>
-            ))}
-          </div>
-  
-          <div className="mb-8 text-center">
-            <input
-              type="text"
-              placeholder="Buscar por nombre o email"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-  
+
+          <MessageFilterBar filtroEstado={filtroEstado} setFiltroEstado={setFiltroEstado} />
+          <MessageSearchInput busqueda={busqueda} setBusqueda={setBusqueda} />
+
           {errorMensaje && (
             <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded mb-6 text-sm text-center">
               {errorMensaje}
             </div>
           )}
-  
+
           {mensajeExito && (
             <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-2 rounded mb-6 text-sm text-center">
               {mensajeExito}
             </div>
           )}
-  
+
           {cargando ? (
             <p className="text-center text-[#5f4b32]">Cargando mensajes...</p>
           ) : mensajesFiltrados.length === 0 ? (
             <p className="text-center text-[#5f4b32]">No hay mensajes en esta categoría.</p>
           ) : (
-            Object.entries(
-              mensajesFiltrados
-                .filter((m) =>
-                  m.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-                  m.email?.toLowerCase().includes(busqueda.toLowerCase())
-                )
-                .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                .reduce<Record<string, any[]>>((acc, msg) => {
-                  const letra = msg.nombre.charAt(0).toUpperCase();
-                  if (!acc[letra]) acc[letra] = [];
-                  acc[letra].push(msg);
-                  return acc;
-                }, {})
-            ).map(([letra, grupo]) => (
-              <div key={letra} className="mb-6">
-                <h3 className="text-lg font-bold text-[#5f4b32] mb-2">{letra}</h3>
-                <div className="grid gap-6">
-                  {grupo.map((m) => (
-                    <div
-                    key={m.id}
-                    className="w-full bg-[#fdf8f4] border border-[#e8d4c3] rounded-xl shadow-sm p-4 sm:p-6 break-words"
-                  >
-                    <p className="text-sm text-gray-500 mb-1">
-                      {m.creado?.toDate().toLocaleString()}
-                    </p>
-                    <h3 className="text-lg font-semibold text-gray-800 break-words">
-                      {m.nombre}
-                    </h3>
-                  
-                    <p className="text-sm text-gray-700 flex items-center gap-2 mt-2 break-all">
-                      <Mail size={16} /> {m.email}
-                    </p>
-                  
-                    {m.telefono && (
-                      <p className="text-sm text-gray-700 flex items-center gap-2 mt-2">
-                        <Phone size={16} /> {m.telefono}
-                      </p>
-                    )}
-                  
-                    {m.fechaPropuesta && (
-                      <p className="text-sm text-gray-600 mt-2 flex items-center gap-2">
-                        <CalendarDays size={16} />
-                        Fecha propuesta:{" "}
-                        {m.fechaPropuesta.toDate().toLocaleDateString("es-ES")}{" "}
-                        {m.horaPropuesta && `a las ${m.horaPropuesta}`}
-                      </p>
-                    )}
-                  
-                    {m.mensaje && <p className="mt-2 text-gray-800 break-words">{m.mensaje}</p>}
-                  
-                    <p className="mt-2 font-medium text-sm">
-                      Estado:{" "}
-                      <span
-                        className={
-                          m.estado === "pendiente"
-                            ? "text-yellow-600"
-                            : m.estado === "aprobada"
-                            ? "text-green-700"
-                            : "text-red-600"
-                        }
-                      >
-                        {m.estado}
-                      </span>
-                    </p>
-                  
-                    <div className="mt-4 flex flex-col sm:flex-row sm:flex-wrap sm:justify-start sm:items-start gap-4">
-                      {filtroEstado !== "todos" && (
-                        <>
-                          <button
-                            onClick={() =>
-                              cambiarEstado(
-                                m.id,
-                                "aprobada",
-                                m.fechaPropuesta?.toDate()?.toISOString().split("T")[0],
-                                m.horaPropuesta,
-                                m
-                              )
-                            }
-                            className="w-full sm:w-auto px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm"
-                          >
-                            Aprobar
-                          </button>
-                          <button
-                            onClick={() =>
-                              cambiarEstado(
-                                m.id,
-                                "rechazada",
-                                m.fechaPropuesta?.toDate()?.toISOString().split("T")[0],
-                                m.horaPropuesta,
-                                m
-                              )
-                            }
-                            className="w-full sm:w-auto px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
-                          >
-                            Rechazar
-                          </button>
-                        </>
-                      )}
-                      <button
-                        onClick={async () => {
-                          await deleteDoc(doc(db, "mensajes", m.id));
-                          setMensajeExito("🗑️ Mensaje eliminado correctamente");
-                          await obtenerMensajes();
-                        }}
-                        className="w-full sm:w-auto px-4 py-2 rounded bg-gray-300 text-gray-800 hover:bg-gray-400 text-sm"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                 ))}
-                </div>
-              </div>
-            ))
+            <MessageListByLetter
+              mensajesFiltrados={mensajesFiltrados}
+              filtroEstado={filtroEstado}
+              cambiarEstado={cambiarEstado}
+              eliminarMensaje={eliminarMensaje}
+            />
           )}
         </div>
       </div>
+
       {alertaCitaActiva && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl shadow-xl border border-red-300 max-w-md w-full text-center">
-            <h3 className="text-lg font-semibold text-red-700 mb-4">Paciente ya tiene una cita</h3>
-            <p className="text-sm text-gray-700 mb-6">
-              Este paciente ya tiene una cita activa registrada. No puedes aprobar otra hasta que finalice o se anule.
-            </p>
-            <div className="flex justify-center">
-              <button
-                onClick={() => setAlertaCitaActiva(false)}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-sm"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
+        <ActiveAppointmentAlert onClose={() => setAlertaCitaActiva(false)} />
       )}
     </AdminLayout>
   );
-}  
+};
+
 export default FormMessagesPage;

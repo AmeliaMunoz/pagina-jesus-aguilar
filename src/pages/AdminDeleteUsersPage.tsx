@@ -7,7 +7,9 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import AdminLayout from "../layouts/AdminLayout";
-import { UserMinus, Mail } from "lucide-react";
+import { UserMinus} from "lucide-react";
+import UserCardAdmin from "../components/admin/UserCardAdmin";
+import UserSearchInput from "../components/admin/UserSearchInput";
 
 interface Usuario {
   uid: string;
@@ -80,15 +82,7 @@ const AdminDeleteUsersPage = () => {
             </div>
           )}
 
-          <div className="w-full max-w-md mx-auto mb-10">
-            <input
-              type="text"
-              placeholder="Buscar por nombre o email"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded text-sm"
-            />
-          </div>
+          <UserSearchInput value={busqueda} onChange={setBusqueda} />
 
           {usuariosFiltrados.length === 0 ? (
             <p className="text-sm text-gray-600 text-center">No se encontraron usuarios.</p>
@@ -98,39 +92,11 @@ const AdminDeleteUsersPage = () => {
                 <h3 className="text-lg font-semibold text-[#5f4b32] mb-4">{letra}</h3>
                 <div className="space-y-4">
                   {grupo.map((usuario) => (
-                    <div
+                    <UserCardAdmin
                       key={usuario.uid}
-                      className="border border-[#e0d6ca] rounded-xl p-6 bg-[#fdf8f4] shadow flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 break-words"
-                    >
-                      <div>
-                        <p className="font-medium text-[#5f4b32] text-base">
-                          {usuario.nombre} {usuario.activo === false && <span className="text-red-500 text-sm">(desactivado)</span>}
-                        </p>
-                        <p className="text-sm text-gray-700 flex items-start gap-1 break-all">
-                            <Mail size={14} /> <span className="break-all">{usuario.email}</span>
-                        </p>
-                        {usuario.telefono && (
-                          <p className="text-sm text-gray-700">{usuario.telefono}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-4 flex-wrap">
-                        {usuario.activo === false ? (
-                          <button
-                            onClick={() => cambiarEstadoUsuario(usuario, true)}
-                            className="text-sm text-green-700 hover:text-green-900 underline"
-                          >
-                            Activar
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => cambiarEstadoUsuario(usuario, false)}
-                            className="text-sm text-yellow-700 hover:text-yellow-900 underline"
-                          >
-                            Desactivar
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                      usuario={usuario}
+                      onChangeStatus={cambiarEstadoUsuario}
+                    />
                   ))}
                 </div>
               </div>
@@ -143,4 +109,5 @@ const AdminDeleteUsersPage = () => {
 };
 
 export default AdminDeleteUsersPage;
+
 

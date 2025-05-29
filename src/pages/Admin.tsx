@@ -1,9 +1,13 @@
-import { JSX, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
-import { CalendarDays, Clock, AlertCircle, Mail } from "lucide-react";
+import { CalendarDays,AlertCircle, Mail } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdminLayout from "../layouts/AdminLayout";
+import PatientMessagesList from "../components/admin/PatientMessagesList";
+import FormMessagesList from "../components/admin/FormMessagesList";
+import TodayAppointmentsList from "../components/admin/TodayAppointmentsList";
+import SummaryCard from "../components/admin/SummaryCard";
 
 interface MensajeFormulario {
   id: string;
@@ -23,26 +27,6 @@ interface MensajePaciente {
   fecha: Date;
   enviadoPorPaciente: boolean;
 }
-
-const SummaryCard = ({
-  icon,
-  title,
-  count,
-  color,
-}: {
-  icon: JSX.Element;
-  title: string;
-  count: number;
-  color: string;
-}) => (
-  <div className="bg-[#fdf8f4] border border-[#e0d6ca] rounded-xl p-6 3xl:p-8 flex items-center gap-4 3xl:gap-6 shadow-md">
-    {icon}
-    <div>
-      <p className="text-sm 3xl:text-base text-[#5f4b32]">{title}</p>
-      <p className={`text-xl 3xl:text-2xl font-bold ${color}`}>{count}</p>
-    </div>
-  </div>
-);
 
 const Admin = () => {
   const [citasHoy, setCitasHoy] = useState<MensajeFormulario[]>([]);
@@ -133,7 +117,9 @@ const Admin = () => {
       <div className="bg-white border border-[#e0d6ca] rounded-2xl shadow-xl p-6 md:p-16 3xl:p-24 mt-10">
         <h1 className="text-2xl md:text-3xl 3xl:text-4xl font-bold text-[#5f4b32] mb-10 text-center">
           Panel de control — Resumen del día
-        </h1> 
+        </h1>
+
+        {/* Tarjetas resumen */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 3xl:gap-12 mb-10">
           <SummaryCard
             icon={<CalendarDays className="w-10 h-10 3xl:w-12 3xl:h-12 text-green-700" />}
@@ -155,6 +141,7 @@ const Admin = () => {
           />
         </div>
 
+        {/* Tabs */}
         <div className="flex flex-wrap justify-center gap-3 sm:gap-4 3xl:gap-6 mb-8 px-2">
           {["citas", "formulario", "pacientes"].map((tab) => (
             <button
@@ -175,44 +162,14 @@ const Admin = () => {
           ))}
         </div>
 
+        {/* Contenido */}
         <div className="space-y-6 3xl:space-y-10">
           {activeTab === "citas" && (
             <section>
               <h2 className="text-xl md:text-2xl 3xl:text-3xl font-semibold text-[#5f4b32] mb-4 flex items-center gap-2">
                 <CalendarDays size={20} className="md:size-6" /> Citas de hoy
               </h2>
-              {citasHoy.length === 0 ? (
-                <p className="text-gray-600 text-sm md:text-base 3xl:text-lg">No hay citas para hoy.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {citasHoy.map((cita) => (
-                    <li
-                      key={cita.id}
-                      className={`p-3 md:p-4 3xl:p-6 rounded-lg shadow-sm border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 ${
-                        cita.estado === "ausente"
-                          ? "bg-yellow-100 border-yellow-300"
-                          : "bg-[#fdf8f4] border-[#e0d6ca]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 text-sm md:text-base 3xl:text-lg text-[#5f4b32]">
-                        <Clock size={16} />
-                        <span>
-                          {cita.horaPropuesta} — {cita.nombre} ({cita.email})
-                        </span>
-                      </div>
-                      <span
-                        className={`text-sm 3xl:text-base font-medium ${
-                          cita.estado === "ausente"
-                            ? "text-yellow-800"
-                            : "text-green-700"
-                        }`}
-                      >
-                        {cita.estado === "ausente" ? "Ausente" : "Confirmada"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <TodayAppointmentsList citas={citasHoy} />
             </section>
           )}
 
@@ -221,26 +178,7 @@ const Admin = () => {
               <h2 className="text-xl md:text-2xl 3xl:text-3xl font-semibold text-[#5f4b32] mb-4 flex items-center gap-2">
                 <AlertCircle size={20} className="md:size-6" /> Mensajes del formulario pendientes
               </h2>
-              {mensajesFormulario.length === 0 ? (
-                <p className="text-gray-600 text-sm md:text-base 3xl:text-lg">No hay mensajes pendientes del formulario.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {mensajesFormulario.map((msg) => (
-                    <li
-                      key={msg.id}
-                      className="p-3 md:p-4 3xl:p-6 rounded-lg shadow-sm border bg-[#fdf8f4] border-[#f3d4a3] flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm md:text-base 3xl:text-lg text-[#5f4b32]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Mail size={16} />
-                        <span>
-                          {msg.nombre} — {msg.email} — {msg.fechaPropuesta?.toLocaleDateString("es-ES")}{" "}
-                          {msg.horaPropuesta && `a las ${msg.horaPropuesta}`}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <FormMessagesList mensajes={mensajesFormulario} />
             </section>
           )}
 
@@ -249,25 +187,7 @@ const Admin = () => {
               <h2 className="text-xl md:text-2xl 3xl:text-3xl font-semibold text-[#5f4b32] mb-4 flex items-center gap-2">
                 <AlertCircle size={20} className="md:size-6" /> Mensajes de pacientes sin responder
               </h2>
-              {mensajesPacientes.length === 0 ? (
-                <p className="text-gray-600 text-sm md:text-base 3xl:text-lg">No hay mensajes pendientes de pacientes.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {mensajesPacientes.map((msg) => (
-                    <li
-                      key={msg.id}
-                      className="p-3 md:p-4 3xl:p-6 rounded-lg shadow-sm border bg-[#fdf8f4] border-[#f3d4a3] flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm md:text-base 3xl:text-lg text-[#5f4b32]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Mail size={16} />
-                        <span>
-                          {msg.nombre} — {msg.email} — {msg.fecha.toLocaleDateString("es-ES")}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <PatientMessagesList mensajes={mensajesPacientes} />
             </section>
           )}
         </div>

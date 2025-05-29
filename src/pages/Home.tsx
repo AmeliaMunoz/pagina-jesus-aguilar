@@ -1,9 +1,9 @@
-import Header from "../components/Header";
-import Hero from "../components/Hero";
-import AboutMe from "../components/Aboutme";
-import TherapyTypes from "../components/TherapyTypes";
-import ContactSection from "../components/ContactSection";
-import Footer from "../components/Footer";
+import Header from "../components/layout/Header";
+import Hero from "../components/sections/Hero";
+import AboutMe from "../components/sections/Aboutme";
+import TherapyTypes from "../components/sections/TherapyTypes";
+import ContactSection from "../components/sections/ContactSection";
+import Footer from "../components/layout/Footer";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -23,7 +23,7 @@ const Home = () => {
     <>
       <main className="w-full bg-[#fdf8f4] px-4 sm:px-6 2xl:px-20 3xl:px-32 pt-8 space-y-32">
         <Header />
-        <Hero />
+        <Hero/>
         <AboutMe />
         <TherapyTypes />
         <ContactSection />

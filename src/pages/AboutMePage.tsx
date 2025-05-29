@@ -1,9 +1,9 @@
 
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import ContactSection from "../components/ContactSection";
+import ContactSection from "../components/sections/ContactSection";
 
 const AboutMePage = () => {
   const location = useLocation();
@@ -19,8 +19,9 @@ const AboutMePage = () => {
 
   return (
     <>
+      
+      <section className="w-full bg-[#fdf8f4] px-4 sm:px-6 2xl:px-20 3xl:px-32 pt-8 space-y-32">
       <Header />
-      <section className="bg-[#fdf8f4]  py-20 px-6">
         <div className="max-w-5xl mx-auto grid md:grid-cols-[auto_1fr] gap-10 items-start bg-white p-10 rounded-2xl shadow-xl">
 
           {/* Contenido principal */}
